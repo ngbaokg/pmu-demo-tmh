@@ -18,7 +18,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
       --primary-gold: #c5a059;
@@ -450,17 +449,11 @@
       #customerList, #homeRecentList, #warrantyList { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
       #customerList .card, #homeRecentList > .card, #warrantyList > .card { margin-bottom: 0; }
     }
-
-    @media (min-width: 1300px) {
-      .container { max-width: 1300px; }
-      #customerList, #homeRecentList, #warrantyList { grid-template-columns: 1fr 1fr 1fr; }
-    }
   </style>
 </head>
 
 <body>
 
-  <!-- HEADER -->
   <header>
     <div class="brand-box">
       <img id="brandLogo" class="brand-logo" src="" alt="Logo">
@@ -471,18 +464,16 @@
     </div>
     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
       <div id="cloudSyncStatus" style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap;" onclick="openSettingsModal()" title="Bấm để mở cài đặt đồng bộ">
-        <i class="fa-solid fa-hard-drive"></i> <span id="cloudSyncStatusText">Chưa đăng nhập</span>
+        <i class="fa-solid fa-hard-drive"></i> <span id="cloudSyncStatusText">Chưa kết nối</span>
       </div>
       <button class="btn-outline btn-icon-only" onclick="openSettingsModal()" title="Cài đặt"><i class="fa-solid fa-gear"></i></button>
     </div>
   </header>
 
-  <!-- MAIN CONTAINER -->
   <div class="container">
 
     <!-- 1. TAB TRANG CHỦ -->
     <div id="tab-home" class="tab-content active">
-      <div id="backupReminderBanner" style="display: none;"></div>
       <div class="hero-banner">
         <h2 style="color: var(--primary-gold); margin-bottom: 8px;" id="heroBrandName">Tiệm Phun Xăm Của Bạn</h2>
         <p style="color: var(--text-muted); font-size: 13px;">Hệ thống lưu trữ hồ sơ, hình ảnh & nhắc dặm tự động</p>
@@ -503,7 +494,6 @@
       <div class="form-group">
         <input type="text" id="customerSearchInput" class="form-control" placeholder="Tìm theo Tên, SĐT, Địa chỉ..." oninput="renderCustomerList()">
       </div>
-      <div id="customerSelectBar" style="display: none;"></div>
       <div id="customerList"></div>
     </div>
 
@@ -596,7 +586,7 @@
 
   </div>
 
-  <!-- MODAL KHÓA HẾT HẠN DÙNG THỬ / BẢN QUYỀN (LOCK MODAL) -->
+  <!-- MODAL KHÓA MÀN HÌNH BẢN QUYỀN / DÙNG THỬ -->
   <div id="licenseLockModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18, 19, 22, 0.98); z-index: 9999; padding: 25px 16px; overflow-y: auto;">
     <div style="max-width: 440px; margin: 30px auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; text-align: center;">
       <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(231, 76, 60, 0.15); color: var(--danger); font-size: 28px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
@@ -616,7 +606,7 @@
 
       <div style="border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
         <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Chưa có mã kích hoạt? Liên hệ quản trị viên:</div>
-        <a href="https://zalo.me" target="_blank" class="btn-outline" style="width: 100%; justify-content: center; padding: 10px; border-color: var(--zalo-blue); color: #4da3ff; text-decoration: none;">
+        <a id="zaloAdminLink" href="https://zalo.me" target="_blank" class="btn-outline" style="width: 100%; justify-content: center; padding: 10px; border-color: var(--zalo-blue); color: #4da3ff; text-decoration: none;">
           <i class="fa-solid fa-comment-dots"></i> Nhắn tin Zalo hỗ trợ
         </a>
         <button class="btn-danger-outline" style="width: 100%; justify-content: center; margin-top: 10px; padding: 8px;" onclick="cloudSignOut()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất tài khoản</button>
@@ -890,24 +880,6 @@
     <div id="imageViewerCaption" style="color: var(--primary-gold); margin-top: 10px; font-weight: 600; font-size: 14px;"></div>
   </div>
 
-  <!-- POPUP NHẮC VIỆC HÀNG NGÀY -->
-  <div id="autoWarrantyReminderModal" class="modal">
-    <div class="modal-content" style="max-width: 420px;">
-      <div class="modal-header-top">
-        <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-bell"></i> Nhắc việc hôm nay</h3>
-      </div>
-      <div id="autoAppointmentReminderSection" style="display: none; margin-bottom: 16px;">
-        <p style="font-size: 12.5px; font-weight: 700; color: #fff; margin-bottom: 8px;"><i class="fa-solid fa-calendar-check" style="color: var(--primary-gold);"></i> Lịch hẹn hôm nay</p>
-        <div id="autoAppointmentReminderList" style="max-height: 32vh; overflow-y: auto;"></div>
-      </div>
-      <div id="autoWarrantyReminderSection" style="display: none;">
-        <p style="font-size: 12.5px; font-weight: 700; color: #fff; margin-bottom: 8px;"><i class="fa-solid fa-shield-halved" style="color: var(--primary-gold);"></i> Bảo hành sắp/quá hạn</p>
-        <div id="autoWarrantyReminderList" style="max-height: 32vh; overflow-y: auto;"></div>
-      </div>
-      <button class="btn-gold" style="margin-top: 12px;" onclick="closeAutoWarrantyReminderPopup()"><i class="fa-solid fa-check"></i> Đã xem</button>
-    </div>
-  </div>
-
   <!-- MODAL: VIETQR THANH TOÁN -->
   <div id="paymentQrModal" class="modal">
     <div class="modal-content" style="max-width: 380px; text-align: center;">
@@ -1052,15 +1024,11 @@
     const defaultBrandLogo = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'><circle cx='250' cy='250' r='240' fill='%231c1e24' stroke='%23c5a059' stroke-width='6'/><text x='250' y='270' font-family='sans-serif' font-size='72' font-weight='bold' fill='%23c5a059' text-anchor='middle'>PMU</text></svg>";
     const defaultReminderTemplate = "Dạ em chào chị {TEN_KH}, tiệm {TEN_TIEM} xin phép nhắc lịch kiểm tra và dặm bảo hành dịch vụ {DICH_VU} của chị ạ. Hạn bảo hành của chị đến ngày {HAN_BH}. Chị sắp xếp ghé tiệm để bên em hỗ trợ dặm đẹp nhất cho chị nhé!";
 
-    // Cơ sở dữ liệu local độc lập
     localforage.config({
       name: 'PMU_PRO_APP_DB',
       storeName: 'pmu_data_store'
     });
 
-    /* ============================================================================
-       CẤU HÌNH FIREBASE MỚI (pmu-demo-phtm) ĐÃ ĐƯỢC CHÈN CHUẨN XÁC VÀO ĐÂY
-       ============================================================================ */
     const firebaseConfig = {
       apiKey: "AIzaSyAnZn28fs7fOrvdsIMaQYf3DNGV8iLdxKE",
       authDomain: "pmu-demo-phtm.firebaseapp.com",
@@ -1111,9 +1079,7 @@
       }
     }
 
-    /* ============================================================================
-       MODULE BẢN QUYỀN, DÙNG THỬ (TRIAL) & KHÓA MÀN HÌNH
-       ============================================================================ */
+    /* MODULE BẢN QUYỀN */
     function checkLicenseExpiry(userData) {
       const lockModal = document.getElementById('licenseLockModal');
       const now = Date.now();
@@ -1141,7 +1107,6 @@
         return;
       }
 
-      // MÃ TEST DÀNH CHO BẠN: TEST1P (1 phút) và TEST3 (3 ngày)
       if (key === 'TEST1P' || key === 'TEST3') {
         const durationMs = (key === 'TEST1P') ? (60 * 1000) : (3 * 24 * 60 * 60 * 1000);
         const newExpire = Date.now() + durationMs;
@@ -1152,7 +1117,7 @@
         }, { merge: true });
 
         inputEl.value = '';
-        showAppAlert(key === 'TEST1P' ? 'Đã kích hoạt 1 PHÚT test (đợi 60 giây để xem màn hình khóa)!' : 'Đã kích hoạt 3 NGÀY trải nghiệm thành công!');
+        showAppAlert(key === 'TEST1P' ? 'Đã kích hoạt 1 PHÚT test!' : 'Đã kích hoạt 3 NGÀY trải nghiệm thành công!');
         return;
       }
 
@@ -1162,14 +1127,10 @@
 
         await cloudFirestore.runTransaction(async (transaction) => {
           const keyDoc = await transaction.get(keyRef);
-          if (!keyDoc.exists) {
-            throw new Error('Mã kích hoạt không tồn tại trên hệ thống!');
-          }
+          if (!keyDoc.exists) throw new Error('Mã kích hoạt không tồn tại trên hệ thống!');
 
           const keyData = keyDoc.data();
-          if (keyData.used) {
-            throw new Error('Mã này đã được sử dụng rồi!');
-          }
+          if (keyData.used) throw new Error('Mã này đã được sử dụng rồi!');
 
           const userDoc = await transaction.get(userRef);
           const userData = userDoc.data() || {};
@@ -1177,16 +1138,8 @@
           const addedMs = (keyData.days || 30) * 24 * 60 * 60 * 1000;
           const newExpire = currentExpire + addedMs;
 
-          transaction.update(keyRef, {
-            used: true,
-            usedBy: cloudUser.email,
-            usedAt: Date.now()
-          });
-
-          transaction.set(userRef, {
-            expireAt: newExpire,
-            updatedAt: Date.now()
-          }, { merge: true });
+          transaction.update(keyRef, { used: true, usedBy: cloudUser.email, usedAt: Date.now() });
+          transaction.set(userRef, { expireAt: newExpire, updatedAt: Date.now() }, { merge: true });
         });
 
         inputEl.value = '';
@@ -1196,9 +1149,7 @@
       }
     }
 
-    /* ============================================================================
-       FIREBASE AUTH & ĐỒNG BỘ
-       ============================================================================ */
+    /* FIREBASE AUTH & SYNC */
     function setCloudStatus(text, iconClass) {
       const textEl = document.getElementById('cloudSyncStatusText');
       const boxEl = document.getElementById('cloudSyncStatus');
@@ -1285,7 +1236,6 @@
           const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
           const now = Date.now();
 
-          // Cấp 3 ngày dùng thử tự động
           return cloudFirestore.collection('users').doc(uid).set({
             email: email,
             trialStartedAt: now,
@@ -1435,9 +1385,135 @@
       cloudFirestore.collection('users').doc(cloudUser.uid).set(db.brand, { merge: true });
     }
 
-    /* ============================================================================
-       CÁC HÀM TIỆN ÍCH, DỊCH VỤ, LỊCH HẸN & BẢO HÀNH
-       ============================================================================ */
+    /* TIỆN ÍCH, NGÂN HÀNG & VIETQR */
+    const VIETQR_BANKS = [
+      { id: '970436', name: 'Vietcombank' },
+      { id: '970415', name: 'VietinBank' },
+      { id: '970418', name: 'BIDV' },
+      { id: '970405', name: 'Agribank' },
+      { id: '970407', name: 'Techcombank' },
+      { id: '970422', name: 'MB Bank' },
+      { id: '970416', name: 'ACB' },
+      { id: '970432', name: 'VPBank' },
+      { id: '970423', name: 'TPBank' },
+      { id: '970403', name: 'Sacombank' },
+      { id: '970437', name: 'HDBank' },
+      { id: '970443', name: 'SHB' },
+      { id: '970431', name: 'Eximbank' },
+      { id: '970426', name: 'MSB' },
+      { id: '970440', name: 'SeABank' },
+      { id: '970448', name: 'OCB' },
+      { id: '970441', name: 'VIB' },
+      { id: '970429', name: 'SCB' }
+    ];
+
+    function renderBankOptions() {
+      const sel = document.getElementById('settingBankId');
+      if (!sel || sel.options.length > 0) return;
+      VIETQR_BANKS.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.innerText = b.name;
+        sel.appendChild(opt);
+      });
+    }
+
+    function removeVietnameseTones(str) {
+      str = str || '';
+      str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g, 'a');
+      str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g, 'e');
+      str = str.replace(/ì|í|ị|ỉ|ĩ/g, 'i');
+      str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g, 'o');
+      str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g, 'u');
+      str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g, 'y');
+      str = str.replace(/đ/g, 'd');
+      str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, 'A');
+      str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, 'E');
+      str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, 'I');
+      str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, 'O');
+      str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, 'U');
+      str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, 'Y');
+      str = str.replace(/Đ/g, 'D');
+      return str;
+    }
+
+    let currentPaymentContext = null;
+
+    function openPaymentQR(custId, sessionId, amount, note) {
+      const bankId = db.brand && db.brand.bankId;
+      const accountNo = db.brand && db.brand.bankAccountNo;
+      const accountName = db.brand && db.brand.bankAccountName;
+
+      if (!bankId || !accountNo) {
+        showAppAlert('Vui lòng vào Cài đặt → mục "Thanh toán" để nhập Ngân hàng và Số tài khoản trước!');
+        openSettingsModal();
+        return;
+      }
+
+      currentPaymentContext = { custId, sessionId, maxAmount: amount };
+      const cleanNote = removeVietnameseTones(note).replace(/[^a-zA-Z0-9 ]/g, '').trim();
+      const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(cleanNote)}${accountName ? '&accountName=' + encodeURIComponent(removeVietnameseTones(accountName)) : ''}`;
+      const bankName = (VIETQR_BANKS.find(b => b.id === bankId) || {}).name || bankId;
+
+      document.getElementById('paymentQrContent').innerHTML = `
+        <img src="${qrUrl}" style="width: 100%; max-width: 300px; border-radius: 8px; background: #fff; padding: 8px;" alt="QR Code">
+        <div style="margin-top: 14px; font-size: 13px; line-height: 1.8; text-align: left; background: var(--bg-input); padding: 12px; border-radius: 8px;">
+          <div>Ngân hàng: <strong style="color: #fff;">${escapeHtml(bankName)}</strong></div>
+          <div>Số tài khoản: <strong style="color: #fff;">${escapeHtml(accountNo)}</strong></div>
+          ${accountName ? `<div>Chủ TK: <strong style="color: #fff;">${escapeHtml(accountName)}</strong></div>` : ''}
+          <div>Cần thu: <strong style="color: var(--primary-gold); font-size: 15px;">${formatMoney(amount)}</strong></div>
+        </div>
+        <div class="form-group" style="margin-top: 14px; text-align: left;">
+          <label style="font-size: 12px;">Số tiền khách ĐÃ TRẢ:</label>
+          <input type="text" id="paymentConfirmAmount" class="form-control" value="${new Intl.NumberFormat('vi-VN').format(amount)}" oninput="formatCurrencyInput(this)">
+        </div>
+        <button class="btn-gold" style="width: 100%; margin-top: 8px; padding: 10px;" onclick="confirmPaymentReceived()"><i class="fa-solid fa-check"></i> Xác nhận đã nhận tiền</button>
+      `;
+      document.getElementById('paymentQrModal').style.display = 'block';
+    }
+
+    async function confirmPaymentReceived() {
+      if (!currentPaymentContext) return;
+      const { custId, sessionId } = currentPaymentContext;
+      const raw = document.getElementById('paymentConfirmAmount').value.replace(/\D/g, '');
+      const receivedAmount = parseInt(raw) || 0;
+      if (receivedAmount <= 0) {
+        showAppAlert('Số tiền không hợp lệ.');
+        return;
+      }
+
+      const customer = db.customers.find(c => c.id === custId);
+      if (!customer || !customer.sessions) return;
+
+      if (sessionId) {
+        const session = customer.sessions.find(s => s.id === sessionId);
+        if (session) {
+          const currentPaid = (session.paid !== undefined) ? session.paid : 0;
+          session.paid = Math.min((session.price || 0), currentPaid + receivedAmount);
+        }
+      } else {
+        let remaining = receivedAmount;
+        for (const session of customer.sessions) {
+          if (remaining <= 0) break;
+          const currentPaid = (session.paid !== undefined) ? session.paid : (session.price || 0);
+          const debt = Math.max(0, (session.price || 0) - currentPaid);
+          if (debt <= 0) continue;
+          const applied = Math.min(debt, remaining);
+          session.paid = currentPaid + applied;
+          remaining -= applied;
+        }
+      }
+
+      markDataChanged();
+      await saveDB();
+      syncCustomerToCloud(custId);
+      closeModal('paymentQrModal');
+      openCustomerDetail(custId);
+      renderCustomerList();
+      showAppAlert('Đã ghi nhận thanh toán ' + formatMoney(receivedAmount));
+    }
+
+    /* ĐỊNH DẠNG & THÔNG TIN DỊCH VỤ */
     const serviceCategories = {
       'moi': { name: 'Môi', title: 'Chọn loại dịch vụ Môi:', items: ['Phun môi', 'Khử thâm', 'Phụ thu'] },
       'may': { name: 'Mày', title: 'Chọn loại dịch vụ Mày:', items: ['Phun Ombre', 'Sợi đầu phun đuôi', 'Điêu khắc sợi', 'Phụ thu'] },
@@ -1467,12 +1543,7 @@
 
     function getTodayDateTimeString() {
       const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      const h = String(now.getHours()).padStart(2, '0');
-      const mi = String(now.getMinutes()).padStart(2, '0');
-      return `${y}-${m}-${d}T${h}:${mi}`;
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     }
 
     function formatDateTimeDisplay(dtStr) {
@@ -1527,6 +1598,7 @@
       };
     }
 
+    /* HIỂN THỊ DANH SÁCH & HỒ SƠ */
     function renderHome() {
       document.getElementById('brandTitle').innerText = db.brand.title;
       document.getElementById('brandSlogan').innerText = db.brand.slogan;
@@ -1562,7 +1634,7 @@
       const container = document.getElementById('customerList');
       if (!db.customers) db.customers = [];
 
-      let filtered = db.customers.filter(c => (c.name && c.name.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q)));
+      let filtered = db.customers.filter(c => (c.name && c.name.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q)) || (c.address && c.address.toLowerCase().includes(q)));
       if (filtered.length === 0) {
         container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 25px;">Không tìm thấy khách hàng nào.</div>`;
         return;
@@ -1587,9 +1659,11 @@
               <div style="font-size: 12px; color: var(--text-muted); margin: 3px 0;">SĐT: ${escapeHtml(c.phone)} | ĐC: ${escapeHtml(c.address) || 'Chưa lưu'}</div>
               <div style="font-size: 12px; margin-top: 4px;">Đã làm: <strong style="color: var(--primary-gold);">${escapeHtml(serviceList)}</strong></div>
             </div>
-            <div style="display: flex; gap: 6px;" onclick="event.stopPropagation();">
-              <a class="btn-call" href="tel:${escapeHtml(c.phone)}" title="Gọi"><i class="fa-solid fa-phone"></i></a>
-              <button class="btn-remind" onclick="openQuickMessageModal('${c.id}')" title="Nhắn"><i class="fa-solid fa-comment-dots"></i></button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 128px; flex-shrink: 0;" onclick="event.stopPropagation();">
+              <button class="btn-outline" style="padding: 6px 8px; font-size: 12px;" onclick="openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
+              <a class="btn-call" href="tel:${escapeHtml(c.phone)}"><i class="fa-solid fa-phone"></i></a>
+              <button class="btn-outline" style="padding: 6px 8px; font-size: 12px; border-color: var(--danger); color: var(--danger);" onclick="deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+              <button class="btn-remind" onclick="openQuickMessageModal('${c.id}')"><i class="fa-solid fa-comment-dots"></i></button>
             </div>
           </div>
         `;
@@ -1597,7 +1671,7 @@
     }
 
     function renderWarrantyList() {
-      const q = (document.getElementById('warrantySearchInput').value || '').toLowerCase().trim();
+      const q = (document.getElementById('warrantySearchInput') ? document.getElementById('warrantySearchInput').value : '').toLowerCase().trim();
       const container = document.getElementById('warrantyList');
       if (!db.customers || db.customers.length === 0) {
         container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 25px;">Chưa có dữ liệu bảo hành.</div>`;
@@ -1616,24 +1690,39 @@
       });
 
       container.innerHTML = groups.map(g => `
-        <div class="card" style="border-left: 4px solid var(--primary-gold); margin-bottom: 12px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="font-weight: bold; font-size: 15px; color: var(--primary-gold);">${escapeHtml(g.customer.name)} (${escapeHtml(g.customer.phone)})</div>
-          </div>
+        <div class="card" style="border-left: 4px solid var(--primary-gold); margin-bottom: 12px; padding: 14px;">
+          <div style="font-size: 15px; font-weight: 700; color: var(--primary-gold);">${escapeHtml(g.customer.name)} (${escapeHtml(g.customer.phone)})</div>
           ${g.sessions.map(item => `
             <div class="warranty-sub-item ${item.warrantyDone ? 'completed' : (item.isOverdue ? 'overdue' : '')}">
               <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <strong>${escapeHtml(item.service)}</strong>
                 <span class="badge ${item.isOverdue ? 'badge-danger' : 'badge-warning'}">${item.expiryDateStr}</span>
               </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Màu pha: <strong>${escapeHtml(item.colorMix) || 'Mặc định'}</strong></div>
               <div class="warranty-actions-row">
                 <a class="btn-call" href="tel:${escapeHtml(g.customer.phone)}"><i class="fa-solid fa-phone"></i></a>
                 <button class="btn-remind" onclick="openRemindModal('${g.customer.id}', '${item.id}')"><i class="fa-solid fa-comment-dots"></i> Nhắc Zalo</button>
+                <button class="btn-warranty-status ${item.warrantyDone ? 'done' : ''}" onclick="toggleWarrantyStatus('${g.customer.id}', '${item.id}')">${item.warrantyDone ? '<i class="fa-solid fa-check"></i> Đã BH' : '<i class="fa-regular fa-circle"></i> Xác nhận BH'}</button>
               </div>
             </div>
           `).join('')}
         </div>
       `).join('');
+    }
+
+    function toggleWarrantyStatus(custId, sessionId) {
+      const customer = db.customers.find(c => c.id === custId);
+      if (customer && customer.sessions) {
+        const session = customer.sessions.find(s => s.id === sessionId);
+        if (session) {
+          session.warrantyDone = !session.warrantyDone;
+          session.warrantyDate = session.warrantyDone ? getTodayDateTimeString() : null;
+          markDataChanged();
+          saveDB();
+          syncCustomerToCloud(custId);
+          renderWarrantyList();
+        }
+      }
     }
 
     function renderAppointmentList() {
@@ -1650,6 +1739,7 @@
             <span class="badge badge-warning">${formatDateTimeDisplay(a.dateTime)}</span>
           </div>
           <div style="font-size: 12px; color: var(--text-muted); margin: 4px 0;">SĐT: ${escapeHtml(a.phone)} &bull; DV: ${escapeHtml(a.service)}</div>
+          ${a.note ? `<div style="font-size: 12px; color: var(--text-muted); font-style: italic;">Ghi chú: ${escapeHtml(a.note)}</div>` : ''}
           <div style="display: flex; gap: 6px; margin-top: 8px;">
             <a class="btn-call" href="tel:${escapeHtml(a.phone)}"><i class="fa-solid fa-phone"></i> Gọi</a>
             <button class="btn-outline" style="border-color: var(--danger); color: var(--danger);" onclick="deleteAppointment('${a.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
@@ -1658,6 +1748,7 @@
       `).join('');
     }
 
+    /* QUẢN LÝ ẢNH & COMPRESS */
     let currentImgBefore = "";
     let currentImgAfter = "";
 
@@ -1698,17 +1789,88 @@
     function removePhoto(type) {
       if (type === 'before') {
         currentImgBefore = "";
+        document.getElementById('previewBefore').src = "";
         document.getElementById('previewBefore').style.display = 'none';
         document.getElementById('textBefore').style.display = 'flex';
         document.getElementById('btnDelBefore').style.display = 'none';
+        document.getElementById('imgBeforeInput').value = "";
       } else {
         currentImgAfter = "";
+        document.getElementById('previewAfter').src = "";
         document.getElementById('previewAfter').style.display = 'none';
         document.getElementById('textAfter').style.display = 'flex';
         document.getElementById('btnDelAfter').style.display = 'none';
+        document.getElementById('imgAfterInput').value = "";
       }
     }
 
+    /* LIGHTBOX PHÓNG TO ẢNH */
+    let imageViewerList = [];
+    let imageViewerIndex = 0;
+
+    function openImageViewer(items, startIndex) {
+      if (!items || items.length === 0) return;
+      imageViewerList = items;
+      imageViewerIndex = startIndex || 0;
+      ivRenderCurrent();
+      document.getElementById('imageViewerModal').style.display = 'flex';
+    }
+
+    function closeImageViewer() {
+      document.getElementById('imageViewerModal').style.display = 'none';
+      document.getElementById('imageViewerImg').src = '';
+      imageViewerList = [];
+    }
+
+    function openSessionImageViewer(custId, sessionId, startType) {
+      const customer = db.customers.find(c => c.id === custId);
+      if (!customer) return;
+      const session = (customer.sessions || []).find(s => s.id === sessionId);
+      if (!session) return;
+
+      const items = [];
+      let startIndex = 0;
+      if (session.imgBefore) {
+        if (startType === 'before') startIndex = items.length;
+        items.push({ src: session.imgBefore, caption: 'Ảnh trước khi làm - ' + customer.name });
+      }
+      if (session.imgAfter) {
+        if (startType === 'after') startIndex = items.length;
+        items.push({ src: session.imgAfter, caption: 'Ảnh sau khi làm - ' + customer.name });
+      }
+      openImageViewer(items, startIndex);
+    }
+
+    function openImageViewerFromForm(clickedType) {
+      const beforeImg = document.getElementById('previewBefore');
+      const afterImg = document.getElementById('previewAfter');
+      const items = [];
+      let startIndex = 0;
+      if (beforeImg.src && beforeImg.src.indexOf('data:image') === 0) {
+        if (clickedType === 'before') startIndex = items.length;
+        items.push({ src: beforeImg.src, caption: 'Ảnh Trước Khi Làm' });
+      }
+      if (afterImg.src && afterImg.src.indexOf('data:image') === 0) {
+        if (clickedType === 'after') startIndex = items.length;
+        items.push({ src: afterImg.src, caption: 'Ảnh Sau Khi Làm' });
+      }
+      openImageViewer(items, startIndex);
+    }
+
+    function ivRenderCurrent() {
+      const item = imageViewerList[imageViewerIndex];
+      if (!item) return;
+      document.getElementById('imageViewerImg').src = item.src;
+      document.getElementById('imageViewerCaption').innerText = item.caption || '';
+      const hasMultiple = imageViewerList.length > 1;
+      document.getElementById('ivPrevArrow').style.display = (hasMultiple && imageViewerIndex > 0) ? 'flex' : 'none';
+      document.getElementById('ivNextArrow').style.display = (hasMultiple && imageViewerIndex < imageViewerList.length - 1) ? 'flex' : 'none';
+    }
+
+    function ivGoNext() { if (imageViewerIndex < imageViewerList.length - 1) { imageViewerIndex++; ivRenderCurrent(); } }
+    function ivGoPrev() { if (imageViewerIndex > 0) { imageViewerIndex--; ivRenderCurrent(); } }
+
+    /* LƯU & SỬA HỒ SƠ KHÁCH HÀNG */
     function toggleServiceGroup(groupKey, preselectedSub = null) {
       document.querySelectorAll('#customerModal .service-parent-btn').forEach(btn => btn.classList.remove('active'));
       const activeBtn = document.getElementById('btn-grp-' + groupKey);
@@ -1739,14 +1901,28 @@
       document.getElementById('custWarrantyMonths').value = val;
     }
 
-    function openAddCustomerModal() {
-      document.getElementById('custEditId').value = '';
+    function openAddCustomerModal(existingCustomerId = null) {
+      document.getElementById('custEditId').value = existingCustomerId || '';
       document.getElementById('custSessionEditId').value = '';
+      document.getElementById('isAddingSessionOnly').value = existingCustomerId ? 'true' : 'false';
       removePhoto('before');
       removePhoto('after');
-      document.getElementById('custName').value = '';
-      document.getElementById('custPhone').value = '';
-      document.getElementById('custAddress').value = '';
+
+      if (existingCustomerId) {
+        let cust = db.customers.find(c => c.id === existingCustomerId);
+        document.getElementById('modalTitle').innerText = `Thêm lượt xăm cho: ${cust.name}`;
+        document.getElementById('personalInfoFields').style.display = 'none';
+      } else {
+        document.getElementById('modalTitle').innerText = "Thêm khách hàng mới";
+        document.getElementById('personalInfoFields').style.display = 'block';
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        document.getElementById('custAddress').value = '';
+      }
+
+      document.getElementById('custPreStatus').value = '';
+      document.getElementById('custProcess').value = '';
+      document.getElementById('custColorMix').value = '';
       document.getElementById('custPrice').value = '';
       document.getElementById('custPaid').value = '';
       document.getElementById('custDebt').value = '0 đ';
@@ -1755,74 +1931,205 @@
       document.getElementById('customerModal').style.display = 'block';
     }
 
-    async function saveCustomerData(openQRAfter = false) {
-      const name = document.getElementById('custName').value.trim();
-      const phone = document.getElementById('custPhone').value.trim();
-      if (!name || !phone) {
-        showAppAlert('Vui lòng nhập Tên và Số điện thoại!');
-        return;
+    function openEditFullCustomerModal(custId, sessionId = null) {
+      closeModal('customerDetailModal');
+      const customer = db.customers.find(c => c.id === custId);
+      if (!customer) return;
+
+      let session = null;
+      if (sessionId && customer.sessions) session = customer.sessions.find(s => s.id === sessionId);
+      if (!session && customer.sessions && customer.sessions.length > 0) session = customer.sessions[customer.sessions.length - 1];
+
+      document.getElementById('modalTitle').innerText = "Chỉnh sửa hồ sơ";
+      document.getElementById('custEditId').value = customer.id;
+      document.getElementById('custSessionEditId').value = session ? session.id : '';
+      document.getElementById('isAddingSessionOnly').value = 'false';
+
+      document.getElementById('personalInfoFields').style.display = 'block';
+      document.getElementById('custName').value = customer.name || '';
+      document.getElementById('custPhone').value = customer.phone || '';
+      document.getElementById('custAddress').value = customer.address || '';
+
+      if (session) {
+        document.getElementById('custPreStatus').value = session.preStatus || '';
+        document.getElementById('custProcess').value = session.process || '';
+        document.getElementById('custColorMix').value = session.colorMix || '';
+        document.getElementById('custPrice').value = session.price ? new Intl.NumberFormat('vi-VN').format(session.price) : '';
+        document.getElementById('custPaid').value = session.paid ? new Intl.NumberFormat('vi-VN').format(session.paid) : '0';
+        handlePriceOrPaidChange();
+
+        let dateVal = session.date || getTodayDateTimeString();
+        document.getElementById('custDate').value = dateVal;
+
+        let groupFound = 'moi';
+        for (let g in serviceCategories) {
+          if (serviceCategories[g].items.includes(session.service)) { groupFound = g; break; }
+        }
+        toggleServiceGroup(groupFound, session.service);
+
+        currentImgBefore = session.imgBefore || "";
+        currentImgAfter = session.imgAfter || "";
+        if (currentImgBefore) { document.getElementById('previewBefore').src = currentImgBefore; document.getElementById('previewBefore').style.display = 'block'; document.getElementById('textBefore').style.display = 'none'; document.getElementById('btnDelBefore').style.display = 'flex'; }
+        if (currentImgAfter) { document.getElementById('previewAfter').src = currentImgAfter; document.getElementById('previewAfter').style.display = 'block'; document.getElementById('textAfter').style.display = 'none'; document.getElementById('btnDelAfter').style.display = 'flex'; }
       }
+      document.getElementById('customerModal').style.display = 'block';
+    }
+
+    async function saveCustomerData(openQRAfter = false) {
+      const isSessionOnly = document.getElementById('isAddingSessionOnly').value === 'true';
+      const custId = document.getElementById('custEditId').value;
+      const sessionEditId = document.getElementById('custSessionEditId').value;
+
+      const service = document.getElementById('custService').value;
+      const preStatus = document.getElementById('custPreStatus').value.trim();
+      const process = document.getElementById('custProcess').value.trim();
+      const colorMix = document.getElementById('custColorMix').value.trim();
+      const date = document.getElementById('custDate').value || getTodayDateTimeString();
+      const warrantyMonths = parseInt(document.getElementById('custWarrantyMonths').value) || 1;
 
       let price = parseInt(document.getElementById('custPrice').value.replace(/\D/g, '')) || 0;
       let paid = parseInt(document.getElementById('custPaid').value.replace(/\D/g, '')) || 0;
 
       const sessionData = {
-        id: 's_' + Date.now(),
-        service: document.getElementById('custService').value,
-        preStatus: document.getElementById('custPreStatus').value.trim(),
-        process: document.getElementById('custProcess').value.trim(),
-        colorMix: document.getElementById('custColorMix').value.trim(),
-        date: document.getElementById('custDate').value || getTodayDateTimeString(),
-        price: price,
+        id: sessionEditId || ('s_' + Date.now()),
+        service, preStatus, process, colorMix, date, price,
         paid: isNaN(paid) ? price : paid,
-        warrantyMonths: parseInt(document.getElementById('custWarrantyMonths').value) || 1,
+        warrantyMonths,
+        warrantyDone: false,
         imgBefore: currentImgBefore,
         imgAfter: currentImgAfter
       };
 
-      const newCustomer = {
-        id: 'c_' + Date.now(),
-        name, phone,
-        address: document.getElementById('custAddress').value.trim(),
-        sessions: [sessionData]
-      };
+      let savedCustomerId = null;
 
-      db.customers.push(newCustomer);
+      if (custId) {
+        let customer = db.customers.find(c => c.id === custId);
+        if (customer) {
+          if (!isSessionOnly) {
+            customer.name = document.getElementById('custName').value.trim();
+            customer.phone = document.getElementById('custPhone').value.trim();
+            customer.address = document.getElementById('custAddress').value.trim();
+          }
+          if (!customer.sessions) customer.sessions = [];
+          if (sessionEditId) {
+            const idx = customer.sessions.findIndex(s => s.id === sessionEditId);
+            if (idx !== -1) customer.sessions[idx] = Object.assign(customer.sessions[idx], sessionData);
+            else customer.sessions.push(sessionData);
+          } else {
+            customer.sessions.push(sessionData);
+          }
+          savedCustomerId = customer.id;
+        }
+      } else {
+        const name = document.getElementById('custName').value.trim();
+        const phone = document.getElementById('custPhone').value.trim();
+        if (!name || !phone) {
+          showAppAlert('Vui lòng nhập Tên và Số điện thoại!');
+          return;
+        }
+        const newCustomer = {
+          id: 'c_' + Date.now(),
+          name, phone,
+          address: document.getElementById('custAddress').value.trim(),
+          sessions: [sessionData]
+        };
+        db.customers.push(newCustomer);
+        savedCustomerId = newCustomer.id;
+      }
+
       markDataChanged();
       await saveDB();
-      syncCustomerToCloud(newCustomer.id);
+      if (savedCustomerId) syncCustomerToCloud(savedCustomerId);
 
       closeModal('customerModal');
       renderHome();
       renderCustomerList();
       renderWarrantyList();
-      showAppAlert('Lưu hồ sơ thành công!');
+
+      if (openQRAfter && savedCustomerId) {
+        const debt = Math.max(0, sessionData.price - sessionData.paid);
+        if (debt > 0) {
+          openPaymentQR(savedCustomerId, sessionData.id, debt, 'Thanh toan ' + sessionData.service);
+        } else {
+          showAppAlert('Đã thanh toán đủ, không cần tạo mã QR.');
+        }
+      } else {
+        showAppAlert('Lưu hồ sơ thành công!');
+      }
     }
 
     function openCustomerDetail(custId) {
       const c = db.customers.find(item => item.id === custId);
       if (!c) return;
 
+      let totalCustPrice = 0, totalCustPaid = 0;
+      if (c.sessions) {
+        c.sessions.forEach(s => {
+          totalCustPrice += (s.price || 0);
+          totalCustPaid += ((s.paid !== undefined) ? s.paid : (s.price || 0));
+        });
+      }
+      let totalDebt = Math.max(0, totalCustPrice - totalCustPaid);
+
       let html = `
         <div style="background: var(--bg-input); padding: 14px; border-radius: 10px; margin-bottom: 14px;">
-          <h2 style="color: var(--primary-gold); font-size: 18px;">${escapeHtml(c.name)}</h2>
-          <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">SĐT: ${escapeHtml(c.phone)} | ĐC: ${escapeHtml(c.address)}</div>
-        </div>
-        ${c.sessions.map((s, idx) => `
-          <div class="card" style="background: var(--bg-input); border-left: 4px solid var(--primary-gold); margin-bottom: 10px; font-size: 13px;">
-            <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px;">
-              <span>Lần ${idx + 1}:${escapeHtml(s.service)}</span>
-              <span style="color: var(--primary-gold);">${formatMoney(s.price)}</span>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h2 style="color: var(--primary-gold); font-size: 18px;">${escapeHtml(c.name)}</h2>
+            <div>
+              <button class="btn-outline" onclick="openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
+              <button class="btn-danger-outline" onclick="deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
             </div>
-            <div>Màu đã pha: <strong>${escapeHtml(s.colorMix) || 'Mặc định'}</strong></div>
-            <div>Thời gian: ${formatDateTimeDisplay(s.date)}</div>
           </div>
-        `).join('')}
+          <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">SĐT: ${escapeHtml(c.phone)} | ĐC: ${escapeHtml(c.address) || 'Chưa lưu'}</div>
+          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between;">
+            <span>Tổng làm: <strong>${formatMoney(totalCustPrice)}</strong></span>
+            <span>Tổng nợ: <strong style="color:${totalDebt > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(totalDebt)}</strong></span>
+          </div>
+          ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan ${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
+        </div>
+        <button class="btn-gold" style="width: 100%; margin-bottom: 16px;" onclick="closeModal('customerDetailModal'); openAddCustomerModal('${c.id}')"><i class="fa-solid fa-plus-circle"></i> Thêm lượt xăm mới cho khách này</button>
+        ${(c.sessions || []).map((s, idx) => {
+          let w = calculateWarranty(s.date, s.warrantyMonths);
+          let p = s.price || 0, pd = (s.paid !== undefined) ? s.paid : p;
+          let d = Math.max(0, p - pd);
+          return `
+            <div class="card" style="background: var(--bg-input); border-left: 4px solid var(--primary-gold); margin-bottom: 10px; font-size: 13px;">
+              <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px;">
+                <span>Lần ${idx + 1}: ${escapeHtml(s.service)}</span>
+                <span style="color: var(--primary-gold);">${formatMoney(s.price)}</span>
+              </div>
+              <div style="margin-bottom: 6px;">Đã trả: ${formatMoney(pd)} | Nợ: <strong style="color:${d > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(d)}</strong></div>
+              <div>Màu đã pha: <strong>${escapeHtml(s.colorMix) || 'Mặc định'}</strong></div>
+              <div>Thời gian: ${formatDateTimeDisplay(s.date)}</div>
+              <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>${(s.imgBefore || s.imgAfter) ? `
+                <div class="detail-images">
+                  ${s.imgBefore ? `<div class="detail-img-box"><img src="${s.imgBefore}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'before')"><span>Ảnh Trước</span></div>` : ''}
+                  ${s.imgAfter ? `<div class="detail-img-box"><img src="${s.imgAfter}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'after')"><span>Ảnh Sau</span></div>` : ''}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
       `;
       document.getElementById('customerDetailContent').innerHTML = html;
       document.getElementById('customerDetailModal').style.display = 'block';
     }
 
+    async function deleteCustomer(custId) {
+      if (confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa khách hàng này?')) {
+        db.customers = db.customers.filter(c => c.id !== custId);
+        markDataChanged();
+        await saveDB();
+        cloudDeleteCustomer(custId);
+        closeModal('customerDetailModal');
+        renderCustomerList();
+        renderHome();
+        renderWarrantyList();
+        showAppAlert('Đã xóa thành công!');
+      }
+    }
+
+    /* NHẮC ZALO & SMS */
     let currentRemindPhone = "";
     function openRemindModal(custId, sessionId) {
       const c = db.customers.find(item => item.id === custId);
@@ -1837,6 +2144,17 @@
         .replace(/{HAN_BH}/g, w.expiryDateStr)
         .replace(/{TEN_TIEM}/g, db.brand.title);
 
+      currentRemindPhone = c.phone.replace(/\D/g, '');
+      document.getElementById('remindCustName').innerText = c.name;
+      document.getElementById('remindCustPhone').innerText = c.phone;
+      document.getElementById('remindMessageBody').value = msg;
+      document.getElementById('remindModal').style.display = 'block';
+    }
+
+    function openQuickMessageModal(custId) {
+      const c = db.customers.find(item => item.id === custId);
+      if (!c) return;
+      const msg = `Xin chào ${c.name}, ${db.brand.title} xin cảm ơn bạn đã sử dụng dịch vụ. Nếu cần hỗ trợ thêm, bạn vui lòng nhắn lại tiệm nhé!`;
       currentRemindPhone = c.phone.replace(/\D/g, '');
       document.getElementById('remindCustName').innerText = c.name;
       document.getElementById('remindCustPhone').innerText = c.phone;
@@ -1861,6 +2179,7 @@
       showAppAlert('Đã sao chép tin nhắn!');
     }
 
+    /* LỊCH HẸN */
     function openAppointmentModal() {
       document.getElementById('apptName').value = '';
       document.getElementById('apptPhone').value = '';
@@ -1897,6 +2216,7 @@
       }
     }
 
+    /* DOANH THU */
     function unlockRevenue() {
       if (document.getElementById('passcodeInput').value === db.brand.passcode) {
         document.getElementById('revenueLockScreen').style.display = 'none';
@@ -1912,79 +2232,20 @@
       document.getElementById('revenueContent').style.display = 'none';
     }
 
-    function renderRevenue() {
-      let total = 0;
-      (db.customers || []).forEach(c => {
-        (c.sessions || []).forEach(s => {
-          total += (s.paid !== undefined) ? s.paid : (s.price || 0);
-        });
-      });
-      document.getElementById('revToday').innerText = formatMoney(total);
-      document.getElementById('revMonth').innerText = formatMoney(total);
+    function clearRevenuePresetActive() {
+      document.querySelectorAll('.rev-preset-btn').forEach(b => b.classList.remove('active'));
     }
 
-    function switchTab(tabId, el) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.getElementById('tab-' + tabId).classList.add('active');
-      el.classList.add('active');
+    function applyRevenuePreset(type, btn) {
+      clearRevenuePresetActive();
+      if (btn) btn.classList.add('active');
+      const now = new Date();
+      let start = new Date(), end = new Date();
 
-      if (tabId === 'home') renderHome();
-      if (tabId === 'customers') renderCustomerList();
-      if (tabId === 'appointments') renderAppointmentList();
-      if (tabId === 'warranty') renderWarrantyList();
-      if (tabId === 'revenue') renderRevenue();
-    }
-
-    function openSettingsModal() {
-      document.getElementById('settingTitle').value = db.brand.title;
-      document.getElementById('settingSlogan').value = db.brand.slogan;
-      document.getElementById('settingMsgTemplate').value = db.brand.msgTemplate;
-      document.getElementById('settingsModal').style.display = 'block';
-      renderCloudSettingsBox();
-    }
-
-    function switchSettingsTab(tabName, el) {
-      document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      document.getElementById('settingsTab-' + tabName).classList.add('active');
-    }
-
-    async function saveBrandSettings() {
-      db.brand.title = document.getElementById('settingTitle').value || db.brand.title;
-      db.brand.slogan = document.getElementById('settingSlogan').value || db.brand.slogan;
-      db.brand.msgTemplate = document.getElementById('settingMsgTemplate').value || db.brand.msgTemplate;
-      await saveDB();
-      syncBrandToCloud();
-      renderHome();
-      closeModal('settingsModal');
-      showAppAlert('Đã lưu cài đặt!');
-    }
-
-    async function exportDataFile() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
-      const a = document.createElement('a');
-      a.href = dataStr;
-      a.download = `SaoLuu_PMU_${Date.now()}.json`;
-      a.click();
-    }
-
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function showAppAlert(msg) {
-      document.getElementById('customAlertMessage').innerText = msg;
-      document.getElementById('customAlertModal').style.display = 'block';
-    }
-    function closeCustomAlert() { closeModal('customAlertModal'); }
-
-    window.onload = async function() {
-      try {
-        let saved = await localforage.getItem('na_pmu_db');
-        if (saved) db = saved;
-      } catch (e) {}
-      renderHome();
-      initFirebase();
-    };
-  </script>
-</body>
-</html>
+      if (type === 'this_week') {
+        const day = (now.getDay() + 6) % 7;
+        start.setDate(now.getDate() - day);
+        end.setDate(start.getDate() + 6);
+      } else if (type === 'this_month') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end
