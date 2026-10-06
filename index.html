@@ -440,7 +440,9 @@
     #ivNextArrow { right: 6px; }
     #imageViewerDots { margin-top: 10px; text-align: center; }
 
-    /* GIAO DIỆN DESKTOP / MÁY TÍNH */
+    /* ============================================================================
+       TỐI ƯU GIAO DIỆN MÀN HÌNH MÁY TÍNH & LAPTOP (DESKTOP VIEW)
+       ============================================================================ */
     @media (min-width: 900px) {
       .container { max-width: 1200px; padding: 30px 24px; }
       header { padding: 18px 40px; }
@@ -1131,7 +1133,6 @@
       }
     }
 
-    // ĐÃ XÓA MÃ TEST TEST1P VÀ TEST3: Chỉ dùng mã thật từ Firestore
     async function activateLicenseKey() {
       const inputEl = document.getElementById('licenseKeyInput');
       const key = inputEl.value.trim().toUpperCase();
@@ -1813,12 +1814,14 @@
     function removePhoto(type) {
       if (type === 'before') {
         currentImgBefore = "";
+        document.getElementById('previewBefore').src = "";
         document.getElementById('previewBefore').style.display = 'none';
         document.getElementById('textBefore').style.display = 'flex';
         document.getElementById('btnDelBefore').style.display = 'none';
         document.getElementById('imgBeforeInput').value = "";
       } else {
         currentImgAfter = "";
+        document.getElementById('previewAfter').src = "";
         document.getElementById('previewAfter').style.display = 'none';
         document.getElementById('textAfter').style.display = 'flex';
         document.getElementById('btnDelAfter').style.display = 'none';
@@ -2344,7 +2347,6 @@
       document.getElementById('settingsTab-' + tabName).classList.add('active');
     }
 
-    // BẮT NHẬP MẬT KHẨU CŨ & KHÔNG TỰ ĐÓNG MODAL
     async function saveBrandSettings() {
       let newPass = document.getElementById('settingPasscode').value;
       if (newPass) {
@@ -2407,6 +2409,13 @@
       } catch (e) {}
       renderHome();
       initFirebase();
+
+      // Đăng ký Service Worker cho PWA
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(function(err) {
+          console.log('SW registration failed: ', err);
+        });
+      }
     };
   </script>
 </body>
