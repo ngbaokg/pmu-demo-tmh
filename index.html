@@ -440,66 +440,24 @@
     #ivNextArrow { right: 6px; }
     #imageViewerDots { margin-top: 10px; text-align: center; }
 
-    /* ============================================================================
-       TỐI ƯU GIAO DIỆN MÀN HÌNH MÁY TÍNH & LAPTOP (DESKTOP VIEW)
-       ============================================================================ */
+    /* GIAO DIỆN DESKTOP / MÁY TÍNH */
     @media (min-width: 900px) {
-      .container { 
-        max-width: 1200px; 
-        padding: 30px 24px; 
-      }
+      .container { max-width: 1200px; padding: 30px 24px; }
+      header { padding: 18px 40px; }
+      .brand-box { gap: 18px; }
+      .brand-logo { width: 64px; height: 64px; border-width: 3px; }
+      .brand-title { font-size: 22px; letter-spacing: 0.8px; margin-bottom: 4px; }
+      .brand-slogan { font-size: 14px; }
+      #cloudSyncStatus { font-size: 13px !important; gap: 6px !important; }
+      header .btn-icon-only { padding: 10px 14px; font-size: 16px; }
 
-      /* 1. Phóng to Header: Logo, Tên tiệm, Slogan */
-      header { 
-        padding: 18px 40px; 
-      }
-      .brand-box {
-        gap: 18px;
-      }
-      .brand-logo { 
-        width: 64px; 
-        height: 64px; 
-        border-width: 3px; 
-      }
-      .brand-title { 
-        font-size: 22px; 
-        letter-spacing: 0.8px;
-        margin-bottom: 4px;
-      }
-      .brand-slogan { 
-        font-size: 14px; 
-      }
-      #cloudSyncStatus {
-        font-size: 13px !important;
-        gap: 6px !important;
-      }
-      header .btn-icon-only {
-        padding: 10px 14px;
-        font-size: 16px;
-      }
+      .hero-banner { padding: 40px 20px; margin-bottom: 30px; }
+      .hero-banner h2 { font-size: 26px !important; margin-bottom: 10px !important; }
+      .hero-banner p { font-size: 15px !important; }
+      .quick-add-btn { width: 72px; height: 72px; font-size: 28px; margin-top: 20px; }
 
-      /* 2. Cân đối khung Hero Banner trên trang chủ */
-      .hero-banner {
-        padding: 40px 20px;
-        margin-bottom: 30px;
-      }
-      .hero-banner h2 {
-        font-size: 26px !important;
-        margin-bottom: 10px !important;
-      }
-      .hero-banner p {
-        font-size: 15px !important;
-      }
-      .quick-add-btn {
-        width: 72px;
-        height: 72px;
-        font-size: 28px;
-        margin-top: 20px;
-      }
-
-      /* 3. Phóng to Thanh điều hướng (.bottom-nav) & Chữ, Icon */
       .bottom-nav {
-        max-width: 820px; 
+        max-width: 820px;
         left: 50%;
         right: auto;
         transform: translateX(-50%);
@@ -510,43 +468,23 @@
         border: 1px solid var(--border-color);
         border-bottom: none;
       }
-      .nav-item { 
-        padding: 8px 16px; 
-        border-radius: 12px; 
-        font-size: 13.5px; 
-        transition: all 0.2s; 
-      }
-      .nav-item i { 
-        font-size: 24px; 
-        margin-bottom: 6px; 
-      }
-      .nav-item:hover { 
-        background: rgba(197, 160, 89, 0.12);
-        color: var(--primary-gold);
-      }
+      .nav-item { padding: 8px 16px; border-radius: 12px; font-size: 13.5px; transition: all 0.2s; }
+      .nav-item i { font-size: 24px; margin-bottom: 6px; }
+      .nav-item:hover { background: rgba(197, 160, 89, 0.12); color: var(--primary-gold); }
 
-      /* 4. Hiển thị danh sách dạng lưới 2 cột */
       #customerList, #homeRecentList, #warrantyList, #appointmentList {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 16px;
         align-items: start;
       }
-      #customerList .card, #homeRecentList > .card, #warrantyList > .card, #appointmentList > .card { 
-        margin-bottom: 0; 
-      }
+      #customerList .card, #homeRecentList > .card, #warrantyList > .card, #appointmentList > .card { margin-bottom: 0; }
     }
 
     @media (min-width: 1400px) {
-      .container { 
-        max-width: 1380px; 
-      }
-      #customerList, #homeRecentList, #warrantyList {
-        grid-template-columns: 1fr 1fr 1fr;
-      }
-      .bottom-nav {
-        max-width: 900px;
-      }
+      .container { max-width: 1380px; }
+      #customerList, #homeRecentList, #warrantyList { grid-template-columns: 1fr 1fr 1fr; }
+      .bottom-nav { max-width: 900px; }
     }
   </style>
 </head>
@@ -699,7 +637,7 @@
 
       <div class="form-group" style="text-align: left; margin-bottom: 12px;">
         <label style="font-size: 12px; color: var(--text-muted);">Nhập mã kích hoạt bản quyền (License Key):</label>
-        <input type="text" id="licenseKeyInput" class="form-control" placeholder="Ví dụ: TEST3, TEST1P hoặc PMU-VIP" style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px; text-align: center;">
+        <input type="text" id="licenseKeyInput" class="form-control" placeholder="Nhập mã bản quyền của bạn..." style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px; text-align: center;">
       </div>
       <button class="btn-gold" style="width: 100%; margin-bottom: 15px;" onclick="activateLicenseKey()"><i class="fa-solid fa-key"></i> Kích hoạt ngay</button>
 
@@ -1061,11 +999,11 @@
       <!-- TAB: Bảo mật -->
       <div class="settings-tab-content" id="settingsTab-security">
         <div class="form-group">
-          <label>Mật khẩu xem doanh thu hiện tại</label>
+          <label>Mật khẩu xem doanh thu hiện tại (* Bắt buộc để đổi mật khẩu)</label>
           <input type="password" id="settingOldPasscode" class="form-control" placeholder="Nhập mật khẩu hiện tại...">
         </div>
         <div class="form-group">
-          <label>Đổi mật khẩu mới (Bỏ trống nếu không đổi)</label>
+          <label>Mật khẩu mới (Bỏ trống nếu không đổi)</label>
           <input type="password" id="settingPasscode" class="form-control" placeholder="Nhập mật khẩu mới...">
         </div>
       </div>
@@ -1193,6 +1131,7 @@
       }
     }
 
+    // ĐÃ XÓA MÃ TEST TEST1P VÀ TEST3: Chỉ dùng mã thật từ Firestore
     async function activateLicenseKey() {
       const inputEl = document.getElementById('licenseKeyInput');
       const key = inputEl.value.trim().toUpperCase();
@@ -1203,20 +1142,6 @@
       }
       if (!cloudUser) {
         showAppAlert('Vui lòng đăng nhập tài khoản trước khi kích hoạt mã.');
-        return;
-      }
-
-      if (key === 'TEST1P' || key === 'TEST3') {
-        const durationMs = (key === 'TEST1P') ? (60 * 1000) : (3 * 24 * 60 * 60 * 1000);
-        const newExpire = Date.now() + durationMs;
-
-        await cloudFirestore.collection('users').doc(cloudUser.uid).set({
-          expireAt: newExpire,
-          updatedAt: Date.now()
-        }, { merge: true });
-
-        inputEl.value = '';
-        showAppAlert(key === 'TEST1P' ? 'Đã kích hoạt 1 PHÚT test!' : 'Đã kích hoạt 3 NGÀY trải nghiệm thành công!');
         return;
       }
 
@@ -1612,7 +1537,7 @@
       showAppAlert('Đã ghi nhận thanh toán ' + formatMoney(receivedAmount));
     }
 
-    /* ĐỊNH DẠNG & THÔNG TIN DỊCH VỤ */
+    /* THÔNG TIN DỊCH VỤ */
     const serviceCategories = {
       'moi': { name: 'Môi', title: 'Chọn loại dịch vụ Môi:', items: ['Phun môi', 'Khử thâm', 'Phụ thu'] },
       'may': { name: 'Mày', title: 'Chọn loại dịch vụ Mày:', items: ['Phun Ombre', 'Sợi đầu phun đuôi', 'Điêu khắc sợi', 'Phụ thu'] },
@@ -2406,6 +2331,8 @@
       document.getElementById('settingBankId').value = db.brand.bankId || '970436';
       document.getElementById('settingBankAccountNo').value = db.brand.bankAccountNo || '';
       document.getElementById('settingBankAccountName').value = db.brand.bankAccountName || '';
+      document.getElementById('settingPasscode').value = '';
+      document.getElementById('settingOldPasscode').value = '';
       document.getElementById('settingsModal').style.display = 'block';
       renderCloudSettingsBox();
     }
@@ -2417,7 +2344,23 @@
       document.getElementById('settingsTab-' + tabName).classList.add('active');
     }
 
+    // BẮT NHẬP MẬT KHẨU CŨ & KHÔNG TỰ ĐÓNG MODAL
     async function saveBrandSettings() {
+      let newPass = document.getElementById('settingPasscode').value;
+      if (newPass) {
+        let oldPass = document.getElementById('settingOldPasscode').value;
+        let currentPass = (db.brand && db.brand.passcode) ? db.brand.passcode : '123456';
+        if (!oldPass) {
+          showAppAlert('Vui lòng nhập mật khẩu hiện tại để đổi mật khẩu mới!');
+          return;
+        }
+        if (oldPass !== currentPass) {
+          showAppAlert('Mật khẩu hiện tại không đúng. Vui lòng kiểm tra lại!');
+          return;
+        }
+        db.brand.passcode = newPass;
+      }
+
       db.brand.title = document.getElementById('settingTitle').value || db.brand.title;
       db.brand.slogan = document.getElementById('settingSlogan').value || db.brand.slogan;
       db.brand.msgTemplate = document.getElementById('settingMsgTemplate').value || db.brand.msgTemplate;
@@ -2428,8 +2371,9 @@
       await saveDB();
       syncBrandToCloud();
       renderHome();
-      closeModal('settingsModal');
-      showAppAlert('Đã lưu cài đặt!');
+      document.getElementById('settingPasscode').value = '';
+      document.getElementById('settingOldPasscode').value = '';
+      showAppAlert('Đã cập nhật cài đặt thành công!');
     }
 
     function handleLogoUpload(event) {
