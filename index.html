@@ -441,9 +441,20 @@
     #imageViewerDots { margin-top: 10px; text-align: center; }
 
     /* ============================================================================
-       TỐI ƯU GIAO DIỆN MÀN HÌNH MÁY TÍNH & LAPTOP (DESKTOP VIEW)
+       TỐI ƯU GIAO DIỆN & NỀN NGHỆ THUẬT CHO DESKTOP VIEW
        ============================================================================ */
     @media (min-width: 900px) {
+      body {
+        background-color: var(--bg-dark);
+        background-image: 
+          radial-gradient(circle at 50% 25%, rgba(197, 160, 89, 0.07) 0%, transparent 68%),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600' opacity='0.035'%3E%3Cpath fill='none' stroke='%23c5a059' stroke-width='2.5' d='M250,300 C320,240 400,280 400,300 C400,280 480,240 550,300 C480,360 400,340 400,340 C400,340 320,360 250,300 Z'/%3E%3Cpath fill='none' stroke='%23c5a059' stroke-width='1.5' d='M280,300 C350,320 450,320 520,300'/%3E%3Ccircle cx='400' cy='300' r='180' fill='none' stroke='%23c5a059' stroke-width='1' stroke-dasharray='6,6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: center 180px;
+        background-size: cover, 760px auto;
+        background-attachment: fixed;
+      }
+
       .container { max-width: 1200px; padding: 30px 24px; }
       header { padding: 18px 40px; }
       .brand-box { gap: 18px; }
@@ -453,7 +464,14 @@
       #cloudSyncStatus { font-size: 13px !important; gap: 6px !important; }
       header .btn-icon-only { padding: 10px 14px; font-size: 16px; }
 
-      .hero-banner { padding: 40px 20px; margin-bottom: 30px; }
+      .hero-banner { 
+        padding: 40px 20px; 
+        margin-bottom: 30px; 
+        backdrop-filter: blur(8px);
+        background: linear-gradient(180deg, rgba(197, 160, 89, 0.12) 0%, rgba(28, 30, 36, 0.8) 100%) !important;
+        border: 1px solid rgba(197, 160, 89, 0.3) !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      }
       .hero-banner h2 { font-size: 26px !important; margin-bottom: 10px !important; }
       .hero-banner p { font-size: 15px !important; }
       .quick-add-btn { width: 72px; height: 72px; font-size: 28px; margin-top: 20px; }
@@ -625,7 +643,7 @@
 
   </div>
 
-  <!-- MODAL KHÓA MÀN HÌNH BẢN QUYỀN / DÙNG THỬ (CẬP NHẬT 7 NGÀY) -->
+  <!-- MODAL KHÓA MÀN HÌNH BẢN QUYỀN / DÙNG THỬ (7 NGÀY) -->
   <div id="licenseLockModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18, 19, 22, 0.98); z-index: 9999; padding: 25px 16px; overflow-y: auto;">
     <div style="max-width: 440px; margin: 30px auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; text-align: center;">
       <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(231, 76, 60, 0.15); color: var(--danger); font-size: 28px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
@@ -930,7 +948,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN (CẬP NHẬT 7 NGÀY) -->
+  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN (7 NGÀY) -->
   <div id="cloudLoginModal" class="modal">
     <div class="modal-content">
       <div class="modal-header-top">
@@ -938,10 +956,10 @@
         <div class="modal-close-btn" onclick="closeModal('cloudLoginModal')"><i class="fa-solid fa-xmark"></i></div>
       </div>
       <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
-        Đăng nhập để sử dụng và đồng bộ dữ liệu. Khách hàng mới vui lòng đăng ký email và mật khẩu rồi bấm "Tạo tài khoản mới" để nhận 7 ngày dùng thử.
+        Đăng nhập để đồng bộ dữ liệu trên nhiều thiết bị và kích hoạt hạn sử dụng. Khách hàng mới bấm "Tạo tài khoản mới" để nhận 7 ngày dùng thử.
       </p>
       <div class="form-group">
-        <label>Email</label>
+        <label>Email tiệm của bạn</label>
         <input type="email" id="cloudEmail" class="form-control" placeholder="vidu@gmail.com">
       </div>
       <div class="form-group">
@@ -1246,7 +1264,6 @@
       activateLicenseKey();
     }
 
-    // TỰ CẤP ĐỦ 7 NGÀY DÙNG THỬ KHI TẠO TÀI KHOẢN MỚI
     function cloudSignUp() {
       const email = document.getElementById('cloudEmail').value.trim();
       const pass = document.getElementById('cloudPassword').value;
