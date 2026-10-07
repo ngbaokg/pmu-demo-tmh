@@ -625,7 +625,7 @@
 
   </div>
 
-  <!-- MODAL KHÓA MÀN HÌNH BẢN QUYỀN / DÙNG THỬ -->
+  <!-- MODAL KHÓA MÀN HÌNH BẢN QUYỀN / DÙNG THỬ (CẬP NHẬT 7 NGÀY) -->
   <div id="licenseLockModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18, 19, 22, 0.98); z-index: 9999; padding: 25px 16px; overflow-y: auto;">
     <div style="max-width: 440px; margin: 30px auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; text-align: center;">
       <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(231, 76, 60, 0.15); color: var(--danger); font-size: 28px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
@@ -634,7 +634,7 @@
       
       <h3 style="color: var(--primary-gold); font-size: 18px; margin-bottom: 8px;">Hết Hạn Trải Nghiệm Phần Mềm</h3>
       <p id="lockReasonText" style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
-        Thời gian dùng thử 3 ngày miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng!
+        Thời gian dùng thử 7 ngày miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng!
       </p>
 
       <div class="form-group" style="text-align: left; margin-bottom: 12px;">
@@ -930,7 +930,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN -->
+  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN (CẬP NHẬT 7 NGÀY) -->
   <div id="cloudLoginModal" class="modal">
     <div class="modal-content">
       <div class="modal-header-top">
@@ -938,7 +938,7 @@
         <div class="modal-close-btn" onclick="closeModal('cloudLoginModal')"><i class="fa-solid fa-xmark"></i></div>
       </div>
       <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
-        Đăng nhập để đồng bộ dữ liệu trên nhiều thiết bị và kích hoạt hạn sử dụng. Khách hàng mới bấm "Tạo tài khoản mới" để nhận 3 ngày dùng thử.
+        Đăng nhập để đồng bộ dữ liệu trên nhiều thiết bị và kích hoạt hạn sử dụng. Khách hàng mới bấm "Tạo tài khoản mới" để nhận 7 ngày dùng thử.
       </p>
       <div class="form-group">
         <label>Email tiệm của bạn</label>
@@ -1246,6 +1246,7 @@
       activateLicenseKey();
     }
 
+    // TỰ CẤP ĐỦ 7 NGÀY DÙNG THỬ KHI TẠO TÀI KHOẢN MỚI
     function cloudSignUp() {
       const email = document.getElementById('cloudEmail').value.trim();
       const pass = document.getElementById('cloudPassword').value;
@@ -1258,18 +1259,18 @@
       cloudAuth.createUserWithEmailAndPassword(email, pass)
         .then(function(userCredential) {
           const uid = userCredential.user.uid;
-          const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+          const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
           const now = Date.now();
 
           return cloudFirestore.collection('users').doc(uid).set({
             email: email,
             trialStartedAt: now,
-            expireAt: now + THREE_DAYS_MS,
+            expireAt: now + SEVEN_DAYS_MS,
             createdAt: now
           }, { merge: true });
         })
         .then(function() {
-          showAppAlert("Tạo tài khoản thành công! Bạn nhận được 3 ngày trải nghiệm miễn phí.");
+          showAppAlert("Tạo tài khoản thành công! Bạn nhận được 7 ngày trải nghiệm miễn phí.");
         })
         .catch(function(err) {
           document.getElementById('cloudLoginError').innerText = 'Lỗi: ' + err.message;
@@ -2110,7 +2111,7 @@
             <span>Tổng làm: <strong>${formatMoney(totalCustPrice)}</strong></span>
             <span>Tổng nợ: <strong style="color:${totalDebt > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(totalDebt)}</strong></span>
           </div>
-          ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan ${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
+          ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
         </div>
         <button class="btn-gold" style="width: 100%; margin-bottom: 16px;" onclick="closeModal('customerDetailModal'); openAddCustomerModal('${c.id}')"><i class="fa-solid fa-plus-circle"></i> Thêm lượt xăm mới cho khách này</button>
         ${(c.sessions || []).map((s, idx) => {
@@ -2120,14 +2121,13 @@
           return `
             <div class="card" style="background: var(--bg-input); border-left: 4px solid var(--primary-gold); margin-bottom: 10px; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px;">
-                <span>Lần ${idx + 1}: ${escapeHtml(s.service)}</span>
+                <span>Lần ${idx + 1}:${escapeHtml(s.service)}</span>
                 <span style="color: var(--primary-gold);">${formatMoney(s.price)}</span>
               </div>
               <div style="margin-bottom: 6px;">Đã trả: ${formatMoney(pd)} | Nợ: <strong style="color:${d > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(d)}</strong></div>
               <div>Màu đã pha: <strong>${escapeHtml(s.colorMix) || 'Mặc định'}</strong></div>
               <div>Thời gian: ${formatDateTimeDisplay(s.date)}</div>
-              <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>
-              ${(s.imgBefore || s.imgAfter) ? `
+              <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>${(s.imgBefore || s.imgAfter) ? `
                 <div class="detail-images">
                   ${s.imgBefore ? `<div class="detail-img-box"><img src="${s.imgBefore}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'before')"><span>Ảnh Trước</span></div>` : ''}
                   ${s.imgAfter ? `<div class="detail-img-box"><img src="${s.imgAfter}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'after')"><span>Ảnh Sau</span></div>` : ''}
@@ -2410,7 +2410,6 @@
       renderHome();
       initFirebase();
 
-      // Đăng ký Service Worker cho PWA
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(function(err) {
           console.log('SW registration failed: ', err);
