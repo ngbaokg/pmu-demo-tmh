@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quản Lý Phun Xăm Thẩm Mỹ - PMU Pro</title>
 
-  <!-- PWA -->
+  <!-- PWA Cấu hình chạy toàn màn hình app -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1c1e24">
   <link rel="icon" href="icon-192.png">
@@ -441,7 +441,7 @@
     #ivNextArrow { right: 6px; }
     #imageViewerDots { margin-top: 10px; text-align: center; }
 
-    /* DESKTOP VIEW & HÌNH NỀN SPA CHÌM MỜ */
+    /* GIAO DIỆN MÁY TÍNH & HÌNH NỀN SPA PMU CHÌM MỜ */
     @media (min-width: 900px) {
       body {
         background-color: var(--bg-dark);
@@ -653,7 +653,7 @@
 
   </div>
 
-  <!-- MODAL: NHẮC VIỆC HÀNG NGÀY -->
+  <!-- MODAL: NHẮC VIỆC HÀNG NGÀY (LỊCH HẸN HÔM NAY & BẢO HÀNH GẦN ĐẾN HẠN) -->
   <div id="autoWarrantyReminderModal" class="modal">
     <div class="modal-content" style="max-width: 440px;">
       <div class="modal-header-top">
@@ -680,7 +680,7 @@
       
       <h3 style="color: var(--primary-gold); font-size: 18px; margin-bottom: 8px;">Hết Hạn Trải Nghiệm Phần Mềm</h3>
       <p id="lockReasonText" style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
-        Thời gian dùng thử miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng![cite: 3]
+        Thời gian dùng thử miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng!
       </p>
 
       <div class="form-group" style="text-align: left; margin-bottom: 12px;">
@@ -974,14 +974,14 @@
     </div>
   </div>
 
-  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN -->
-  <div id="cloudLoginModal" class="modal" style="display: block; background: rgba(18, 19, 22, 0.98); z-index: 9998;">
+  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN (BẮT BUỘC KHI CHƯA ĐĂNG NHẬP) -->
+  <div id="cloudLoginModal" class="modal" style="display: none; background: rgba(18, 19, 22, 0.98); z-index: 9998;">
     <div class="modal-content" style="border-color: var(--primary-gold); box-shadow: 0 0 30px rgba(197, 160, 89, 0.2);">
       <div class="modal-header-top" style="border-bottom: none; margin-bottom: 6px;">
         <h3 style="color: var(--primary-gold); font-size: 18px;"><i class="fa-solid fa-cloud"></i> Đăng nhập tài khoản</h3>
       </div>
       <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
-        Vui lòng đăng nhập để bắt đầu sử dụng phần mềm. Nếu là tiệm mới, bạn nhập email và mật khẩu rồi bấm <strong style="color: var(--primary-gold);">"Tạo tài khoản mới"</strong> để nhận ngay 7 ngày trải nghiệm miễn phí![cite: 3]
+        Vui lòng đăng nhập để bắt đầu sử dụng phần mềm. Nếu là tiệm mới, bạn nhập email và mật khẩu rồi bấm <strong style="color: var(--primary-gold);">"Tạo tài khoản mới"</strong> để nhận ngay 7 ngày trải nghiệm miễn phí!
       </p>
       <div class="form-group">
         <label>Email tiệm (*)</label>
@@ -1788,7 +1788,195 @@
       };
     }
 
-    /* HIỂN THỊ DANH SÁCH & HỒ SƠ */
+    /* NHẮC VIỆC HÀNG NGÀY & POPUP */
+    function checkDailyTasksPopup() {
+      const now = new Date();
+      const todayStr = formatDateYMD(now);
+      
+      const appts = (db.appointments || []).filter(a => a.status === 'pending' && a.dateTime && a.dateTime.slice(0, 10) === todayStr);
+
+      let warranties = [];
+      (db.customers || []).forEach(c => {
+        (c.sessions || []).forEach(s => {
+          if (!s.warrantyDone) {
+            const w = calculateWarranty(s.date, s.warrantyMonths);
+            if (!w.isNoWarranty && (w.isOverdue || w.daysLeft <= 3)) {
+              warranties.push({ cust: c, session: s, w: w });
+            }
+          }
+        });
+      });
+
+      if (appts.length === 0 && warranties.length === 0) return;
+
+      const apptSection = document.getElementById('autoAppointmentReminderSection');
+      const apptList = document.getElementById('autoAppointmentReminderList');
+      if (appts.length > 0) {
+        apptList.innerHTML = appts.map(a => {
+          const dt = new Date(a.dateTime);
+          const timeStr = isNaN(dt.getTime()) ? '' : dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          return `
+            <div class="card" style="padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--primary-gold);">
+              <div style="font-weight: 600; font-size: 13px;">${escapeHtml(a.name)} <span style="color: var(--text-muted); font-size: 11px;">- ${escapeHtml(a.phone)}</span></div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Dịch vụ: ${escapeHtml(a.service) || 'Chưa ghi'}</div>
+              <div style="font-size: 12px; margin-top: 4px; color: var(--primary-gold);"><i class="fa-regular fa-clock"></i> Hẹn lúc: <strong>${timeStr}</strong> hôm nay</div>
+            </div>
+          `;
+        }).join('');
+        apptSection.style.display = 'block';
+      } else {
+        apptSection.style.display = 'none';
+      }
+
+      const wSection = document.getElementById('autoWarrantyReminderSection');
+      const wList = document.getElementById('autoWarrantyReminderList');
+      if (warranties.length > 0) {
+        wList.innerHTML = warranties.map(item => `
+          <div class="card" style="padding: 10px; margin-bottom: 8px; border-left: 3px solid ${item.w.isOverdue ? 'var(--danger)' : 'var(--warning)'};">
+            <div style="font-weight: 600; font-size: 13px;">${escapeHtml(item.cust.name)} <span style="color: var(--text-muted); font-size: 11px;">- ${escapeHtml(item.cust.phone)}</span></div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Dịch vụ: ${escapeHtml(item.session.service)}</div>
+            <div style="font-size: 12px; margin-top: 4px; color: ${item.w.isOverdue ? 'var(--danger)' : 'var(--warning)'};">
+              ${item.w.isOverdue ? `<i class="fa-solid fa-triangle-exclamation"></i> Đã quá hạn bảo hành ${item.w.overdueDays} ngày` : `<i class="fa-regular fa-clock"></i> Còn ${item.w.daysLeft} ngày là hết hạn (${item.w.expiryDateStr})`}
+            </div>
+          </div>
+        `).join('');
+        wSection.style.display = 'block';
+      } else {
+        wSection.style.display = 'none';
+      }
+
+      document.getElementById('autoWarrantyReminderModal').style.display = 'block';
+    }
+
+    function closeAutoWarrantyReminderPopup() {
+      closeModal('autoWarrantyReminderModal');
+    }
+
+    function renderBackupReminder() {
+      const el = document.getElementById('backupReminderBanner');
+      if (!el) return;
+      if (!db.customers || db.customers.length === 0) {
+        el.style.display = 'none';
+        return;
+      }
+      const lastExportStr = db.brand && db.brand.lastExportDate;
+      const lastExportTime = lastExportStr ? new Date(lastExportStr).getTime() : 0;
+      const lastModifiedTime = (db.brand && db.brand.lastDataModifiedTime) || 0;
+      let daysSince = Infinity;
+      if (lastExportTime && !isNaN(lastExportTime)) {
+        daysSince = Math.floor((Date.now() - lastExportTime) / (1000 * 60 * 60 * 24));
+      }
+      const hasUnsavedChanges = !lastExportTime || (lastModifiedTime > lastExportTime);
+
+      if (daysSince >= 14 && hasUnsavedChanges) {
+        el.innerHTML = `
+          <div class="card" style="border: 1px solid var(--warning); background: rgba(243, 156, 18, 0.1); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning); font-size: 20px;"></i>
+            <div style="flex: 1; font-size: 12.5px; color: var(--text-main); line-height: 1.5;">Đã lâu chưa sao lưu dữ liệu ra file! Hãy tải file sao lưu để phòng trường hợp đổi máy hoặc xóa bộ nhớ.</div>
+            <button class="btn-outline" style="flex-shrink: 0; font-size: 12px;" onclick="openSettingsModal()"><i class="fa-solid fa-download"></i> Sao lưu ngay</button>
+          </div>
+        `;
+        el.style.display = 'block';
+      } else {
+        el.style.display = 'none';
+      }
+    }
+
+    /* CHỌN NHIỀU KHÁCH HÀNG ĐỂ XÓA (BULK DELETE) */
+    let customerSelectMode = false;
+    let selectedCustomerIds = new Set();
+    let custLongPressTimer = null;
+    let custLongPressFired = false;
+    let custPointerStartX = 0;
+    let custPointerStartY = 0;
+
+    function custCardPointerDown(e, custId) {
+      custPointerStartX = e.clientX;
+      custPointerStartY = e.clientY;
+      custLongPressFired = false;
+      clearTimeout(custLongPressTimer);
+      custLongPressTimer = setTimeout(() => {
+        custLongPressFired = true;
+        if (navigator.vibrate) navigator.vibrate(30);
+        customerSelectMode = true;
+        toggleCustomerSelection(custId);
+      }, 500);
+    }
+
+    function custCardPointerMove(e) {
+      if (Math.abs(e.clientX - custPointerStartX) > 12 || Math.abs(e.clientY - custPointerStartY) > 12) {
+        clearTimeout(custLongPressTimer);
+      }
+    }
+
+    function custCardPointerUp() {
+      clearTimeout(custLongPressTimer);
+    }
+
+    function custCardClick(e, custId) {
+      if (custLongPressFired) {
+        custLongPressFired = false;
+        return;
+      }
+      if (customerSelectMode) {
+        toggleCustomerSelection(custId);
+      } else {
+        openCustomerDetail(custId);
+      }
+    }
+
+    function toggleCustomerSelection(custId) {
+      if (selectedCustomerIds.has(custId)) {
+        selectedCustomerIds.delete(custId);
+      } else {
+        selectedCustomerIds.add(custId);
+      }
+      renderCustomerList();
+    }
+
+    function exitCustomerSelectMode() {
+      customerSelectMode = false;
+      selectedCustomerIds.clear();
+      renderCustomerList();
+    }
+
+    async function deleteSelectedCustomers() {
+      const count = selectedCustomerIds.size;
+      if (count === 0) return;
+      if (confirm(`CẢNH BÁO: Bạn có chắc chắn muốn xóa ${count} khách hàng đã chọn không?`)) {
+        const ids = Array.from(selectedCustomerIds);
+        db.customers = db.customers.filter(c => !selectedCustomerIds.has(c.id));
+        markDataChanged();
+        await saveDB();
+        ids.forEach(id => cloudDeleteCustomer(id));
+        exitCustomerSelectMode();
+        renderHome();
+        renderWarrantyList();
+        showAppAlert(`Đã xóa ${count} khách hàng thành công.`);
+      }
+    }
+
+    function renderCustomerSelectBar() {
+      const bar = document.getElementById('customerSelectBar');
+      if (!bar) return;
+      if (!customerSelectMode) {
+        bar.style.display = 'none';
+        bar.innerHTML = '';
+        return;
+      }
+      const count = selectedCustomerIds.size;
+      bar.style.display = 'block';
+      bar.innerHTML = `
+        <div class="card" style="border: 1px solid var(--primary-gold); background: rgba(212,175,55,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;">
+          <div style="font-size: 13px; font-weight: 600;">Đã chọn: <span style="color: var(--primary-gold);">${count}</span> khách hàng</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-outline" style="padding: 7px 12px; font-size: 12px;" onclick="exitCustomerSelectMode()"><i class="fa-solid fa-xmark"></i> Hủy</button>
+            <button class="btn-outline" style="padding: 7px 12px; font-size: 12px; border-color: var(--danger); color: var(--danger);" ${count === 0 ? 'disabled' : ''} onclick="deleteSelectedCustomers()"><i class="fa-solid fa-trash"></i> Xóa đã chọn</button>
+          </div>
+        </div>
+      `;
+    }
+
     function renderHome() {
       document.getElementById('brandTitle').innerText = db.brand.title;
       document.getElementById('brandSlogan').innerText = db.brand.slogan;
@@ -2610,7 +2798,7 @@
           if (!isSessionOnly) {
             const phoneVal = document.getElementById('custPhone').value.trim();
             if (!isValidPhoneNumber(phoneVal)) {
-              showAppAlert('Số điện thoại không hợp lệ (phải từ 9-11 số)!');
+              showAppAlert('Số điện thoại không hợp lệ (phải từ 9 đến 11 số)!');
               return;
             }
             customer.name = document.getElementById('custName').value.trim();
@@ -2635,7 +2823,7 @@
           return;
         }
         if (!isValidPhoneNumber(phone)) {
-          showAppAlert('Số điện thoại không hợp lệ (phải từ 9-11 số)!');
+          showAppAlert('Số điện thoại không hợp lệ (phải từ 9 đến 11 số)!');
           return;
         }
         const newCustomer = {
