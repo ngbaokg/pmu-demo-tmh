@@ -1125,7 +1125,8 @@
     }
 
     function isValidPhoneNumber(phone) {
-      return /^(0[3|5|7|8|9])[0-9]{8}$/.test(phone);
+  const clean = (phone || '').replace(/\D/g, '');
+  return clean.length >= 9 && clean.length <= 11;
     }
 
     /* MODULE BẢN QUYỀN */
@@ -1243,15 +1244,29 @@
     }
 
     async function updateLicenseDisplay() {
-      if (!cloudUser || !cloudFirestore) return;
-      const doc = await cloudFirestore.collection('users').doc(cloudUser.uid).get();
-      const expEl = document.getElementById('licenseExpiryDisplay');
-      if (doc.exists && expEl) {
-        const data = doc.data();
-        const exp = data.expireAt || 0;
-        expEl.innerText = exp ? new Date(exp).toLocaleDateString('vi-VN') : 'Hết hạn';
-      }
-    }
+  if (!cloudUser || !cloudFirestore) return;
+  const userRef = cloudFirestore.collection('users').doc(cloudUser.uid);
+  const doc = await userRef.get();
+  const expEl = document.getElementById('licenseExpiryDisplay');
+  
+  if (doc.exists) {
+    const data = doc.data() || {};
+    const exp = data.expireAt || 0;
+    if (expEl) expEl.innerText = exp ? new Date(exp).toLocaleDateString('vi-VN') : 'Hết hạn';
+  } else {
+    // Tự động cấp bù 7 ngày nếu tài khoản từng bị lỗi tạo thiếu trên Firestore
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const newExpire = now + SEVEN_DAYS_MS;
+    await userRef.set({
+      email: cloudUser.email,
+      trialStartedAt: now,
+      expireAt: newExpire,
+      createdAt: now
+    }, { merge: true });
+    if (expEl) expEl.innerText = new Date(newExpire).toLocaleDateString('vi-VN');
+  }
+}
 
     function activateLicenseKeyFromSettings() {
       const input = document.getElementById('settingLicenseKeyInput');
