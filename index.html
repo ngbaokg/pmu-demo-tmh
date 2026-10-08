@@ -651,7 +651,7 @@
       
       <h3 style="color: var(--primary-gold); font-size: 18px; margin-bottom: 8px;">Hết Hạn Trải Nghiệm Phần Mềm</h3>
       <p id="lockReasonText" style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
-        Thời gian dùng thử 7 ngày miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng![cite: 3]
+        Thời gian dùng thử miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng!
       </p>
 
       <div class="form-group" style="text-align: left; margin-bottom: 12px;">
@@ -660,12 +660,21 @@
       </div>
       <button class="btn-gold" style="width: 100%; margin-bottom: 15px;" onclick="activateLicenseKey()"><i class="fa-solid fa-key"></i> Kích hoạt ngay</button>
 
-      <div style="border-top: 1px dashed var(--border-color); padding-top: 15px; margin-top: 15px;">
-        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Chưa có mã kích hoạt? Liên hệ quản trị viên:</div>
-        <a id="zaloAdminLink" href="https://zalo.me" target="_blank" class="btn-outline" style="width: 100%; justify-content: center; padding: 10px; border-color: var(--zalo-blue); color: #4da3ff; text-decoration: none;">
-          <i class="fa-solid fa-comment-dots"></i> Nhắn tin Zalo hỗ trợ
-        </a>
-        <button class="btn-danger-outline" style="width: 100%; justify-content: center; margin-top: 10px; padding: 8px;" onclick="cloudSignOut()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất tài khoản</button>
+      <div style="border-top: 1px dashed var(--border-color); padding-top: 16px; margin-top: 15px;">
+        <div style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
+          Chưa có mã kích hoạt? Liên hệ quản trị viên để mua bản quyền:
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+          <a href="https://zalo.me/0913535344" target="_blank" class="btn-outline" style="justify-content: center; padding: 10px; border-color: var(--zalo-blue); color: #4da3ff; text-decoration: none; font-weight: 600;">
+            <i class="fa-solid fa-comment-dots"></i> Nhắn Zalo
+          </a>
+          <a href="tel:0913535344" class="btn-call" style="justify-content: center; padding: 10px; font-weight: 600; text-decoration: none;">
+            <i class="fa-solid fa-phone"></i> Gọi 0913.535.344
+          </a>
+        </div>
+
+        <button class="btn-danger-outline" style="width: 100%; justify-content: center; margin-top: 6px; padding: 8px;" onclick="cloudSignOut()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất tài khoản</button>
       </div>
     </div>
   </div>
