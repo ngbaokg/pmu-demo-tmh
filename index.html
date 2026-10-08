@@ -334,7 +334,7 @@
       overflow-y: auto;
       padding: 20px 12px;
     }
-    #customAlertModal, #customConfirmModal { z-index: 3000; }
+    #customAlertModal { z-index: 3000; }
     .modal-content {
       background: var(--bg-card);
       max-width: 560px;
@@ -380,7 +380,7 @@
     .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
     .badge-success { background: rgba(46, 204, 113, 0.2); color: var(--success); }
     .badge-warning { background: rgba(243, 156, 18, 0.2); color: var(--warning); }
-    .badge-danger { background: rgba(231, 76, 60, 0.25); color: var(--danger); border: 1px solid rgba(231, 76, 60, 0.4); }
+    .badge-danger { background: rgba(231, 76, 60, 0.25); color: var(--danger); }
     .badge-secondary { background: rgba(155, 161, 166, 0.2); color: var(--text-muted); }
 
     .debt-panel { background: rgba(37, 40, 48, 0.85); border: 1px dashed var(--border-color); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
@@ -651,7 +651,7 @@
       
       <h3 style="color: var(--primary-gold); font-size: 18px; margin-bottom: 8px;">Hết Hạn Trải Nghiệm Phần Mềm</h3>
       <p id="lockReasonText" style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
-        Thời gian dùng thử 7 ngày miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng!
+        Thời gian dùng thử 7 ngày miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng![cite: 3]
       </p>
 
       <div class="form-group" style="text-align: left; margin-bottom: 12px;">
@@ -688,8 +688,8 @@
           <input type="text" id="custName" class="form-control" placeholder="Ví dụ: Nguyễn Thị Mai">
         </div>
         <div class="form-group">
-          <label>Số điện thoại (* 10 số)</label>
-          <input type="tel" id="custPhone" class="form-control" placeholder="Ví dụ: 0908123456" maxlength="10">
+          <label>Số điện thoại (*)</label>
+          <input type="tel" id="custPhone" class="form-control" placeholder="Ví dụ: 0908123456" maxlength="11">
         </div>
         <div class="form-group">
           <label>Địa chỉ</label>
@@ -834,8 +834,8 @@
         <input type="text" id="apptName" class="form-control" placeholder="Nhập tên khách...">
       </div>
       <div class="form-group">
-        <label>Số điện thoại (* 10 số)</label>
-        <input type="tel" id="apptPhone" class="form-control" placeholder="Nhập số điện thoại..." maxlength="10">
+        <label>Số điện thoại (*)</label>
+        <input type="tel" id="apptPhone" class="form-control" placeholder="Nhập số điện thoại..." maxlength="11">
       </div>
       <div class="form-group">
         <label>Dịch vụ hẹn</label>
@@ -935,7 +935,7 @@
         <h3 style="color: var(--primary-gold); font-size: 18px;"><i class="fa-solid fa-cloud"></i> Đăng nhập tài khoản</h3>
       </div>
       <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
-        Vui lòng đăng nhập để bắt đầu sử dụng phần mềm. Nếu là tiệm mới, bạn nhập email và mật khẩu rồi bấm <strong style="color: var(--primary-gold);">"Tạo tài khoản mới"</strong> để nhận ngay 7 ngày trải nghiệm miễn phí![cite: 7]
+        Vui lòng đăng nhập để bắt đầu sử dụng phần mềm. Nếu là tiệm mới, bạn nhập email và mật khẩu rồi bấm <strong style="color: var(--primary-gold);">"Tạo tài khoản mới"</strong> để nhận ngay 7 ngày trải nghiệm miễn phí![cite: 3]
       </p>
       <div class="form-group">
         <label>Email tiệm (*)</label>
@@ -1082,6 +1082,7 @@
     let cloudUnsubCustomers = null;
     let cloudUnsubAppointments = null;
     let cloudUnsubBrand = null;
+    let currentAccountExpireAt = 0; // Biến lưu mốc thời gian hết hạn của tài khoản
 
     let db = {
       brand: {
@@ -1116,7 +1117,6 @@
       }
     }
 
-    // Tiện ích ngày chuẩn giờ địa phương Việt Nam (Chống lệch múi giờ UTC)
     function formatDateYMD(d) {
       const year = d.getFullYear();
       const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -1125,17 +1125,34 @@
     }
 
     function isValidPhoneNumber(phone) {
-  const clean = (phone || '').replace(/\D/g, '');
-  return clean.length >= 9 && clean.length <= 11;
+      const clean = (phone || '').replace(/\D/g, '');
+      return clean.length >= 9 && clean.length <= 11;
     }
 
-    /* MODULE BẢN QUYỀN */
+    // Định dạng chuỗi đếm ngược thời gian còn lại
+    function formatTimeRemaining(expireAt) {
+      const diffMs = expireAt - Date.now();
+      if (diffMs <= 0) return 'Đã hết hạn';
+      
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays >= 1) {
+        return `Còn ${diffDays} ngày`;
+      }
+      
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      return `Còn ${diffHours} giờ ${diffMins} phút`;
+    }
+
+    /* MODULE BẢN QUYỀN & KHÓA TỨC THÌ */
     function checkLicenseExpiry(userData) {
       const lockModal = document.getElementById('licenseLockModal');
       const now = Date.now();
-      const expireAt = (userData && userData.expireAt) ? userData.expireAt : 0;
+      const expireAt = (userData && userData.expireAt) ? userData.expireAt : (currentAccountExpireAt || 0);
 
-      if (!expireAt || now > expireAt) {
+      currentAccountExpireAt = expireAt;
+
+      if (!expireAt || now >= expireAt) {
         const dateStr = expireAt ? new Date(expireAt).toLocaleDateString('vi-VN') : 'Chưa kích hoạt';
         document.getElementById('lockReasonText').innerHTML = `Tài khoản đã hết hạn vào ngày: <strong style="color: #fff;">${dateStr}</strong>.<br>Vui lòng kích hoạt bản quyền để tiếp tục sử dụng dữ liệu!`;
         lockModal.style.display = 'block';
@@ -1143,6 +1160,22 @@
         lockModal.style.display = 'none';
       }
     }
+
+    // Bộ hẹn giờ ngầm kiểm tra mỗi 30 giây (Tự khóa tức thì nếu khách treo máy qua giờ hết hạn)
+    setInterval(function() {
+      if (cloudUser && currentAccountExpireAt > 0) {
+        if (Date.now() >= currentAccountExpireAt) {
+          checkLicenseExpiry({ expireAt: currentAccountExpireAt });
+        }
+        // Cập nhật lại chuỗi đếm ngược nếu đang mở modal cài đặt
+        const expEl = document.getElementById('licenseExpiryDisplay');
+        if (expEl && document.getElementById('settingsModal').style.display === 'block') {
+          const dateStr = new Date(currentAccountExpireAt).toLocaleDateString('vi-VN');
+          const remainStr = formatTimeRemaining(currentAccountExpireAt);
+          expEl.innerHTML = `<strong style="color: #fff;">${dateStr}</strong> <span style="color: var(--primary-gold); font-size: 11.5px;">(${remainStr})</span>`;
+        }
+      }
+    }, 30000);
 
     async function activateLicenseKey() {
       const inputEl = document.getElementById('licenseKeyInput');
@@ -1199,7 +1232,6 @@
         cloudAuth = firebase.auth();
         cloudFirestore = firebase.firestore();
 
-        // Duy trì phiên đăng nhập Token vĩnh viễn trên thiết bị
         cloudAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(console.error);
 
         cloudAuth.onAuthStateChanged(function(user) {
@@ -1227,7 +1259,7 @@
       if (cloudUser) {
         el.innerHTML = `
           <div style="margin-bottom: 8px;">Tài khoản: <strong style="color: #fff;">${escapeHtml(cloudUser.email)}</strong></div>
-          <div style="margin-bottom: 12px; color: var(--primary-gold);">Hạn dùng: <span id="licenseExpiryDisplay">Đang tải...</span></div>
+          <div style="margin-bottom: 12px; color: var(--text-muted);">Hạn dùng: <span id="licenseExpiryDisplay">Đang tải...</span></div>
           <div class="form-group" style="margin-bottom: 10px;">
             <input type="text" id="settingLicenseKeyInput" class="form-control" placeholder="Nhập mã kích hoạt (Key)..." style="text-transform: uppercase;">
           </div>
@@ -1244,29 +1276,39 @@
     }
 
     async function updateLicenseDisplay() {
-  if (!cloudUser || !cloudFirestore) return;
-  const userRef = cloudFirestore.collection('users').doc(cloudUser.uid);
-  const doc = await userRef.get();
-  const expEl = document.getElementById('licenseExpiryDisplay');
-  
-  if (doc.exists) {
-    const data = doc.data() || {};
-    const exp = data.expireAt || 0;
-    if (expEl) expEl.innerText = exp ? new Date(exp).toLocaleDateString('vi-VN') : 'Hết hạn';
-  } else {
-    // Tự động cấp bù 7 ngày nếu tài khoản từng bị lỗi tạo thiếu trên Firestore
-    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-    const now = Date.now();
-    const newExpire = now + SEVEN_DAYS_MS;
-    await userRef.set({
-      email: cloudUser.email,
-      trialStartedAt: now,
-      expireAt: newExpire,
-      createdAt: now
-    }, { merge: true });
-    if (expEl) expEl.innerText = new Date(newExpire).toLocaleDateString('vi-VN');
-  }
-}
+      if (!cloudUser || !cloudFirestore) return;
+      const userRef = cloudFirestore.collection('users').doc(cloudUser.uid);
+      const doc = await userRef.get();
+      const expEl = document.getElementById('licenseExpiryDisplay');
+      
+      let exp = 0;
+      if (doc.exists) {
+        const data = doc.data() || {};
+        exp = data.expireAt || 0;
+      } else {
+        // Tự động cấp bù nếu tài khoản từng bị tạo thiếu tài liệu
+        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+        const now = Date.now();
+        exp = now + SEVEN_DAYS_MS;
+        await userRef.set({
+          email: cloudUser.email,
+          trialStartedAt: now,
+          expireAt: exp,
+          createdAt: now
+        }, { merge: true });
+      }
+
+      currentAccountExpireAt = exp;
+      if (expEl) {
+        if (exp) {
+          const dateStr = new Date(exp).toLocaleDateString('vi-VN');
+          const remainStr = formatTimeRemaining(exp);
+          expEl.innerHTML = `<strong style="color: #fff;">${dateStr}</strong> <span style="color: var(--primary-gold); font-size: 11.5px;">(${remainStr})</span>`;
+        } else {
+          expEl.innerHTML = `<span style="color: var(--danger);">Hết hạn</span>`;
+        }
+      }
+    }
 
     function activateLicenseKeyFromSettings() {
       const input = document.getElementById('settingLicenseKeyInput');
@@ -1342,7 +1384,6 @@
             const remoteData = docSnap.data();
             checkLicenseExpiry(remoteData);
             if (remoteData.title) {
-              // Bỏ qua expireAt để không đè vào local brand
               const safeRemote = { ...remoteData };
               delete safeRemote.expireAt;
               db.brand = Object.assign({}, db.brand, safeRemote);
@@ -1424,7 +1465,11 @@
       const customer = db.customers.find(c => c.id === customerId);
       if (!customer) return;
       customer.updatedAt = Date.now();
-      cloudFirestore.collection('users').doc(cloudUser.uid).collection('customers').doc(customerId).set(customer);
+      cloudFirestore.collection('users').doc(cloudUser.uid).collection('customers').doc(customerId).set(customer)
+        .catch(function(err) {
+          console.error("Lỗi đồng bộ khách hàng lên cloud:", err);
+          showAppAlert("Không thể lưu lên Cloud: " + err.message);
+        });
     }
 
     function cloudDeleteCustomer(customerId) {
@@ -1437,7 +1482,10 @@
       const appt = (db.appointments || []).find(a => a.id === apptId);
       if (!appt) return;
       appt.updatedAt = Date.now();
-      cloudFirestore.collection('users').doc(cloudUser.uid).collection('appointments').doc(apptId).set(appt);
+      cloudFirestore.collection('users').doc(cloudUser.uid).collection('appointments').doc(apptId).set(appt)
+        .catch(function(err) {
+          console.error("Lỗi đồng bộ lịch hẹn:", err);
+        });
     }
 
     function cloudDeleteAppointment(apptId) {
@@ -1445,7 +1493,6 @@
       cloudFirestore.collection('users').doc(cloudUser.uid).collection('appointments').doc(apptId).delete();
     }
 
-    // Bóc tách hoàn toàn expireAt khỏi cài đặt tiệm khi đẩy lên server (Chống ghi đè hạn giữa 2 máy)
     function syncBrandToCloud() {
       if (!cloudFirestore || !cloudUser) return;
       const brandPayload = {
@@ -1607,6 +1654,10 @@
     function escapeHtml(str) {
       if (!str) return '';
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function escapeHtmlMultiline(str) {
+      return escapeHtml(str).replace(/\n/g, '<br>');
     }
 
     function escapeJsAttr(str) {
@@ -1798,7 +1849,7 @@
       }
     }
 
-    /* QUẢN LÝ LỊCH HẸN HOÀN CHỈNH (TRẠNG THÁI + SỬA) */
+    /* QUẢN LÝ LỊCH HẸN */
     function renderAppointmentList() {
       const q = (document.getElementById('appointmentSearchInput').value || '').toLowerCase().trim();
       const container = document.getElementById('appointmentList');
@@ -1880,7 +1931,7 @@
         return;
       }
       if (!isValidPhoneNumber(phone)) {
-        showAppAlert('Số điện thoại không đúng định dạng (phải có 10 số)!');
+        showAppAlert('Số điện thoại không hợp lệ (phải từ 9 đến 11 số)!');
         return;
       }
 
@@ -2183,7 +2234,7 @@
           if (!isSessionOnly) {
             const phoneVal = document.getElementById('custPhone').value.trim();
             if (!isValidPhoneNumber(phoneVal)) {
-              showAppAlert('Số điện thoại không hợp lệ (phải đủ 10 số)!');
+              showAppAlert('Số điện thoại không hợp lệ (phải từ 9 đến 11 số)!');
               return;
             }
             customer.name = document.getElementById('custName').value.trim();
@@ -2208,7 +2259,7 @@
           return;
         }
         if (!isValidPhoneNumber(phone)) {
-          showAppAlert('Số điện thoại không hợp lệ (phải đủ 10 số)!');
+          showAppAlert('Số điện thoại không hợp lệ (phải từ 9 đến 11 số)!');
           return;
         }
         const newCustomer = {
@@ -2363,7 +2414,7 @@
       showAppAlert('Đã sao chép tin nhắn!');
     }
 
-    /* MODULE DOANH THU HOÀN CHỈNH 6 NÚT & ĐỔ DỮ LIỆU ĐẦY ĐỦ */
+    /* MODULE DOANH THU HOÀN CHỈNH 6 NÚT */
     function unlockRevenue() {
       if (document.getElementById('passcodeInput').value === db.brand.passcode) {
         document.getElementById('revenueLockScreen').style.display = 'none';
@@ -2384,7 +2435,6 @@
       document.querySelectorAll('.rev-preset-btn').forEach(b => b.classList.remove('active'));
     }
 
-    // Xử lý chuẩn xác 100% cả 6 mốc thời gian không bị lệch múi giờ
     function applyRevenuePreset(type, btn) {
       clearRevenuePresetActive();
       if (btn) btn.classList.add('active');
@@ -2392,7 +2442,7 @@
       let start = new Date(now), end = new Date(now);
 
       if (type === 'this_week') {
-        const day = (now.getDay() + 6) % 7; // Thứ 2 là đầu tuần
+        const day = (now.getDay() + 6) % 7;
         start.setDate(now.getDate() - day);
         end.setDate(start.getDate() + 6);
       } else if (type === 'last_week') {
@@ -2436,7 +2486,6 @@
             total += money;
             custTotal += money;
 
-            // Gom nhóm dịch vụ
             let sName = s.service || 'Khác';
             serviceMap[sName] = (serviceMap[sName] || 0) + money;
           }
@@ -2448,7 +2497,6 @@
 
       document.getElementById('filteredRevResult').innerText = 'Tổng thực thu: ' + formatMoney(total);
 
-      // Đổ dữ liệu khung Thống kê theo loại dịch vụ
       const sContainer = document.getElementById('serviceStatsList');
       const sKeys = Object.keys(serviceMap);
       if (sKeys.length === 0) {
@@ -2462,7 +2510,6 @@
         `).join('');
       }
 
-      // Đổ dữ liệu khung Doanh thu theo khách hàng
       const cContainer = document.getElementById('customerRevList');
       const cKeys = Object.keys(customerMap);
       if (cKeys.length === 0) {
