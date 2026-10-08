@@ -653,7 +653,7 @@
 
   </div>
 
-  <!-- MODAL: NHẮC VIỆC HÀNG NGÀY (LỊCH HẸN HÔM NAY & BẢO HÀNH GẦN ĐẾN HẠN) -->
+  <!-- MODAL: NHẮC VIỆC HÀNG NGÀY -->
   <div id="autoWarrantyReminderModal" class="modal">
     <div class="modal-content" style="max-width: 440px;">
       <div class="modal-header-top">
@@ -1088,7 +1088,6 @@
           </div>
           <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importDataFile(event)">
 
-          <!-- PHỤC HỒI BẰNG CÁCH DÁN NỘI DUNG (GIỮ LẠI TỪ BẢN GỐC) -->
           <div style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;">
             <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Nếu nút "Nhập file dữ liệu" không phản hồi trên điện thoại: mở file sao lưu (.json), copy toàn bộ nội dung rồi dán vào ô bên dưới:</div>
             <textarea id="importPasteText" class="form-control" rows="3" placeholder="Dán nội dung file sao lưu (.json) vào đây..."></textarea>
@@ -1135,7 +1134,7 @@
     let cloudUnsubCustomers = null;
     let cloudUnsubAppointments = null;
     let cloudUnsubBrand = null;
-    let currentAccountExpireAt = 0;
+    let currentAccountExpireAt = null;
 
     let db = {
       brand: {
@@ -1194,16 +1193,22 @@
       return `Còn ${diffHours} giờ ${diffMins} phút`;
     }
 
-    /* MODULE BẢN QUYỀN */
+    /* MODULE BẢN QUYỀN AN TOÀN */
     function checkLicenseExpiry(userData) {
       const lockModal = document.getElementById('licenseLockModal');
-      const now = Date.now();
-      const expireAt = (userData && userData.expireAt) ? userData.expireAt : (currentAccountExpireAt || 0);
+      if (!lockModal) return;
 
+      if (!userData || userData.expireAt === undefined || userData.expireAt === null) {
+        lockModal.style.display = 'none';
+        return;
+      }
+
+      const now = Date.now();
+      const expireAt = userData.expireAt;
       currentAccountExpireAt = expireAt;
 
-      if (!expireAt || now >= expireAt) {
-        const dateStr = expireAt ? new Date(expireAt).toLocaleDateString('vi-VN') : 'Chưa kích hoạt';
+      if (expireAt > 0 && now >= expireAt) {
+        const dateStr = new Date(expireAt).toLocaleDateString('vi-VN');
         document.getElementById('lockReasonText').innerHTML = `Tài khoản đã hết hạn vào ngày: <strong style="color: #fff;">${dateStr}</strong>.<br>Vui lòng kích hoạt bản quyền để tiếp tục sử dụng dữ liệu!`;
         lockModal.style.display = 'block';
       } else {
@@ -1212,7 +1217,7 @@
     }
 
     setInterval(function() {
-      if (cloudUser && currentAccountExpireAt > 0) {
+      if (cloudUser && currentAccountExpireAt && currentAccountExpireAt > 0) {
         if (Date.now() >= currentAccountExpireAt) {
           checkLicenseExpiry({ expireAt: currentAccountExpireAt });
         }
@@ -1313,7 +1318,6 @@
           </div>
           <button type="button" class="btn-gold" style="padding: 10px; margin-bottom: 12px;" onclick="activateLicenseKeyFromSettings()"><i class="fa-solid fa-key"></i> Kích hoạt gói</button>
 
-          <!-- KHỐI LIÊN HỆ MUA KEY TRỰC TIẾP -->
           <div style="background: rgba(37, 40, 48, 0.7); border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 12px; text-align: center;">
             <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Chưa có mã key? Liên hệ để mua bản quyền:</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -1360,6 +1364,8 @@
       }
 
       currentAccountExpireAt = exp;
+      checkLicenseExpiry({ expireAt: exp });
+
       if (expEl) {
         if (exp) {
           const dateStr = new Date(exp).toLocaleDateString('vi-VN');
@@ -1529,7 +1535,6 @@
       cloudFirestore.collection('users').doc(cloudUser.uid).collection('customers').doc(customerId).set(customer)
         .catch(function(err) {
           console.error("Lỗi đồng bộ khách hàng lên cloud:", err);
-          showAppAlert("Không thể lưu lên Cloud: " + err.message);
         });
     }
 
@@ -1698,7 +1703,7 @@
       showAppAlert('Đã ghi nhận thanh toán ' + formatMoney(receivedAmount));
     }
 
-    /* THÔNG TIN DỊCH VỤ */
+    /* DỊCH VỤ */
     const serviceCategories = {
       'moi': { name: 'Môi', title: 'Chọn loại dịch vụ Môi:', items: ['Phun môi', 'Khử thâm', 'Phụ thu'] },
       'may': { name: 'Mày', title: 'Chọn loại dịch vụ Mày:', items: ['Phun Ombre', 'Sợi đầu phun đuôi', 'Điêu khắc sợi', 'Phụ thu'] },
@@ -1783,196 +1788,7 @@
       };
     }
 
-    /* NHẮC VIỆC HÀNG NGÀY & POPUP (LỊCH HẸN HÔM NAY + BẢO HÀNH GẦN ĐẾN HẠN) */
-    function checkDailyTasksPopup() {
-      const now = new Date();
-      const todayStr = formatDateYMD(now);
-      
-      const appts = (db.appointments || []).filter(a => a.status === 'pending' && a.dateTime && a.dateTime.slice(0, 10) === todayStr);
-
-      let warranties = [];
-      (db.customers || []).forEach(c => {
-        (c.sessions || []).forEach(s => {
-          if (!s.warrantyDone && !s.autoReminderDismissed) {
-            const w = calculateWarranty(s.date, s.warrantyMonths);
-            if (!w.isNoWarranty && (w.isOverdue || w.daysLeft <= 3)) {
-              warranties.push({ cust: c, session: s, w: w });
-            }
-          }
-        });
-      });
-
-      if (appts.length === 0 && warranties.length === 0) return;
-
-      const apptSection = document.getElementById('autoAppointmentReminderSection');
-      const apptList = document.getElementById('autoAppointmentReminderList');
-      if (appts.length > 0) {
-        apptList.innerHTML = appts.map(a => {
-          const dt = new Date(a.dateTime);
-          const timeStr = isNaN(dt.getTime()) ? '' : dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-          return `
-            <div class="card" style="padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--primary-gold);">
-              <div style="font-weight: 600; font-size: 13px;">${escapeHtml(a.name)} <span style="color: var(--text-muted); font-size: 11px;">- ${escapeHtml(a.phone)}</span></div>
-              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Dịch vụ: ${escapeHtml(a.service) || 'Chưa ghi'}</div>
-              <div style="font-size: 12px; margin-top: 4px; color: var(--primary-gold);"><i class="fa-regular fa-clock"></i> Hẹn lúc: <strong>${timeStr}</strong> hôm nay</div>
-            </div>
-          `;
-        }).join('');
-        apptSection.style.display = 'block';
-      } else {
-        apptSection.style.display = 'none';
-      }
-
-      const wSection = document.getElementById('autoWarrantyReminderSection');
-      const wList = document.getElementById('autoWarrantyReminderList');
-      if (warranties.length > 0) {
-        wList.innerHTML = warranties.map(item => `
-          <div class="card" style="padding: 10px; margin-bottom: 8px; border-left: 3px solid ${item.w.isOverdue ? 'var(--danger)' : 'var(--warning)'};">
-            <div style="font-weight: 600; font-size: 13px;">${escapeHtml(item.cust.name)} <span style="color: var(--text-muted); font-size: 11px;">- ${escapeHtml(item.cust.phone)}</span></div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Dịch vụ: ${escapeHtml(item.session.service)}</div>
-            <div style="font-size: 12px; margin-top: 4px; color: ${item.w.isOverdue ? 'var(--danger)' : 'var(--warning)'};">
-              ${item.w.isOverdue ? `<i class="fa-solid fa-triangle-exclamation"></i> Đã quá hạn bảo hành ${item.w.overdueDays} ngày` : `<i class="fa-regular fa-clock"></i> Còn ${item.w.daysLeft} ngày là hết hạn (${item.w.expiryDateStr})`}
-            </div>
-          </div>
-        `).join('');
-        wSection.style.display = 'block';
-      } else {
-        wSection.style.display = 'none';
-      }
-
-      document.getElementById('autoWarrantyReminderModal').style.display = 'block';
-    }
-
-    function closeAutoWarrantyReminderPopup() {
-      closeModal('autoWarrantyReminderModal');
-    }
-
-    /* NHẮC SAO LƯU DỰ DỮ LIỆU ĐỊNH KỲ */
-    function renderBackupReminder() {
-      const el = document.getElementById('backupReminderBanner');
-      if (!el) return;
-      if (!db.customers || db.customers.length === 0) {
-        el.style.display = 'none';
-        return;
-      }
-      const lastExportStr = db.brand && db.brand.lastExportDate;
-      const lastExportTime = lastExportStr ? new Date(lastExportStr).getTime() : 0;
-      const lastModifiedTime = (db.brand && db.brand.lastDataModifiedTime) || 0;
-      let daysSince = Infinity;
-      if (lastExportTime && !isNaN(lastExportTime)) {
-        daysSince = Math.floor((Date.now() - lastExportTime) / (1000 * 60 * 60 * 24));
-      }
-      const hasUnsavedChanges = !lastExportTime || (lastModifiedTime > lastExportTime);
-
-      if (daysSince >= 14 && hasUnsavedChanges) {
-        el.innerHTML = `
-          <div class="card" style="border: 1px solid var(--warning); background: rgba(243, 156, 18, 0.1); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
-            <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning); font-size: 20px;"></i>
-            <div style="flex: 1; font-size: 12.5px; color: var(--text-main); line-height: 1.5;">Đã lâu chưa sao lưu dữ liệu ra file! Hãy tải file sao lưu để phòng trường hợp đổi máy hoặc xóa bộ nhớ.</div>
-            <button class="btn-outline" style="flex-shrink: 0; font-size: 12px;" onclick="openSettingsModal()"><i class="fa-solid fa-download"></i> Sao lưu ngay</button>
-          </div>
-        `;
-        el.style.display = 'block';
-      } else {
-        el.style.display = 'none';
-      }
-    }
-
-    /* XỬ LÝ CHỌN NHIỀU KHÁCH ĐỂ XÓA (BULK DELETE NHƯ BẢN GỐC) */
-    let customerSelectMode = false;
-    let selectedCustomerIds = new Set();
-    let custLongPressTimer = null;
-    let custLongPressFired = false;
-    let custPointerStartX = 0;
-    let custPointerStartY = 0;
-
-    function custCardPointerDown(e, custId) {
-      custPointerStartX = e.clientX;
-      custPointerStartY = e.clientY;
-      custLongPressFired = false;
-      clearTimeout(custLongPressTimer);
-      custLongPressTimer = setTimeout(() => {
-        custLongPressFired = true;
-        if (navigator.vibrate) navigator.vibrate(30);
-        customerSelectMode = true;
-        toggleCustomerSelection(custId);
-      }, 500);
-    }
-
-    function custCardPointerMove(e) {
-      if (Math.abs(e.clientX - custPointerStartX) > 12 || Math.abs(e.clientY - custPointerStartY) > 12) {
-        clearTimeout(custLongPressTimer);
-      }
-    }
-
-    function custCardPointerUp() {
-      clearTimeout(custLongPressTimer);
-    }
-
-    function custCardClick(e, custId) {
-      if (custLongPressFired) {
-        custLongPressFired = false;
-        return;
-      }
-      if (customerSelectMode) {
-        toggleCustomerSelection(custId);
-      } else {
-        openCustomerDetail(custId);
-      }
-    }
-
-    function toggleCustomerSelection(custId) {
-      if (selectedCustomerIds.has(custId)) {
-        selectedCustomerIds.delete(custId);
-      } else {
-        selectedCustomerIds.add(custId);
-      }
-      renderCustomerList();
-    }
-
-    function exitCustomerSelectMode() {
-      customerSelectMode = false;
-      selectedCustomerIds.clear();
-      renderCustomerList();
-    }
-
-    async function deleteSelectedCustomers() {
-      const count = selectedCustomerIds.size;
-      if (count === 0) return;
-      if (confirm(`CẢNH BÁO: Bạn có chắc chắn muốn xóa ${count} khách hàng đã chọn không?`)) {
-        const ids = Array.from(selectedCustomerIds);
-        db.customers = db.customers.filter(c => !selectedCustomerIds.has(c.id));
-        markDataChanged();
-        await saveDB();
-        ids.forEach(id => cloudDeleteCustomer(id));
-        exitCustomerSelectMode();
-        renderHome();
-        renderWarrantyList();
-        showAppAlert(`Đã xóa ${count} khách hàng thành công.`);
-      }
-    }
-
-    function renderCustomerSelectBar() {
-      const bar = document.getElementById('customerSelectBar');
-      if (!bar) return;
-      if (!customerSelectMode) {
-        bar.style.display = 'none';
-        bar.innerHTML = '';
-        return;
-      }
-      const count = selectedCustomerIds.size;
-      bar.style.display = 'block';
-      bar.innerHTML = `
-        <div class="card" style="border: 1px solid var(--primary-gold); background: rgba(212,175,55,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;">
-          <div style="font-size: 13px; font-weight: 600;">Đã chọn: <span style="color: var(--primary-gold);">${count}</span> khách hàng</div>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn-outline" style="padding: 7px 12px; font-size: 12px;" onclick="exitCustomerSelectMode()"><i class="fa-solid fa-xmark"></i> Hủy</button>
-            <button class="btn-outline" style="padding: 7px 12px; font-size: 12px; border-color: var(--danger); color: var(--danger);" ${count === 0 ? 'disabled' : ''} onclick="deleteSelectedCustomers()"><i class="fa-solid fa-trash"></i> Xóa đã chọn</button>
-          </div>
-        </div>
-      `;
-    }
-
+    /* HIỂN THỊ DANH SÁCH & HỒ SƠ */
     function renderHome() {
       document.getElementById('brandTitle').innerText = db.brand.title;
       document.getElementById('brandSlogan').innerText = db.brand.slogan;
@@ -2301,9 +2117,7 @@
       let targetSub = preselectedSub || grp.items[0];
 
       subGrid.innerHTML = grp.items.map(item => `
-        <div class="sub-chip ${item === targetSub ? 'selected' : ''}" onclick="selectApptSubService('${item}')">
-          ${item}
-        </div>
+        <div class="sub-chip ${item === targetSub ? 'selected' : ''}" onclick="selectApptSubService('${item}')">${item}</div>
       `).join('');
 
       selectApptSubService(targetSub);
@@ -2464,7 +2278,7 @@
       document.getElementById('remindModal').style.display = 'block';
     }
 
-    /* QUẢN LÝ ẢNH & COMPRESS KÈM XOAY THEO EXIF (CHUẨN BẢN GỐC) */
+    /* QUẢN LÝ ẢNH & COMPRESS */
     let currentImgBefore = "";
     let currentImgAfter = "";
 
@@ -2882,7 +2696,7 @@
             <span>Tổng làm: <strong>${formatMoney(totalCustPrice)}</strong></span>
             <span>Tổng nợ: <strong style="color:${totalDebt > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(totalDebt)}</strong></span>
           </div>
-          ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
+          ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan ${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
         </div>
         <button class="btn-gold" style="width: 100%; margin-bottom: 16px;" onclick="closeModal('customerDetailModal'); openAddCustomerModal('${c.id}')"><i class="fa-solid fa-plus-circle"></i> Thêm lượt xăm mới cho khách này</button>
         ${(c.sessions || []).map((s, idx) => {
@@ -2892,13 +2706,14 @@
           return `
             <div class="card" style="background: var(--bg-input); border-left: 4px solid var(--primary-gold); margin-bottom: 10px; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px;">
-                <span>Lần ${idx + 1}:${escapeHtml(s.service)}</span>
+                <span>Lần ${idx + 1}: ${escapeHtml(s.service)}</span>
                 <span style="color: var(--primary-gold);">${formatMoney(s.price)}</span>
               </div>
               <div style="margin-bottom: 6px;">Đã trả: ${formatMoney(pd)} | Nợ: <strong style="color:${d > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(d)}</strong></div>
               <div>Màu đã pha: <strong>${escapeHtml(s.colorMix) || 'Mặc định'}</strong></div>
               <div>Thời gian: ${formatDateTimeDisplay(s.date)}</div>
-              <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>${(s.imgBefore || s.imgAfter) ? `
+              <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>
+              ${(s.imgBefore || s.imgAfter) ? `
                 <div class="detail-images">
                   ${s.imgBefore ? `<div class="detail-img-box"><img src="${s.imgBefore}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'before')"><span>Ảnh Trước</span></div>` : ''}
                   ${s.imgAfter ? `<div class="detail-img-box"><img src="${s.imgAfter}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'after')"><span>Ảnh Sau</span></div>` : ''}
@@ -2911,3 +2726,355 @@
       document.getElementById('customerDetailContent').innerHTML = html;
       document.getElementById('customerDetailModal').style.display = 'block';
     }
+
+    async function deleteCustomer(custId) {
+      if (confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa khách hàng này?')) {
+        db.customers = db.customers.filter(c => c.id !== custId);
+        markDataChanged();
+        await saveDB();
+        cloudDeleteCustomer(custId);
+        closeModal('customerDetailModal');
+        renderCustomerList();
+        renderHome();
+        renderWarrantyList();
+        showAppAlert('Đã xóa thành công!');
+      }
+    }
+
+    /* NHẮC ZALO & SMS */
+    let currentRemindPhone = "";
+    function openRemindModal(custId, sessionId) {
+      const c = db.customers.find(item => item.id === custId);
+      if (!c) return;
+      const s = c.sessions.find(item => item.id === sessionId);
+      if (!s) return;
+
+      const w = calculateWarranty(s.date, s.warrantyMonths);
+      const msg = db.brand.msgTemplate
+        .replace(/{TEN_KH}/g, c.name)
+        .replace(/{DICH_VU}/g, s.service)
+        .replace(/{HAN_BH}/g, w.expiryDateStr)
+        .replace(/{TEN_TIEM}/g, db.brand.title);
+
+      currentRemindPhone = c.phone.replace(/\D/g, '');
+      document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Nhắc bảo hành dặm';
+      document.getElementById('remindCustName').innerText = c.name;
+      document.getElementById('remindCustPhone').innerText = c.phone;
+      document.getElementById('remindMessageBody').value = msg;
+      document.getElementById('remindModal').style.display = 'block';
+    }
+
+    function openQuickMessageModal(custId) {
+      const c = db.customers.find(item => item.id === custId);
+      if (!c) return;
+      const msg = `Xin chào ${c.name}, ${db.brand.title} xin cảm ơn bạn đã sử dụng dịch vụ. Nếu cần hỗ trợ thêm, bạn vui lòng nhắn lại tiệm nhé!`;
+      currentRemindPhone = c.phone.replace(/\D/g, '');
+      document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi tin nhắn chăm sóc';
+      document.getElementById('remindCustName').innerText = c.name;
+      document.getElementById('remindCustPhone').innerText = c.phone;
+      document.getElementById('remindMessageBody').value = msg;
+      document.getElementById('remindModal').style.display = 'block';
+    }
+
+    function sendViaZalo() {
+      const text = document.getElementById('remindMessageBody').value;
+      navigator.clipboard.writeText(text).then(() => {
+        window.open(`https://zalo.me/${currentRemindPhone}`, '_blank');
+      });
+    }
+
+    function sendViaSMS() {
+      const text = encodeURIComponent(document.getElementById('remindMessageBody').value);
+      window.location.href = `sms:${currentRemindPhone}?body=${text}`;
+    }
+
+    function copyReminderText() {
+      navigator.clipboard.writeText(document.getElementById('remindMessageBody').value);
+      showAppAlert('Đã sao chép tin nhắn!');
+    }
+
+    /* DOANH THU 6 NÚT */
+    function unlockRevenue() {
+      if (document.getElementById('passcodeInput').value === db.brand.passcode) {
+        document.getElementById('revenueLockScreen').style.display = 'none';
+        document.getElementById('revenueContent').style.display = 'block';
+        applyRevenuePreset('this_month', document.getElementById('btnPresetThisMonth'));
+      } else {
+        showAppAlert('Sai mật khẩu!');
+      }
+    }
+
+    function lockRevenue() {
+      document.getElementById('revenueLockScreen').style.display = 'block';
+      document.getElementById('revenueContent').style.display = 'none';
+      document.getElementById('passcodeInput').value = '';
+    }
+
+    function clearRevenuePresetActive() {
+      document.querySelectorAll('.rev-preset-btn').forEach(b => b.classList.remove('active'));
+    }
+
+    function applyRevenuePreset(type, btn) {
+      clearRevenuePresetActive();
+      if (btn) btn.classList.add('active');
+      const now = new Date();
+      let start = new Date(now), end = new Date(now);
+
+      if (type === 'this_week') {
+        const day = (now.getDay() + 6) % 7;
+        start.setDate(now.getDate() - day);
+        end.setDate(start.getDate() + 6);
+      } else if (type === 'last_week') {
+        const day = (now.getDay() + 6) % 7;
+        start.setDate(now.getDate() - day - 7);
+        end.setDate(start.getDate() + 6);
+      } else if (type === 'this_month') {
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      } else if (type === 'last_month') {
+        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        end = new Date(now.getFullYear(), now.getMonth(), 0);
+      } else if (type === 'this_year') {
+        start = new Date(now.getFullYear(), 0, 1);
+        end = new Date(now.getFullYear(), 11, 31);
+      } else if (type === 'last_year') {
+        start = new Date(now.getFullYear() - 1, 0, 1);
+        end = new Date(now.getFullYear() - 1, 11, 31);
+      }
+
+      document.getElementById('revStartDate').value = formatDateYMD(start);
+      document.getElementById('revEndDate').value = formatDateYMD(end);
+      filterRevenue();
+    }
+
+    function filterRevenue() {
+      let start = document.getElementById('revStartDate').value;
+      let end = document.getElementById('revEndDate').value;
+      if (!start || !end) return;
+
+      let total = 0;
+      let serviceMap = {};
+      let customerMap = {};
+
+      (db.customers || []).forEach(c => {
+        let custTotal = 0;
+        (c.sessions || []).forEach(s => {
+          let sDate = (s.date || '').substring(0, 10);
+          if (sDate >= start && sDate <= end) {
+            let money = ((s.paid !== undefined) ? s.paid : (s.price || 0));
+            total += money;
+            custTotal += money;
+
+            let sName = s.service || 'Khác';
+            serviceMap[sName] = (serviceMap[sName] || 0) + money;
+          }
+        });
+        if (custTotal > 0) {
+          customerMap[c.name] = (customerMap[c.name] || 0) + custTotal;
+        }
+      });
+
+      document.getElementById('filteredRevResult').innerText = 'Tổng thực thu: ' + formatMoney(total);
+
+      const sContainer = document.getElementById('serviceStatsList');
+      const sKeys = Object.keys(serviceMap);
+      if (sKeys.length === 0) {
+        sContainer.innerHTML = '<div style="color:var(--text-muted); font-size:12.5px; padding:6px 0;">Không có phát sinh doanh thu trong kỳ này.</div>';
+      } else {
+        sContainer.innerHTML = sKeys.map(k => `
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border-color); font-size:13px;">
+            <span>${escapeHtml(k)}</span>
+            <strong style="color:var(--primary-gold);">${formatMoney(serviceMap[k])}</strong>
+          </div>
+        `).join('');
+      }
+
+      const cContainer = document.getElementById('customerRevList');
+      const cKeys = Object.keys(customerMap);
+      if (cKeys.length === 0) {
+        cContainer.innerHTML = '<div style="color:var(--text-muted); font-size:12.5px; padding:6px 0;">Không có khách hàng thanh toán trong kỳ này.</div>';
+      } else {
+        cContainer.innerHTML = cKeys.map(k => `
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border-color); font-size:13px;">
+            <span>${escapeHtml(k)}</span>
+            <strong style="color:var(--success);">${formatMoney(customerMap[k])}</strong>
+          </div>
+        `).join('');
+      }
+
+      renderRevenueCards();
+    }
+
+    function renderRevenueCards() {
+      const todayStr = formatDateYMD(new Date());
+      const monthStr = todayStr.substring(0, 7);
+      let revToday = 0, revMonth = 0;
+
+      (db.customers || []).forEach(c => {
+        (c.sessions || []).forEach(s => {
+          let p = (s.paid !== undefined) ? s.paid : (s.price || 0);
+          let dStr = (s.date || '').substring(0, 10);
+          if (dStr === todayStr) revToday += p;
+          if (dStr.startsWith(monthStr)) revMonth += p;
+        });
+      });
+      document.getElementById('revToday').innerText = formatMoney(revToday);
+      document.getElementById('revMonth').innerText = formatMoney(revMonth);
+    }
+
+    /* ĐIỀU HƯỚNG & CÀI ĐẶT */
+    function switchTab(tabId, el) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById('tab-' + tabId).classList.add('active');
+      el.classList.add('active');
+
+      if (tabId === 'home') renderHome();
+      if (tabId === 'customers') renderCustomerList();
+      if (tabId === 'appointments') renderAppointmentList();
+      if (tabId === 'warranty') renderWarrantyList();
+      if (tabId === 'revenue') renderRevenueCards();
+    }
+
+    function openSettingsModal() {
+      renderBankOptions();
+      document.getElementById('settingTitle').value = db.brand.title;
+      document.getElementById('settingSlogan').value = db.brand.slogan;
+      document.getElementById('settingMsgTemplate').value = db.brand.msgTemplate;
+      document.getElementById('settingBankId').value = db.brand.bankId || '970436';
+      document.getElementById('settingBankAccountNo').value = db.brand.bankAccountNo || '';
+      document.getElementById('settingBankAccountName').value = db.brand.bankAccountName || '';
+      document.getElementById('settingPasscode').value = '';
+      document.getElementById('settingOldPasscode').value = '';
+      document.getElementById('settingsModal').style.display = 'block';
+      renderCloudSettingsBox();
+    }
+
+    function switchSettingsTab(tabName, el) {
+      document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('settingsTab-' + tabName).classList.add('active');
+    }
+
+    async function saveBrandSettings() {
+      let newPass = document.getElementById('settingPasscode').value.trim();
+      if (newPass) {
+        let oldPass = document.getElementById('settingOldPasscode').value.trim();
+        let currentPass = (db.brand && db.brand.passcode) ? db.brand.passcode : '123456';
+        if (!oldPass) {
+          showAppAlert('Vui lòng nhập mật khẩu hiện tại để đổi mật khẩu mới!');
+          return;
+        }
+        if (oldPass !== currentPass) {
+          showAppAlert('Mật khẩu hiện tại không đúng. Vui lòng kiểm tra lại!');
+          return;
+        }
+        db.brand.passcode = newPass;
+      }
+
+      db.brand.title = document.getElementById('settingTitle').value.trim() || db.brand.title;
+      db.brand.slogan = document.getElementById('settingSlogan').value.trim() || db.brand.slogan;
+      db.brand.msgTemplate = document.getElementById('settingMsgTemplate').value.trim() || db.brand.msgTemplate;
+      db.brand.bankId = document.getElementById('settingBankId').value;
+      db.brand.bankAccountNo = document.getElementById('settingBankAccountNo').value.trim();
+      db.brand.bankAccountName = document.getElementById('settingBankAccountName').value.trim();
+
+      await saveDB();
+      syncBrandToCloud();
+      renderHome();
+      document.getElementById('settingPasscode').value = '';
+      document.getElementById('settingOldPasscode').value = '';
+      showAppAlert('Đã cập nhật cài đặt thành công!');
+    }
+
+    function handleLogoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      compressImageFile(file, 400, 0.85, function(dataUrl) {
+        document.getElementById('settingLogoPreview').src = dataUrl;
+        db.brand.logo = dataUrl;
+      });
+    }
+
+    async function exportDataFile() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+      const a = document.createElement('a');
+      a.href = dataStr;
+      a.download = `SaoLuu_PMU_${Date.now()}.json`;
+      a.click();
+      if (!db.brand) db.brand = {};
+      db.brand.lastExportDate = getTodayDateTimeString();
+      await saveDB();
+    }
+
+    async function processImportedJsonText(jsonText) {
+      try {
+        const importedDB = JSON.parse(jsonText);
+        if (importedDB && importedDB.customers) {
+          db = importedDB;
+          if (!db.appointments) db.appointments = [];
+          markDataChanged();
+          await saveDB();
+          renderHome();
+          renderCustomerList();
+          renderWarrantyList();
+          if (cloudUser) {
+            syncBrandToCloud();
+            db.customers.forEach(c => syncCustomerToCloud(c.id));
+            (db.appointments || []).forEach(a => syncAppointmentToCloud(a.id));
+          }
+          showAppAlert("Phục hồi dữ liệu thành công! Đã nạp " + importedDB.customers.length + " khách hàng.");
+          closeModal('settingsModal');
+        } else {
+          showAppAlert("Nội dung không đúng định dạng sao lưu của ứng dụng!");
+        }
+      } catch (err) {
+        showAppAlert("Lỗi đọc dữ liệu: " + err.message);
+      }
+    }
+
+    function importDataFromPaste() {
+      const text = document.getElementById('importPasteText').value.trim();
+      if (!text) {
+        showAppAlert('Vui lòng dán nội dung file sao lưu vào ô trước khi bấm nút này.');
+        return;
+      }
+      processImportedJsonText(text);
+    }
+
+    function importDataFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        processImportedJsonText(e.target.result);
+      };
+      reader.readAsText(file);
+    }
+
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function showAppAlert(msg) {
+      document.getElementById('customAlertMessage').innerText = msg;
+      document.getElementById('customAlertModal').style.display = 'block';
+    }
+    function closeCustomAlert() { closeModal('customAlertModal'); }
+
+    window.onload = async function() {
+      try {
+        let saved = await localforage.getItem('na_pmu_db');
+        if (saved) db = saved;
+      } catch (e) {}
+      renderHome();
+      initFirebase();
+      checkDailyTasksPopup();
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').catch(function(err) {
+          console.log('SW registration failed: ', err);
+        });
+      }
+    };
+  </script>
+</body>
+</html>
