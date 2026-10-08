@@ -380,7 +380,7 @@
     .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; }
     .badge-success { background: rgba(46, 204, 113, 0.2); color: var(--success); }
     .badge-warning { background: rgba(243, 156, 18, 0.2); color: var(--warning); }
-    .badge-danger { background: rgba(231, 76, 60, 0.25); color: var(--danger); }
+    .badge-danger { background: rgba(231, 76, 60, 0.25); color: var(--danger); border: 1px solid rgba(231, 76, 60, 0.4); }
     .badge-secondary { background: rgba(155, 161, 166, 0.2); color: var(--text-muted); }
 
     .debt-panel { background: rgba(37, 40, 48, 0.85); border: 1px dashed var(--border-color); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
@@ -642,7 +642,21 @@
 
   </div>
 
-  <!-- MODAL KHÓA MÀN HÌNH BẢN QUYỀN / DÙNG THỬ (7 NGÀY) -->
+  <!-- MODAL: NHẮC VIỆC HÀNG NGÀY (LỊCH HẸN HÔM NAY) -->
+  <div id="autoWarrantyReminderModal" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+      <div class="modal-header-top">
+        <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-bell"></i> Nhắc việc hôm nay</h3>
+      </div>
+      <div id="autoAppointmentReminderSection" style="margin-bottom: 16px;">
+        <p style="font-size: 12.5px; font-weight: 700; color: #fff; margin-bottom: 8px;"><i class="fa-solid fa-calendar-check" style="color: var(--primary-gold);"></i> Lịch hẹn hôm nay</p>
+        <div id="autoAppointmentReminderList" style="max-height: 45vh; overflow-y: auto;"></div>
+      </div>
+      <button class="btn-gold" style="margin-top: 12px;" onclick="closeModal('autoWarrantyReminderModal')"><i class="fa-solid fa-check"></i> Đã hiểu</button>
+    </div>
+  </div>
+
+  <!-- MODAL KHÓA MÀN HÌNH BẢN QUYỀN (7 NGÀY & LIÊN HỆ) -->
   <div id="licenseLockModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(18, 19, 22, 0.98); z-index: 9999; padding: 25px 16px; overflow-y: auto;">
     <div style="max-width: 440px; margin: 30px auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 24px; text-align: center;">
       <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(231, 76, 60, 0.15); color: var(--danger); font-size: 28px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
@@ -829,7 +843,7 @@
     </div>
   </div>
 
-  <!-- MODAL: THÊM / SỬA LỊCH HẸN -->
+  <!-- MODAL: THÊM / SỬA LỊCH HẸN (CHỌN DỊCH VỤ LINH HOẠT NHƯ BẢN GỐC) -->
   <div id="appointmentModal" class="modal">
     <div class="modal-content">
       <div class="modal-header-top">
@@ -847,20 +861,28 @@
         <input type="tel" id="apptPhone" class="form-control" placeholder="Nhập số điện thoại..." maxlength="11">
       </div>
       <div class="form-group">
-        <label>Dịch vụ hẹn</label>
-        <input type="text" id="apptService" class="form-control" placeholder="VD: Phun mày, Dặm môi, Khử thâm...">
+        <label>Dịch vụ dự kiến (* Nhấn nhóm để chọn chi tiết)</label>
+        <div class="service-btn-grid">
+          <div class="service-parent-btn active" id="appt-btn-grp-moi" onclick="toggleApptServiceGroup('moi')"><span>Môi</span></div>
+          <div class="service-parent-btn" id="appt-btn-grp-may" onclick="toggleApptServiceGroup('may')"><span>Mày</span></div>
+          <div class="service-parent-btn" id="appt-btn-grp-mi" onclick="toggleApptServiceGroup('mi')"><span>Mí</span></div>
+          <div class="service-parent-btn" id="appt-btn-grp-combo" onclick="toggleApptServiceGroup('combo')"><span>Combo</span></div>
+          <div class="service-parent-btn" id="appt-btn-grp-nhuhoa" onclick="toggleApptServiceGroup('nhuhoa')"><span>Nhũ hoa</span></div>
+          <div class="service-parent-btn" id="appt-btn-grp-xoa" onclick="toggleApptServiceGroup('xoa')"><span>Xóa</span></div>
+        </div>
+
+        <div class="sub-service-container" id="apptSubServiceContainer">
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;" id="apptSubServiceTitle">Chọn loại dịch vụ Môi:</div>
+          <div class="sub-service-grid" id="apptSubServiceGrid"></div>
+        </div>
+        <input type="hidden" id="apptService" value="Phun môi">
+        <div style="font-size: 12px; color: var(--primary-gold); margin-top: -6px; margin-bottom: 10px;">
+          Dịch vụ đã chọn: <strong id="apptDisplaySelectedService">Phun môi</strong>
+        </div>
       </div>
       <div class="form-group">
         <label>Ngày giờ hẹn (*)</label>
         <input type="datetime-local" id="apptDateTime" class="form-control">
-      </div>
-      <div class="form-group">
-        <label>Trạng thái</label>
-        <select id="apptStatus" class="form-control">
-          <option value="pending">Chờ đến</option>
-          <option value="completed">Đã đến làm</option>
-          <option value="cancelled">Đã huỷ</option>
-        </select>
       </div>
       <div class="form-group">
         <label>Ghi chú</label>
@@ -871,11 +893,11 @@
     </div>
   </div>
 
-  <!-- MODAL: GỬI TIN NHẮN NHẮC BẢO HÀNH -->
+  <!-- MODAL: GỬI TIN NHẮN NHẮC LỊCH HẸN / BẢO HÀNH -->
   <div id="remindModal" class="modal">
     <div class="modal-content">
       <div class="modal-header-top">
-        <h3 style="color: var(--primary-gold); font-size: 16px;"><i class="fa-solid fa-paper-plane"></i> Gửi tin nhắn nhắc bảo hành</h3>
+        <h3 id="remindModalHeaderTitle" style="color: var(--primary-gold); font-size: 16px;"><i class="fa-solid fa-paper-plane"></i> Gửi tin nhắn nhắc lịch</h3>
         <div class="modal-close-btn" onclick="closeModal('remindModal')"><i class="fa-solid fa-xmark"></i></div>
       </div>
 
@@ -937,7 +959,7 @@
     </div>
   </div>
 
-  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN (BẮT BUỘC) -->
+  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN -->
   <div id="cloudLoginModal" class="modal" style="background: rgba(18, 19, 22, 0.98); z-index: 9998;">
     <div class="modal-content" style="border-color: var(--primary-gold); box-shadow: 0 0 30px rgba(197, 160, 89, 0.2);">
       <div class="modal-header-top" style="border-bottom: none; margin-bottom: 6px;">
@@ -1091,7 +1113,7 @@
     let cloudUnsubCustomers = null;
     let cloudUnsubAppointments = null;
     let cloudUnsubBrand = null;
-    let currentAccountExpireAt = 0; // Biến lưu mốc thời gian hết hạn của tài khoản
+    let currentAccountExpireAt = 0;
 
     let db = {
       brand: {
@@ -1138,22 +1160,19 @@
       return clean.length >= 9 && clean.length <= 11;
     }
 
-    // Định dạng chuỗi đếm ngược thời gian còn lại
     function formatTimeRemaining(expireAt) {
       const diffMs = expireAt - Date.now();
       if (diffMs <= 0) return 'Đã hết hạn';
       
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      if (diffDays >= 1) {
-        return `Còn ${diffDays} ngày`;
-      }
+      if (diffDays >= 1) return `Còn ${diffDays} ngày`;
       
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
       return `Còn ${diffHours} giờ ${diffMins} phút`;
     }
 
-    /* MODULE BẢN QUYỀN & KHÓA TỨC THÌ */
+    /* MODULE BẢN QUYỀN */
     function checkLicenseExpiry(userData) {
       const lockModal = document.getElementById('licenseLockModal');
       const now = Date.now();
@@ -1170,13 +1189,11 @@
       }
     }
 
-    // Bộ hẹn giờ ngầm kiểm tra mỗi 30 giây (Tự khóa tức thì nếu khách treo máy qua giờ hết hạn)
     setInterval(function() {
       if (cloudUser && currentAccountExpireAt > 0) {
         if (Date.now() >= currentAccountExpireAt) {
           checkLicenseExpiry({ expireAt: currentAccountExpireAt });
         }
-        // Cập nhật lại chuỗi đếm ngược nếu đang mở modal cài đặt
         const expEl = document.getElementById('licenseExpiryDisplay');
         if (expEl && document.getElementById('settingsModal').style.display === 'block') {
           const dateStr = new Date(currentAccountExpireAt).toLocaleDateString('vi-VN');
@@ -1274,7 +1291,7 @@
           </div>
           <button type="button" class="btn-gold" style="padding: 10px; margin-bottom: 12px;" onclick="activateLicenseKeyFromSettings()"><i class="fa-solid fa-key"></i> Kích hoạt gói</button>
 
-          <!-- KHỐI LIÊN HỆ MUA KEY -->
+          <!-- KHỐI LIÊN HỆ MUA KEY TRỰC TIẾP -->
           <div style="background: rgba(37, 40, 48, 0.7); border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 12px; text-align: center;">
             <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Chưa có mã key? Liên hệ để mua bản quyền:</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -1297,7 +1314,7 @@
         `;
       }
     }
-    
+
     async function updateLicenseDisplay() {
       if (!cloudUser || !cloudFirestore) return;
       const userRef = cloudFirestore.collection('users').doc(cloudUser.uid);
@@ -1309,7 +1326,6 @@
         const data = doc.data() || {};
         exp = data.expireAt || 0;
       } else {
-        // Tự động cấp bù nếu tài khoản từng bị tạo thiếu tài liệu
         const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
         const now = Date.now();
         exp = now + SEVEN_DAYS_MS;
@@ -1532,7 +1548,7 @@
       cloudFirestore.collection('users').doc(cloudUser.uid).set(brandPayload, { merge: true });
     }
 
-    /* TIỆN ÍCH, NGÂN HÀNG & VIETQR */
+    /* TIỆN ÍCH & VIETQR */
     const VIETQR_BANKS = [
       { id: '970436', name: 'Vietcombank' },
       { id: '970415', name: 'VietinBank' },
@@ -1660,7 +1676,7 @@
       showAppAlert('Đã ghi nhận thanh toán ' + formatMoney(receivedAmount));
     }
 
-    /* THÔNG TIN DỊCH VỤ */
+    /* DỊCH VỤ */
     const serviceCategories = {
       'moi': { name: 'Môi', title: 'Chọn loại dịch vụ Môi:', items: ['Phun môi', 'Khử thâm', 'Phụ thu'] },
       'may': { name: 'Mày', title: 'Chọn loại dịch vụ Mày:', items: ['Phun Ombre', 'Sợi đầu phun đuôi', 'Điêu khắc sợi', 'Phụ thu'] },
@@ -1872,129 +1888,277 @@
       }
     }
 
-    /* QUẢN LÝ LỊCH HẸN */
+    /* ============================================================================
+       KHÔI PHỤC HOÀN TOÀN TÍNH NĂNG LỊCH HẸN BẢN GỐC (ĐÃ TRỄ HẸN, ĐÃ ĐẾN, HUỶ, NHẮC)
+       ============================================================================ */
     function renderAppointmentList() {
       const q = (document.getElementById('appointmentSearchInput').value || '').toLowerCase().trim();
       const container = document.getElementById('appointmentList');
       if (!db.appointments) db.appointments = [];
 
-      let filtered = db.appointments.filter(a => (a.name && a.name.toLowerCase().includes(q)) || (a.phone && a.phone.includes(q)) || (a.service && a.service.toLowerCase().includes(q)));
+      let filtered = db.appointments.filter(a =>
+        (a.name && a.name.toLowerCase().includes(q)) ||
+        (a.phone && a.phone.includes(q)) ||
+        (a.service && a.service.toLowerCase().includes(q))
+      );
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 25px;">Không có lịch hẹn nào.</div>`;
+        container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 25px;">Không có lịch hẹn nào. Bấm "Thêm lịch hẹn" để bắt đầu.</div>`;
         return;
       }
 
-      const statusMap = {
-        'pending': { text: 'Chờ đến', class: 'badge-warning' },
-        'completed': { text: 'Đã hoàn thành', class: 'badge-success' },
-        'cancelled': { text: 'Đã huỷ', class: 'badge-danger' }
-      };
+      filtered.sort((a, b) => (a.dateTime || '').localeCompare(b.dateTime || ''));
 
-      container.innerHTML = filtered.map(a => {
-        const st = statusMap[a.status || 'pending'] || statusMap['pending'];
-        return `
+      const now = new Date();
+      const todayStr = formatDateYMD(now);
+
+      let html = '';
+      filtered.forEach(a => {
+        const dt = new Date(a.dateTime);
+        const validDate = !isNaN(dt.getTime());
+        const dateDisplay = validDate ? formatDateTimeDisplay(a.dateTime) : 'Chưa xác định';
+        const isToday = validDate && a.dateTime.slice(0, 10) === todayStr;
+        const isPast = validDate && dt < now && a.status === 'pending';
+
+        let statusBadge = '';
+        if (a.status === 'done') {
+          statusBadge = `<span class="badge badge-success"><i class="fa-solid fa-check"></i> Đã đến</span>`;
+        } else if (a.status === 'cancelled') {
+          statusBadge = `<span class="badge badge-secondary"><i class="fa-solid fa-ban"></i> Đã huỷ</span>`;
+        } else if (isPast) {
+          statusBadge = `<span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Đã trễ hẹn</span>`;
+        } else if (isToday) {
+          statusBadge = `<span class="badge badge-warning"><i class="fa-solid fa-bell"></i> Hôm nay</span>`;
+        } else {
+          statusBadge = `<span class="badge badge-secondary"><i class="fa-regular fa-clock"></i> Sắp tới</span>`;
+        }
+
+        html += `
           <div class="card" style="border-left: 4px solid var(--primary-gold);">
-            <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 4px;">
-              <span>${escapeHtml(a.name)}</span>
-              <span class="badge ${st.class}">${st.text}</span>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px;">
+              <div style="font-weight: bold; font-size: 15px;">${escapeHtml(a.name)}</div>
+              ${statusBadge}
             </div>
-            <div style="font-size: 12.5px; color: var(--text-muted); margin: 3px 0;">
-              SĐT: ${escapeHtml(a.phone)} &bull; Thời gian: <strong style="color: var(--primary-gold);">${formatDateTimeDisplay(a.dateTime)}</strong>
-            </div>
-            <div style="font-size: 12px; margin-top: 4px;">Dịch vụ hẹn: <strong>${escapeHtml(a.service || 'Chưa chọn')}</strong></div>
-            ${a.note ? `<div style="font-size: 12px; color: var(--text-muted); font-style: italic; margin-top: 3px;">Ghi chú: ${escapeHtml(a.note)}</div>` : ''}
-            
-            <div style="display: flex; gap: 6px; margin-top: 10px;">
-              <a class="btn-call" href="tel:${escapeHtml(a.phone)}"><i class="fa-solid fa-phone"></i> Gọi</a>
-              <button class="btn-outline" onclick="openAppointmentModal('${a.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
-              <button class="btn-outline" style="border-color: var(--danger); color: var(--danger);" onclick="deleteAppointment('${a.id}')"><i class="fa-solid fa-trash"></i> Xoá</button>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">SĐT: ${escapeHtml(a.phone)}</div>
+            <div style="font-size: 12px; margin-bottom: 4px;">Dịch vụ: <strong style="color: var(--primary-gold);">${escapeHtml(a.service) || '(chưa ghi rõ)'}</strong></div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-regular fa-clock"></i> ${dateDisplay}</div>
+            ${a.note ? `<div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-style: italic;">Ghi chú: ${escapeHtml(a.note)}</div>` : ''}
+
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;">
+              <a class="btn-call" style="flex: 0 0 auto; padding: 6px 12px;" href="tel:${escapeHtml(a.phone)}" title="Gọi điện"><i class="fa-solid fa-phone"></i></a>
+              <button class="btn-remind" style="flex: 0 0 auto; padding: 6px 12px;" onclick="openAppointmentRemindModal('${a.id}')" title="Gửi tin nhắn nhắc"><i class="fa-solid fa-comment-dots"></i></button>
+              ${a.status === 'pending' ? `
+                <button class="btn-outline" style="padding: 6px 10px; font-size: 11px; border-color: var(--success); color: var(--success);" title="Đánh dấu đã đến và mở form tạo hồ sơ" onclick="markAppointmentStatus('${a.id}', 'done')"><i class="fa-solid fa-check"></i> Đã đến</button>
+                <button class="btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="markAppointmentStatus('${a.id}', 'cancelled')"><i class="fa-solid fa-ban"></i> Huỷ hẹn</button>
+              ` : `
+                <button class="btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="markAppointmentStatus('${a.id}', 'pending')"><i class="fa-solid fa-rotate-left"></i> Khôi phục</button>
+              `}
+              <button class="btn-outline" style="padding: 6px 10px; font-size: 11px;" onclick="openAppointmentModal('${a.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
+              <button class="btn-outline" style="padding: 6px 10px; font-size: 11px; border-color: var(--danger); color: var(--danger);" onclick="deleteAppointment('${a.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
             </div>
           </div>
         `;
-      }).join('');
+      });
+      container.innerHTML = html;
     }
 
-    function openAppointmentModal(apptId = null) {
-      document.getElementById('apptEditId').value = apptId || '';
-      if (apptId) {
-        const appt = (db.appointments || []).find(a => a.id === apptId);
-        if (appt) {
-          document.getElementById('appointmentModalTitle').innerHTML = '<i class="fa-solid fa-calendar-check"></i> Chỉnh sửa lịch hẹn';
-          document.getElementById('apptName').value = appt.name || '';
-          document.getElementById('apptPhone').value = appt.phone || '';
-          document.getElementById('apptService').value = appt.service || '';
-          document.getElementById('apptDateTime').value = appt.dateTime || getTodayDateTimeString();
-          document.getElementById('apptStatus').value = appt.status || 'pending';
-          document.getElementById('apptNote').value = appt.note || '';
+    function toggleApptServiceGroup(groupKey, preselectedSub = null) {
+      document.querySelectorAll('#appointmentModal .service-parent-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById('appt-btn-grp-' + groupKey);
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const grp = serviceCategories[groupKey];
+      document.getElementById('apptSubServiceTitle').innerText = grp.title;
+
+      const subGrid = document.getElementById('apptSubServiceGrid');
+      let targetSub = preselectedSub || grp.items[0];
+
+      subGrid.innerHTML = grp.items.map(item => `
+        <div class="sub-chip ${item === targetSub ? 'selected' : ''}" onclick="selectApptSubService('${item}')">
+          ${item}
+        </div>
+      `).join('');
+
+      selectApptSubService(targetSub);
+    }
+
+    function selectApptSubService(subItemName) {
+      document.querySelectorAll('#appointmentModal .sub-chip').forEach(c => {
+        c.classList.toggle('selected', c.innerText.trim() === subItemName);
+      });
+      document.getElementById('apptService').value = subItemName;
+      document.getElementById('apptDisplaySelectedService').innerText = subItemName;
+    }
+
+    function openAppointmentModal(id = null) {
+      document.getElementById('apptEditId').value = id || '';
+      if (id) {
+        const appt = (db.appointments || []).find(a => a.id === id);
+        if (!appt) return;
+        document.getElementById('appointmentModalTitle').innerHTML = '<i class="fa-solid fa-calendar-check"></i> Sửa lịch hẹn';
+        document.getElementById('apptName').value = appt.name || '';
+        document.getElementById('apptPhone').value = appt.phone || '';
+        document.getElementById('apptDateTime').value = appt.dateTime || '';
+        document.getElementById('apptNote').value = appt.note || '';
+
+        let groupFound = 'moi';
+        for (let g in serviceCategories) {
+          if (serviceCategories[g].items.includes(appt.service)) { groupFound = g; break; }
         }
+        toggleApptServiceGroup(groupFound, appt.service || null);
       } else {
-        document.getElementById('appointmentModalTitle').innerHTML = '<i class="fa-solid fa-calendar-plus"></i> Thêm lịch hẹn mới';
+        document.getElementById('appointmentModalTitle').innerHTML = '<i class="fa-solid fa-calendar-plus"></i> Thêm lịch hẹn';
         document.getElementById('apptName').value = '';
         document.getElementById('apptPhone').value = '';
-        document.getElementById('apptService').value = 'Phun môi';
-        document.getElementById('apptDateTime').value = getTodayDateTimeString();
-        document.getElementById('apptStatus').value = 'pending';
         document.getElementById('apptNote').value = '';
+        toggleApptServiceGroup('moi');
+        const suggested = new Date(Date.now() + 2 * 60 * 60 * 1000);
+        document.getElementById('apptDateTime').value = suggested.toISOString().slice(0, 16);
       }
       document.getElementById('appointmentModal').style.display = 'block';
     }
 
     async function saveAppointmentData() {
-      const apptId = document.getElementById('apptEditId').value;
+      const id = document.getElementById('apptEditId').value;
       const name = document.getElementById('apptName').value.trim();
       const phone = document.getElementById('apptPhone').value.trim();
       const service = document.getElementById('apptService').value.trim();
       const dateTime = document.getElementById('apptDateTime').value;
-      const status = document.getElementById('apptStatus').value;
       const note = document.getElementById('apptNote').value.trim();
 
-      if (!name || !phone || !dateTime) {
-        showAppAlert('Vui lòng nhập Tên, Số điện thoại và Thời gian hẹn!');
+      if (!name || !phone) {
+        showAppAlert('Vui lòng nhập Tên và Số điện thoại khách hẹn!');
         return;
       }
       if (!isValidPhoneNumber(phone)) {
-        showAppAlert('Số điện thoại không hợp lệ (phải từ 9 đến 11 số)!');
+        showAppAlert('Số điện thoại không hợp lệ! Vui lòng nhập từ 9-11 chữ số.');
+        return;
+      }
+      if (!dateTime) {
+        showAppAlert('Vui lòng chọn ngày giờ hẹn!');
         return;
       }
 
-      if (apptId) {
-        const appt = (db.appointments || []).find(a => a.id === apptId);
+      if (!db.appointments) db.appointments = [];
+
+      let apptId = id;
+      if (id) {
+        const appt = db.appointments.find(a => a.id === id);
         if (appt) {
           appt.name = name;
           appt.phone = phone;
           appt.service = service;
           appt.dateTime = dateTime;
-          appt.status = status;
           appt.note = note;
           appt.updatedAt = Date.now();
         }
       } else {
-        const newAppt = {
-          id: 'a_' + Date.now(),
-          name, phone, service, dateTime, status, note,
+        apptId = 'a_' + Date.now();
+        db.appointments.push({
+          id: apptId,
+          name, phone, service, dateTime, note,
+          status: 'pending',
           createdAt: Date.now(),
           updatedAt: Date.now()
-        };
-        db.appointments.push(newAppt);
+        });
       }
 
       markDataChanged();
       await saveDB();
-      syncAppointmentToCloud(apptId || ('a_' + Date.now()));
+      syncAppointmentToCloud(apptId);
       closeModal('appointmentModal');
       renderAppointmentList();
-      showAppAlert('Lưu lịch hẹn thành công!');
+      showAppAlert('Đã lưu lịch hẹn thành công!');
+    }
+
+    async function markAppointmentStatus(id, status) {
+      const appt = (db.appointments || []).find(a => a.id === id);
+      if (!appt) return;
+      appt.status = status;
+      appt.updatedAt = Date.now();
+
+      markDataChanged();
+      await saveDB();
+      syncAppointmentToCloud(id);
+      renderAppointmentList();
+
+      // Nếu khách bấm "Đã đến", tự động mở form thêm khách hàng điền sẵn Tên + SĐT + Dịch vụ như bản gốc
+      if (status === 'done') {
+        openAddCustomerModalFromAppointment(id);
+      }
+    }
+
+    function openAddCustomerModalFromAppointment(apptId) {
+      const appt = (db.appointments || []).find(a => a.id === apptId);
+      if (!appt) return;
+
+      openAddCustomerModal();
+      document.getElementById('custName').value = appt.name || '';
+      document.getElementById('custPhone').value = appt.phone || '';
+
+      if (appt.service) {
+        let groupFound = null;
+        for (let g in serviceCategories) {
+          if (serviceCategories[g].items.includes(appt.service)) { groupFound = g; break; }
+        }
+        if (groupFound) toggleServiceGroup(groupFound, appt.service);
+      }
+
+      if (appt.note) {
+        document.getElementById('custPreStatus').value = 'Ghi chú lúc hẹn: ' + appt.note;
+      }
     }
 
     async function deleteAppointment(id) {
       if (confirm('Bạn có chắc chắn muốn xóa lịch hẹn này?')) {
-        db.appointments = db.appointments.filter(a => a.id !== id);
+        db.appointments = (db.appointments || []).filter(a => a.id !== id);
         markDataChanged();
         await saveDB();
         cloudDeleteAppointment(id);
         renderAppointmentList();
+        showAppAlert('Đã xóa lịch hẹn thành công!');
       }
+    }
+
+    function openAppointmentRemindModal(apptId) {
+      const appt = (db.appointments || []).find(a => a.id === apptId);
+      if (!appt) return;
+
+      const dt = new Date(appt.dateTime);
+      const timeStr = isNaN(dt.getTime()) ? '' : dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      const dateStr = isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('vi-VN');
+
+      const msg = `Xin chào ${appt.name}, ${db.brand.title || 'PMU Pro'} xin phép nhắc bạn có lịch hẹn ${appt.service || 'làm đẹp'} vào lúc ${timeStr} ngày ${dateStr}. Rất mong được đón tiếp bạn!`;
+
+      currentRemindPhone = appt.phone ? appt.phone.replace(/\D/g, '') : '';
+      document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Nhắc lịch hẹn khách';
+      document.getElementById('remindCustName').innerText = appt.name;
+      document.getElementById('remindCustPhone').innerText = appt.phone || 'Chưa có SĐT';
+      document.getElementById('remindMessageBody').value = msg;
+      document.getElementById('remindModal').style.display = 'block';
+    }
+
+    function checkTodayAppointmentsPopup() {
+      const now = new Date();
+      const todayStr = formatDateYMD(now);
+      const candidates = (db.appointments || []).filter(a => a.status === 'pending' && a.dateTime && a.dateTime.slice(0, 10) === todayStr);
+
+      if (candidates.length === 0) return;
+
+      const container = document.getElementById('autoAppointmentReminderList');
+      container.innerHTML = candidates.map(a => {
+        const dt = new Date(a.dateTime);
+        const timeStr = isNaN(dt.getTime()) ? '' : dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        return `
+          <div class="card" style="padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--primary-gold);">
+            <div style="font-weight: 600; font-size: 13px;">${escapeHtml(a.name)} <span style="color: var(--text-muted); font-size: 11px;">- ${escapeHtml(a.phone)}</span></div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Dịch vụ: ${escapeHtml(a.service) || 'Chưa ghi'}</div>
+            <div style="font-size: 12px; margin-top: 4px; color: var(--primary-gold);"><i class="fa-regular fa-clock"></i> Hẹn lúc: <strong>${timeStr}</strong> hôm nay</div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('autoWarrantyReminderModal').style.display = 'block';
     }
 
     /* QUẢN LÝ ẢNH & COMPRESS */
@@ -2343,7 +2507,7 @@
             <span>Tổng làm: <strong>${formatMoney(totalCustPrice)}</strong></span>
             <span>Tổng nợ: <strong style="color:${totalDebt > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(totalDebt)}</strong></span>
           </div>
-          ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
+          ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan ${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
         </div>
         <button class="btn-gold" style="width: 100%; margin-bottom: 16px;" onclick="closeModal('customerDetailModal'); openAddCustomerModal('${c.id}')"><i class="fa-solid fa-plus-circle"></i> Thêm lượt xăm mới cho khách này</button>
         ${(c.sessions || []).map((s, idx) => {
@@ -2353,13 +2517,14 @@
           return `
             <div class="card" style="background: var(--bg-input); border-left: 4px solid var(--primary-gold); margin-bottom: 10px; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px;">
-                <span>Lần ${idx + 1}:${escapeHtml(s.service)}</span>
+                <span>Lần ${idx + 1}: ${escapeHtml(s.service)}</span>
                 <span style="color: var(--primary-gold);">${formatMoney(s.price)}</span>
               </div>
               <div style="margin-bottom: 6px;">Đã trả: ${formatMoney(pd)} | Nợ: <strong style="color:${d > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(d)}</strong></div>
               <div>Màu đã pha: <strong>${escapeHtml(s.colorMix) || 'Mặc định'}</strong></div>
               <div>Thời gian: ${formatDateTimeDisplay(s.date)}</div>
-              <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>${(s.imgBefore || s.imgAfter) ? `
+              <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>
+              ${(s.imgBefore || s.imgAfter) ? `
                 <div class="detail-images">
                   ${s.imgBefore ? `<div class="detail-img-box"><img src="${s.imgBefore}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'before')"><span>Ảnh Trước</span></div>` : ''}
                   ${s.imgAfter ? `<div class="detail-img-box"><img src="${s.imgAfter}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'after')"><span>Ảnh Sau</span></div>` : ''}
@@ -2403,6 +2568,7 @@
         .replace(/{TEN_TIEM}/g, db.brand.title);
 
       currentRemindPhone = c.phone.replace(/\D/g, '');
+      document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Nhắc bảo hành dặm';
       document.getElementById('remindCustName').innerText = c.name;
       document.getElementById('remindCustPhone').innerText = c.phone;
       document.getElementById('remindMessageBody').value = msg;
@@ -2414,6 +2580,7 @@
       if (!c) return;
       const msg = `Xin chào ${c.name}, ${db.brand.title} xin cảm ơn bạn đã sử dụng dịch vụ. Nếu cần hỗ trợ thêm, bạn vui lòng nhắn lại tiệm nhé!`;
       currentRemindPhone = c.phone.replace(/\D/g, '');
+      document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi tin nhắn chăm sóc';
       document.getElementById('remindCustName').innerText = c.name;
       document.getElementById('remindCustPhone').innerText = c.phone;
       document.getElementById('remindMessageBody').value = msg;
@@ -2663,6 +2830,7 @@
       } catch (e) {}
       renderHome();
       initFirebase();
+      checkTodayAppointmentsPopup();
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(function(err) {
