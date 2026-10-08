@@ -447,7 +447,6 @@
       body {
         background-color: var(--bg-dark);
         background-image: 
-          /* Phủ lớp màu tối tạo độ sâu và làm chìm ảnh gốc */
           linear-gradient(rgba(18, 19, 22, 0.88), rgba(18, 19, 22, 0.94)),
           url("bg-desktop.jpg");
         background-repeat: no-repeat;
@@ -958,28 +957,33 @@
     </div>
   </div>
 
-  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN (7 NGÀY) -->
-  <div id="cloudLoginModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header-top">
-        <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-cloud"></i> Đăng nhập tài khoản</h3>
-        <div class="modal-close-btn" onclick="closeModal('cloudLoginModal')"><i class="fa-solid fa-xmark"></i></div>
+  <!-- MODAL: ĐĂNG NHẬP / TẠO TÀI KHOẢN (BẮT BUỘC & LƯU TÀI KHOẢN) -->
+  <div id="cloudLoginModal" class="modal" style="background: rgba(18, 19, 22, 0.98); z-index: 9998;">
+    <div class="modal-content" style="border-color: var(--primary-gold); box-shadow: 0 0 30px rgba(197, 160, 89, 0.2);">
+      <div class="modal-header-top" style="border-bottom: none; margin-bottom: 6px;">
+        <h3 style="color: var(--primary-gold); font-size: 18px;"><i class="fa-solid fa-cloud"></i> Đăng nhập tài khoản</h3>
       </div>
-      <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
-        Đăng nhập để sử dụng và đồng bộ dữ liệu. Khách hàng mới nhập email và mật khẩu rồi bấm "Tạo tài khoản mới" để nhận 7 ngày dùng thử.
+      <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
+        Vui lòng đăng nhập để bắt đầu sử dụng phần mềm. Nếu là tiệm mới, bạn nhập email và mật khẩu rồi bấm <strong style="color: var(--primary-gold);">"Tạo tài khoản mới"</strong> để nhận ngay 7 ngày trải nghiệm miễn phí![cite: 7]
       </p>
       <div class="form-group">
-        <label>Email</label>
+        <label>Email tiệm (*)</label>
         <input type="email" id="cloudEmail" class="form-control" placeholder="vidu@gmail.com">
       </div>
-      <div class="form-group">
-        <label>Mật khẩu (tối thiểu 6 ký tự)</label>
+      <div class="form-group" style="margin-bottom: 8px;">
+        <label>Mật khẩu (tối thiểu 6 ký tự) (*)</label>
         <input type="password" id="cloudPassword" class="form-control" placeholder="••••••">
       </div>
-      <div id="cloudLoginError" style="color: var(--danger); font-size: 12px; margin-bottom: 10px; display: none;"></div>
+
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+        <input type="checkbox" id="rememberLoginCheck" style="width: 16px; height: 16px; accent-color: var(--primary-gold); cursor: pointer;" checked>
+        <label for="rememberLoginCheck" style="font-size: 12.5px; color: var(--text-main); cursor: pointer; user-select: none;">Ghi nhớ tài khoản trên thiết bị này</label>
+      </div>
+
+      <div id="cloudLoginError" style="color: var(--danger); font-size: 12px; margin-bottom: 12px; display: none;"></div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <button class="btn-outline" style="justify-content: center; padding: 11px;" onclick="cloudSignUp()"><i class="fa-solid fa-user-plus"></i> Tạo tài khoản mới</button>
-        <button class="btn-gold" onclick="cloudSignIn()"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập</button>
+        <button class="btn-outline" style="justify-content: center; padding: 12px; font-weight: 600;" onclick="cloudSignUp()"><i class="fa-solid fa-user-plus"></i> Tạo tài khoản mới</button>
+        <button class="btn-gold" style="padding: 12px;" onclick="cloudSignIn()"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập</button>
       </div>
     </div>
   </div>
@@ -1202,12 +1206,41 @@
       }
     }
 
-    /* FIREBASE AUTH & SYNC */
+    /* FIREBASE AUTH, SYNC & REMEMBER ME */
     function setCloudStatus(text, iconClass) {
       const textEl = document.getElementById('cloudSyncStatusText');
       const boxEl = document.getElementById('cloudSyncStatus');
       if (textEl) textEl.innerText = text;
       if (boxEl) boxEl.querySelector('i').className = iconClass;
+    }
+
+    // Tự động nạp thông tin đăng nhập đã lưu
+    function loadSavedLoginCredentials() {
+      const savedEmail = localStorage.getItem('pmu_saved_email');
+      const savedPass = localStorage.getItem('pmu_saved_pass');
+      const emailInput = document.getElementById('cloudEmail');
+      const passInput = document.getElementById('cloudPassword');
+      const checkEl = document.getElementById('rememberLoginCheck');
+
+      if (savedEmail && emailInput) {
+        emailInput.value = savedEmail;
+        if (checkEl) checkEl.checked = true;
+      }
+      if (savedPass && passInput) {
+        passInput.value = savedPass;
+      }
+    }
+
+    // Lưu hoặc xóa thông tin đăng nhập theo checkbox
+    function saveLoginCredentialsIfChecked(email, pass) {
+      const checkEl = document.getElementById('rememberLoginCheck');
+      if (checkEl && checkEl.checked) {
+        localStorage.setItem('pmu_saved_email', email);
+        localStorage.setItem('pmu_saved_pass', pass);
+      } else {
+        localStorage.removeItem('pmu_saved_email');
+        localStorage.removeItem('pmu_saved_pass');
+      }
     }
 
     function initFirebase() {
@@ -1216,15 +1249,21 @@
         cloudAuth = firebase.auth();
         cloudFirestore = firebase.firestore();
 
+        // Đảm bảo phiên đăng nhập được lưu vĩnh viễn trên thiết bị
+        cloudAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(console.error);
+
+        loadSavedLoginCredentials();
+
         cloudAuth.onAuthStateChanged(function(user) {
           cloudUser = user;
           if (user) {
             setCloudStatus('Đã kết nối', 'fa-solid fa-cloud-arrow-up');
-            closeModal('cloudLoginModal');
+            document.getElementById('cloudLoginModal').style.display = 'none';
             startCloudSync();
           } else {
             setCloudStatus('Chưa đăng nhập', 'fa-solid fa-cloud-arrow-down');
             stopCloudSync();
+            // Khóa chặt: Chưa đăng nhập thì bắt buộc hiện modal, không cho thao tác app
             document.getElementById('cloudLoginModal').style.display = 'block';
           }
           renderCloudSettingsBox();
@@ -1285,6 +1324,7 @@
 
       cloudAuth.createUserWithEmailAndPassword(email, pass)
         .then(function(userCredential) {
+          saveLoginCredentialsIfChecked(email, pass);
           const uid = userCredential.user.uid;
           const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
           const now = Date.now();
@@ -1308,10 +1348,21 @@
     function cloudSignIn() {
       const email = document.getElementById('cloudEmail').value.trim();
       const pass = document.getElementById('cloudPassword').value;
-      cloudAuth.signInWithEmailAndPassword(email, pass).catch(function(err) {
-        document.getElementById('cloudLoginError').innerText = 'Lỗi: ' + err.message;
+      if (!email || !pass) {
+        document.getElementById('cloudLoginError').innerText = 'Vui lòng nhập email và mật khẩu!';
         document.getElementById('cloudLoginError').style.display = 'block';
-      });
+        return;
+      }
+
+      cloudAuth.signInWithEmailAndPassword(email, pass)
+        .then(function() {
+          saveLoginCredentialsIfChecked(email, pass);
+          document.getElementById('cloudLoginError').style.display = 'none';
+        })
+        .catch(function(err) {
+          document.getElementById('cloudLoginError').innerText = 'Đăng nhập thất bại: ' + err.message;
+          document.getElementById('cloudLoginError').style.display = 'block';
+        });
     }
 
     function cloudSignOut() {
