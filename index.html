@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quản Lý Phun Xăm Thẩm Mỹ - PMU Pro</title>
 
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1c1e24">
   <link rel="icon" href="icon-192.png">
@@ -406,6 +407,13 @@
     .warranty-sub-item.overdue { border-left-color: var(--danger); }
     .warranty-sub-item.completed { border-left-color: var(--success); }
     .warranty-actions-row { display: flex; gap: 8px; margin-top: 10px; }
+    .warranty-accordion-btn {
+      display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--primary-gold); font-size: 12px; background: var(--bg-dark); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color); transition: all 0.2s; white-space: nowrap;
+    }
+    .warranty-chevron { transition: transform 0.3s ease; }
+    .warranty-chevron.open { transform: rotate(180deg); }
+    .warranty-details-collapse { display: none; margin-top: 6px; animation: fadeIn 0.25s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
     .customer-item { display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
     .customer-item:hover { background: rgba(255,255,255,0.02); }
@@ -433,6 +441,7 @@
     #ivNextArrow { right: 6px; }
     #imageViewerDots { margin-top: 10px; text-align: center; }
 
+    /* DESKTOP VIEW & HÌNH NỀN SPA CHÌM MỜ */
     @media (min-width: 900px) {
       body {
         background-color: var(--bg-dark);
@@ -530,6 +539,7 @@
 
     <!-- 1. TAB TRANG CHỦ -->
     <div id="tab-home" class="tab-content active">
+      <div id="backupReminderBanner" style="display: none;"></div>
       <div class="hero-banner">
         <h2 style="color: var(--primary-gold); margin-bottom: 8px;" id="heroBrandName">Tiệm Phun Xăm Của Bạn</h2>
         <p style="color: var(--text-muted); font-size: 13px;">Hệ thống lưu trữ hồ sơ, hình ảnh & nhắc dặm tự động</p>
@@ -550,6 +560,7 @@
       <div class="form-group">
         <input type="text" id="customerSearchInput" class="form-control" placeholder="Tìm theo Tên, SĐT, Địa chỉ..." oninput="renderCustomerList()">
       </div>
+      <div id="customerSelectBar" style="display: none;"></div>
       <div id="customerList"></div>
     </div>
 
@@ -642,17 +653,21 @@
 
   </div>
 
-  <!-- MODAL: NHẮC VIỆC HÀNG NGÀY (LỊCH HẸN HÔM NAY) -->
+  <!-- MODAL: NHẮC VIỆC HÀNG NGÀY (LỊCH HẸN HÔM NAY & BẢO HÀNH GẦN ĐẾN HẠN) -->
   <div id="autoWarrantyReminderModal" class="modal">
-    <div class="modal-content" style="max-width: 420px;">
+    <div class="modal-content" style="max-width: 440px;">
       <div class="modal-header-top">
         <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-bell"></i> Nhắc việc hôm nay</h3>
       </div>
-      <div id="autoAppointmentReminderSection" style="margin-bottom: 16px;">
+      <div id="autoAppointmentReminderSection" style="margin-bottom: 16px; display: none;">
         <p style="font-size: 12.5px; font-weight: 700; color: #fff; margin-bottom: 8px;"><i class="fa-solid fa-calendar-check" style="color: var(--primary-gold);"></i> Lịch hẹn hôm nay</p>
-        <div id="autoAppointmentReminderList" style="max-height: 45vh; overflow-y: auto;"></div>
+        <div id="autoAppointmentReminderList" style="max-height: 28vh; overflow-y: auto;"></div>
       </div>
-      <button class="btn-gold" style="margin-top: 12px;" onclick="closeModal('autoWarrantyReminderModal')"><i class="fa-solid fa-check"></i> Đã hiểu</button>
+      <div id="autoWarrantyReminderSection" style="margin-bottom: 8px; display: none;">
+        <p style="font-size: 12.5px; font-weight: 700; color: #fff; margin-bottom: 8px;"><i class="fa-solid fa-shield-halved" style="color: var(--primary-gold);"></i> Khách sắp/quá hạn dặm bảo hành</p>
+        <div id="autoWarrantyReminderList" style="max-height: 28vh; overflow-y: auto;"></div>
+      </div>
+      <button class="btn-gold" style="margin-top: 12px;" onclick="closeAutoWarrantyReminderPopup()"><i class="fa-solid fa-check"></i> Đã hiểu</button>
     </div>
   </div>
 
@@ -665,7 +680,7 @@
       
       <h3 style="color: var(--primary-gold); font-size: 18px; margin-bottom: 8px;">Hết Hạn Trải Nghiệm Phần Mềm</h3>
       <p id="lockReasonText" style="color: var(--text-muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px;">
-        Thời gian dùng thử miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng!
+        Thời gian dùng thử miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng![cite: 3]
       </p>
 
       <div class="form-group" style="text-align: left; margin-bottom: 12px;">
@@ -843,7 +858,7 @@
     </div>
   </div>
 
-  <!-- MODAL: THÊM / SỬA LỊCH HẸN (CHỌN DỊCH VỤ LINH HOẠT NHƯ BẢN GỐC) -->
+  <!-- MODAL: THÊM / SỬA LỊCH HẸN -->
   <div id="appointmentModal" class="modal">
     <div class="modal-content">
       <div class="modal-header-top">
@@ -1066,12 +1081,19 @@
         </div>
 
         <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-top: 15px;">
-          <label style="color: var(--primary-gold); font-weight: 600; margin-bottom: 8px; display: block;"><i class="fa-solid fa-cloud-arrow-down"></i> Sao lưu file dự phòng</label>
+          <label style="color: var(--primary-gold); font-weight: 600; margin-bottom: 8px; display: block;"><i class="fa-solid fa-cloud-arrow-down"></i> Sao lưu & Phục hồi bộ nhớ</label>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             <button type="button" class="btn-outline" style="justify-content: center; padding: 8px;" onclick="exportDataFile()"><i class="fa-solid fa-download"></i> Tải file sao lưu</button>
             <button type="button" class="btn-outline" style="justify-content: center; padding: 8px;" onclick="document.getElementById('importFileInput').click()"><i class="fa-solid fa-upload"></i> Nhập file dữ liệu</button>
           </div>
           <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importDataFile(event)">
+
+          <!-- PHỤC HỒI BẰNG CÁCH DÁN NỘI DUNG (GIỮ LẠI TỪ BẢN GỐC) -->
+          <div style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;">
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Nếu nút "Nhập file dữ liệu" không phản hồi trên điện thoại: mở file sao lưu (.json), copy toàn bộ nội dung rồi dán vào ô bên dưới:</div>
+            <textarea id="importPasteText" class="form-control" rows="3" placeholder="Dán nội dung file sao lưu (.json) vào đây..."></textarea>
+            <button type="button" class="btn-outline" style="width: 100%; justify-content: center; padding: 8px; margin-top: 6px;" onclick="importDataFromPaste()"><i class="fa-solid fa-paste"></i> Phục hồi từ nội dung đã dán</button>
+          </div>
         </div>
       </div>
 
@@ -1676,7 +1698,7 @@
       showAppAlert('Đã ghi nhận thanh toán ' + formatMoney(receivedAmount));
     }
 
-    /* DỊCH VỤ */
+    /* THÔNG TIN DỊCH VỤ */
     const serviceCategories = {
       'moi': { name: 'Môi', title: 'Chọn loại dịch vụ Môi:', items: ['Phun môi', 'Khử thâm', 'Phụ thu'] },
       'may': { name: 'Mày', title: 'Chọn loại dịch vụ Mày:', items: ['Phun Ombre', 'Sợi đầu phun đuôi', 'Điêu khắc sợi', 'Phụ thu'] },
@@ -1761,12 +1783,203 @@
       };
     }
 
-    /* HIỂN THỊ DANH SÁCH & HỒ SƠ */
+    /* NHẮC VIỆC HÀNG NGÀY & POPUP (LỊCH HẸN HÔM NAY + BẢO HÀNH GẦN ĐẾN HẠN) */
+    function checkDailyTasksPopup() {
+      const now = new Date();
+      const todayStr = formatDateYMD(now);
+      
+      const appts = (db.appointments || []).filter(a => a.status === 'pending' && a.dateTime && a.dateTime.slice(0, 10) === todayStr);
+
+      let warranties = [];
+      (db.customers || []).forEach(c => {
+        (c.sessions || []).forEach(s => {
+          if (!s.warrantyDone && !s.autoReminderDismissed) {
+            const w = calculateWarranty(s.date, s.warrantyMonths);
+            if (!w.isNoWarranty && (w.isOverdue || w.daysLeft <= 3)) {
+              warranties.push({ cust: c, session: s, w: w });
+            }
+          }
+        });
+      });
+
+      if (appts.length === 0 && warranties.length === 0) return;
+
+      const apptSection = document.getElementById('autoAppointmentReminderSection');
+      const apptList = document.getElementById('autoAppointmentReminderList');
+      if (appts.length > 0) {
+        apptList.innerHTML = appts.map(a => {
+          const dt = new Date(a.dateTime);
+          const timeStr = isNaN(dt.getTime()) ? '' : dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          return `
+            <div class="card" style="padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--primary-gold);">
+              <div style="font-weight: 600; font-size: 13px;">${escapeHtml(a.name)} <span style="color: var(--text-muted); font-size: 11px;">- ${escapeHtml(a.phone)}</span></div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Dịch vụ: ${escapeHtml(a.service) || 'Chưa ghi'}</div>
+              <div style="font-size: 12px; margin-top: 4px; color: var(--primary-gold);"><i class="fa-regular fa-clock"></i> Hẹn lúc: <strong>${timeStr}</strong> hôm nay</div>
+            </div>
+          `;
+        }).join('');
+        apptSection.style.display = 'block';
+      } else {
+        apptSection.style.display = 'none';
+      }
+
+      const wSection = document.getElementById('autoWarrantyReminderSection');
+      const wList = document.getElementById('autoWarrantyReminderList');
+      if (warranties.length > 0) {
+        wList.innerHTML = warranties.map(item => `
+          <div class="card" style="padding: 10px; margin-bottom: 8px; border-left: 3px solid ${item.w.isOverdue ? 'var(--danger)' : 'var(--warning)'};">
+            <div style="font-weight: 600; font-size: 13px;">${escapeHtml(item.cust.name)} <span style="color: var(--text-muted); font-size: 11px;">- ${escapeHtml(item.cust.phone)}</span></div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Dịch vụ: ${escapeHtml(item.session.service)}</div>
+            <div style="font-size: 12px; margin-top: 4px; color: ${item.w.isOverdue ? 'var(--danger)' : 'var(--warning)'};">
+              ${item.w.isOverdue ? `<i class="fa-solid fa-triangle-exclamation"></i> Đã quá hạn bảo hành ${item.w.overdueDays} ngày` : `<i class="fa-regular fa-clock"></i> Còn ${item.w.daysLeft} ngày là hết hạn (${item.w.expiryDateStr})`}
+            </div>
+          </div>
+        `).join('');
+        wSection.style.display = 'block';
+      } else {
+        wSection.style.display = 'none';
+      }
+
+      document.getElementById('autoWarrantyReminderModal').style.display = 'block';
+    }
+
+    function closeAutoWarrantyReminderPopup() {
+      closeModal('autoWarrantyReminderModal');
+    }
+
+    /* NHẮC SAO LƯU DỰ DỮ LIỆU ĐỊNH KỲ */
+    function renderBackupReminder() {
+      const el = document.getElementById('backupReminderBanner');
+      if (!el) return;
+      if (!db.customers || db.customers.length === 0) {
+        el.style.display = 'none';
+        return;
+      }
+      const lastExportStr = db.brand && db.brand.lastExportDate;
+      const lastExportTime = lastExportStr ? new Date(lastExportStr).getTime() : 0;
+      const lastModifiedTime = (db.brand && db.brand.lastDataModifiedTime) || 0;
+      let daysSince = Infinity;
+      if (lastExportTime && !isNaN(lastExportTime)) {
+        daysSince = Math.floor((Date.now() - lastExportTime) / (1000 * 60 * 60 * 24));
+      }
+      const hasUnsavedChanges = !lastExportTime || (lastModifiedTime > lastExportTime);
+
+      if (daysSince >= 14 && hasUnsavedChanges) {
+        el.innerHTML = `
+          <div class="card" style="border: 1px solid var(--warning); background: rgba(243, 156, 18, 0.1); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning); font-size: 20px;"></i>
+            <div style="flex: 1; font-size: 12.5px; color: var(--text-main); line-height: 1.5;">Đã lâu chưa sao lưu dữ liệu ra file! Hãy tải file sao lưu để phòng trường hợp đổi máy hoặc xóa bộ nhớ.</div>
+            <button class="btn-outline" style="flex-shrink: 0; font-size: 12px;" onclick="openSettingsModal()"><i class="fa-solid fa-download"></i> Sao lưu ngay</button>
+          </div>
+        `;
+        el.style.display = 'block';
+      } else {
+        el.style.display = 'none';
+      }
+    }
+
+    /* XỬ LÝ CHỌN NHIỀU KHÁCH ĐỂ XÓA (BULK DELETE NHƯ BẢN GỐC) */
+    let customerSelectMode = false;
+    let selectedCustomerIds = new Set();
+    let custLongPressTimer = null;
+    let custLongPressFired = false;
+    let custPointerStartX = 0;
+    let custPointerStartY = 0;
+
+    function custCardPointerDown(e, custId) {
+      custPointerStartX = e.clientX;
+      custPointerStartY = e.clientY;
+      custLongPressFired = false;
+      clearTimeout(custLongPressTimer);
+      custLongPressTimer = setTimeout(() => {
+        custLongPressFired = true;
+        if (navigator.vibrate) navigator.vibrate(30);
+        customerSelectMode = true;
+        toggleCustomerSelection(custId);
+      }, 500);
+    }
+
+    function custCardPointerMove(e) {
+      if (Math.abs(e.clientX - custPointerStartX) > 12 || Math.abs(e.clientY - custPointerStartY) > 12) {
+        clearTimeout(custLongPressTimer);
+      }
+    }
+
+    function custCardPointerUp() {
+      clearTimeout(custLongPressTimer);
+    }
+
+    function custCardClick(e, custId) {
+      if (custLongPressFired) {
+        custLongPressFired = false;
+        return;
+      }
+      if (customerSelectMode) {
+        toggleCustomerSelection(custId);
+      } else {
+        openCustomerDetail(custId);
+      }
+    }
+
+    function toggleCustomerSelection(custId) {
+      if (selectedCustomerIds.has(custId)) {
+        selectedCustomerIds.delete(custId);
+      } else {
+        selectedCustomerIds.add(custId);
+      }
+      renderCustomerList();
+    }
+
+    function exitCustomerSelectMode() {
+      customerSelectMode = false;
+      selectedCustomerIds.clear();
+      renderCustomerList();
+    }
+
+    async function deleteSelectedCustomers() {
+      const count = selectedCustomerIds.size;
+      if (count === 0) return;
+      if (confirm(`CẢNH BÁO: Bạn có chắc chắn muốn xóa ${count} khách hàng đã chọn không?`)) {
+        const ids = Array.from(selectedCustomerIds);
+        db.customers = db.customers.filter(c => !selectedCustomerIds.has(c.id));
+        markDataChanged();
+        await saveDB();
+        ids.forEach(id => cloudDeleteCustomer(id));
+        exitCustomerSelectMode();
+        renderHome();
+        renderWarrantyList();
+        showAppAlert(`Đã xóa ${count} khách hàng thành công.`);
+      }
+    }
+
+    function renderCustomerSelectBar() {
+      const bar = document.getElementById('customerSelectBar');
+      if (!bar) return;
+      if (!customerSelectMode) {
+        bar.style.display = 'none';
+        bar.innerHTML = '';
+        return;
+      }
+      const count = selectedCustomerIds.size;
+      bar.style.display = 'block';
+      bar.innerHTML = `
+        <div class="card" style="border: 1px solid var(--primary-gold); background: rgba(212,175,55,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;">
+          <div style="font-size: 13px; font-weight: 600;">Đã chọn: <span style="color: var(--primary-gold);">${count}</span> khách hàng</div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-outline" style="padding: 7px 12px; font-size: 12px;" onclick="exitCustomerSelectMode()"><i class="fa-solid fa-xmark"></i> Hủy</button>
+            <button class="btn-outline" style="padding: 7px 12px; font-size: 12px; border-color: var(--danger); color: var(--danger);" ${count === 0 ? 'disabled' : ''} onclick="deleteSelectedCustomers()"><i class="fa-solid fa-trash"></i> Xóa đã chọn</button>
+          </div>
+        </div>
+      `;
+    }
+
     function renderHome() {
       document.getElementById('brandTitle').innerText = db.brand.title;
       document.getElementById('brandSlogan').innerText = db.brand.slogan;
       document.getElementById('heroBrandName').innerText = db.brand.title;
       document.getElementById('brandLogo').src = db.brand.logo || defaultBrandLogo;
+
+      renderBackupReminder();
 
       const recentContainer = document.getElementById('homeRecentList');
       if (!db.customers || db.customers.length === 0) {
@@ -1795,6 +2008,8 @@
     function renderCustomerList() {
       const q = (document.getElementById('customerSearchInput').value || '').toLowerCase().trim();
       const container = document.getElementById('customerList');
+      renderCustomerSelectBar();
+
       if (!db.customers) db.customers = [];
 
       let filtered = db.customers.filter(c => (c.name && c.name.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q)) || (c.address && c.address.toLowerCase().includes(q)));
@@ -1814,20 +2029,35 @@
           });
         }
         let debtTag = totalDebt > 0 ? `<span class="badge badge-danger" style="margin-top: 4px;">Nợ: ${formatMoney(totalDebt)}</span>` : '';
+        const isSelected = selectedCustomerIds.has(c.id);
+        const selectCircle = customerSelectMode ? `
+          <div style="width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--primary-gold); flex-shrink: 0; margin-top: 2px; margin-right: 10px; display: flex; align-items: center; justify-content: center; background: ${isSelected ? 'var(--primary-gold)' : 'transparent'};">
+            ${isSelected ? '<i class="fa-solid fa-check" style="font-size: 11px; color: #000;"></i>' : ''}
+          </div>
+        ` : '';
 
         return `
-          <div class="card customer-item" onclick="openCustomerDetail('${c.id}')">
-            <div style="flex: 1;">
-              <div style="font-weight: bold; font-size: 15px;">${escapeHtml(c.name)} ${debtTag}</div>
-              <div style="font-size: 12px; color: var(--text-muted); margin: 3px 0;">SĐT: ${escapeHtml(c.phone)} | ĐC: ${escapeHtml(c.address) || 'Chưa lưu'}</div>
-              <div style="font-size: 12px; margin-top: 4px;">Đã làm: <strong style="color: var(--primary-gold);">${escapeHtml(serviceList)}</strong></div>
+          <div class="card customer-item" style="${isSelected ? 'border: 1px solid var(--primary-gold); background: rgba(212,175,55,0.06);' : ''} user-select: none;"
+               onpointerdown="custCardPointerDown(event, '${c.id}')"
+               onpointermove="custCardPointerMove(event)"
+               onpointerup="custCardPointerUp(event)"
+               onpointercancel="custCardPointerUp(event)"
+               onclick="custCardClick(event, '${c.id}')">
+            <div style="flex: 1; cursor: pointer; display: flex; align-items: flex-start;">
+              ${selectCircle}
+              <div style="flex: 1;">
+                <div style="font-weight: bold; font-size: 15px;">${escapeHtml(c.name)} ${debtTag}</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin: 3px 0;">SĐT: ${escapeHtml(c.phone)} | ĐC: ${escapeHtml(c.address) || 'Chưa lưu'}</div>
+                <div style="font-size: 12px; margin-top: 4px;">Đã làm: <strong style="color: var(--primary-gold);">${escapeHtml(serviceList)}</strong></div>
+              </div>
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 128px; flex-shrink: 0;" onclick="event.stopPropagation();">
-              <button class="btn-outline" style="padding: 6px 8px; font-size: 12px;" onclick="openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
-              <a class="btn-call" href="tel:${escapeHtml(c.phone)}"><i class="fa-solid fa-phone"></i></a>
-              <button class="btn-outline" style="padding: 6px 8px; font-size: 12px; border-color: var(--danger); color: var(--danger);" onclick="deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
-              <button class="btn-remind" onclick="openQuickMessageModal('${c.id}')"><i class="fa-solid fa-comment-dots"></i></button>
-            </div>
+            ${!customerSelectMode ? `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 128px; flex-shrink: 0;">
+              <button class="btn-outline" style="padding: 6px 8px; font-size: 12px;" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation(); openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
+              <a class="btn-call" href="tel:${escapeHtml(c.phone)}" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();"><i class="fa-solid fa-phone"></i></a>
+              <button class="btn-outline" style="padding: 6px 8px; font-size: 12px; border-color: var(--danger); color: var(--danger);" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation(); deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+              <button class="btn-remind" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation(); openQuickMessageModal('${c.id}')"><i class="fa-solid fa-comment-dots"></i></button>
+            </div>` : ''}
           </div>
         `;
       }).join('');
@@ -1841,36 +2071,139 @@
         return;
       }
 
-      let groups = [];
+      let customerWarrantyGroups = [];
+
       db.customers.forEach(c => {
         if (c.sessions && c.sessions.length > 0) {
-          let sList = c.sessions.map(s => {
+          let sessionDetails = [];
+          let minActiveDaysLeft = Infinity;
+          let nearestExpiryDateStr = '';
+          let nearestServiceName = '';
+          let hasOverdue = false;
+          let allDone = true;
+          let allNoWarranty = true;
+
+          c.sessions.forEach(s => {
             let w = calculateWarranty(s.date, s.warrantyMonths);
-            return { ...s, ...w };
+            let isDone = !!s.warrantyDone;
+            
+            if (!w.isNoWarranty) {
+              allNoWarranty = false;
+              if (!isDone) {
+                allDone = false;
+                if (w.daysLeft < minActiveDaysLeft) {
+                  minActiveDaysLeft = w.daysLeft;
+                  nearestExpiryDateStr = w.expiryDateStr;
+                  nearestServiceName = s.service;
+                }
+                if (w.isOverdue) hasOverdue = true;
+              }
+            }
+
+            sessionDetails.push({
+              sessionId: s.id,
+              service: s.service,
+              date: s.date,
+              expiryDate: w.expiryDateStr,
+              daysLeft: w.daysLeft,
+              isOverdue: w.isOverdue,
+              overdueDays: w.overdueDays,
+              colorMix: s.colorMix,
+              isNoWarranty: w.isNoWarranty,
+              warrantyDone: isDone,
+              warrantyDate: s.warrantyDate || null
+            });
           });
-          groups.push({ customer: c, sessions: sList });
+
+          let matchSearch = !q || (c.name && c.name.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q)) || (c.address && c.address.toLowerCase().includes(q)) || (sessionDetails.some(s => s.service && s.service.toLowerCase().includes(q)));
+
+          if (matchSearch) {
+            customerWarrantyGroups.push({
+              customer: c,
+              sessions: sessionDetails,
+              minActiveDaysLeft, nearestExpiryDateStr, nearestServiceName,
+              hasOverdue, allDone, allNoWarranty
+            });
+          }
         }
       });
 
-      container.innerHTML = groups.map(g => `
-        <div class="card" style="border-left: 4px solid var(--primary-gold); margin-bottom: 12px; padding: 14px;">
-          <div style="font-size: 15px; font-weight: 700; color: var(--primary-gold);">${escapeHtml(g.customer.name)} (${escapeHtml(g.customer.phone)})</div>
-          ${g.sessions.map(item => `
+      customerWarrantyGroups.sort((a, b) => a.minActiveDaysLeft - b.minActiveDaysLeft);
+
+      if (customerWarrantyGroups.length === 0) {
+        container.innerHTML = `<div style="color: var(--text-muted); text-align: center; padding: 25px;">Không tìm thấy thông tin bảo hành phù hợp.</div>`;
+        return;
+      }
+
+      container.innerHTML = customerWarrantyGroups.map(group => {
+        const c = group.customer;
+        let cardBorderColor = group.hasOverdue ? 'var(--danger)' : (group.allDone && !group.allNoWarranty ? 'var(--success)' : 'var(--primary-gold)');
+        let outerSummaryBadge = '';
+        if (group.allNoWarranty) outerSummaryBadge = `<span class="badge badge-secondary" style="margin-top: 4px;">Không bảo hành</span>`;
+        else if (group.allDone) outerSummaryBadge = `<span class="badge badge-success" style="margin-top: 4px;"><i class="fa-solid fa-check-double"></i> Đã hoàn tất bảo hành</span>`;
+        else if (group.hasOverdue) outerSummaryBadge = `<span class="badge badge-danger" style="margin-top: 4px;"><i class="fa-solid fa-triangle-exclamation"></i> Có dịch vụ quá hạn</span>`;
+        else if (group.nearestExpiryDateStr) {
+          let warnClass = group.minActiveDaysLeft <= 15 ? 'badge-warning' : 'badge-success';
+          outerSummaryBadge = `<span class="badge ${warnClass}" style="margin-top: 4px;"><i class="fa-regular fa-clock"></i> Hạn gần nhất (${group.nearestServiceName}): ${group.nearestExpiryDateStr} (còn ${group.minActiveDaysLeft} ngày)</span>`;
+        }
+
+        let subItemsHtml = group.sessions.map(item => {
+          let badgeClass = item.isNoWarranty ? 'badge-secondary' : (item.warrantyDone ? 'badge-success' : (item.isOverdue ? 'badge-danger' : (item.daysLeft <= 15 ? 'badge-warning' : 'badge-success')));
+          let textStatus = item.isNoWarranty ? 'Không bảo hành' : (item.warrantyDone ? '<i class="fa-solid fa-check"></i> Đã bảo hành' : (item.isOverdue ? `<i class="fa-solid fa-triangle-exclamation"></i> Quá hạn ${item.overdueDays} ngày` : `Còn ${item.daysLeft} ngày BH`));
+          let doneDateFormatted = item.warrantyDate ? formatDateTimeDisplay(item.warrantyDate) : 'Đã làm';
+
+          return `
             <div class="warranty-sub-item ${item.warrantyDone ? 'completed' : (item.isOverdue ? 'overdue' : '')}">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-                <strong>${escapeHtml(item.service)}</strong>
-                <span class="badge ${item.isOverdue ? 'badge-danger' : 'badge-warning'}">${item.expiryDateStr}</span>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <strong style="color: #fff; font-size: 14px;">Dịch vụ: ${escapeHtml(item.service)}</strong>
+                <span class="badge ${badgeClass}">${textStatus}</span>
               </div>
-              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Màu pha: <strong>${escapeHtml(item.colorMix) || 'Mặc định'}</strong></div>
+              <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6;">
+                <div>Màu pha: <strong style="color: #fff;">${escapeHtml(item.colorMix) || 'Mặc định'}</strong></div>
+                <div>Vào làm: <strong style="color: #fff;">${formatDateTimeDisplay(item.date)}</strong> &bull; Hạn chót: <strong style="color: var(--primary-gold);">${item.expiryDate}</strong></div>
+              </div>
               <div class="warranty-actions-row">
-                <a class="btn-call" href="tel:${escapeHtml(g.customer.phone)}"><i class="fa-solid fa-phone"></i></a>
-                <button class="btn-remind" onclick="openRemindModal('${g.customer.id}', '${item.id}')"><i class="fa-solid fa-comment-dots"></i> Nhắc Zalo</button>
-                <button class="btn-warranty-status ${item.warrantyDone ? 'done' : ''}" onclick="toggleWarrantyStatus('${g.customer.id}', '${item.id}')">${item.warrantyDone ? '<i class="fa-solid fa-check"></i> Đã BH' : '<i class="fa-regular fa-circle"></i> Xác nhận BH'}</button>
+                <div style="display: flex; flex: 1; gap: 6px;">
+                  <a class="btn-call" href="tel:${escapeHtml(c.phone)}" onclick="event.stopPropagation();"><i class="fa-solid fa-phone"></i></a>
+                  <button class="btn-remind" onclick="event.stopPropagation(); openRemindModal('${c.id}', '${item.sessionId}')"><i class="fa-solid fa-comment-dots"></i></button>
+                </div>
+                ${!item.isNoWarranty ? (item.warrantyDone ? `<button class="btn-warranty-status done" onclick="event.stopPropagation(); toggleWarrantyStatus('${c.id}', '${item.sessionId}')"><i class="fa-solid fa-check"></i> Đã BH (${doneDateFormatted})</button>` : `<button class="btn-warranty-status" onclick="event.stopPropagation(); toggleWarrantyStatus('${c.id}', '${item.sessionId}')"><i class="fa-regular fa-circle"></i> Xác nhận bảo hành</button>`) : ''}
               </div>
             </div>
-          `).join('')}
-        </div>
-      `).join('');
+          `;
+        }).join('');
+
+        return `
+          <div class="card" style="border-left: 4px solid ${cardBorderColor}; margin-bottom: 12px; padding: 14px;">
+            <div style="cursor: pointer;" onclick="toggleWarrantyAccordion('${c.id}')">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 15px; font-weight: 700; color: var(--primary-gold); line-height: 1.3;">
+                    ${escapeHtml(c.name)} <span style="color: var(--text-muted); font-size: 13px; font-weight: normal;">- ${escapeHtml(c.phone)}</span>
+                  </div>
+                  <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">ĐC: ${escapeHtml(c.address) || 'Chưa lưu'}</div>
+                </div>
+                <div class="warranty-accordion-btn" style="flex-shrink: 0; padding: 5px 8px;">
+                  <span style="font-weight: 600;">${group.sessions.length} DV</span>
+                  <i class="fa-solid fa-chevron-down warranty-chevron" id="chevron-${c.id}"></i>
+                </div>
+              </div>
+              <div style="margin-top: 8px;">${outerSummaryBadge}</div>
+            </div>
+            <div class="warranty-details-collapse" id="collapse-${c.id}">${subItemsHtml}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function toggleWarrantyAccordion(custId) {
+      const collapseEl = document.getElementById(`collapse-${custId}`);
+      const chevronEl = document.getElementById(`chevron-${custId}`);
+      if (collapseEl && chevronEl) {
+        const isHidden = (collapseEl.style.display === 'none' || collapseEl.style.display === '');
+        collapseEl.style.display = isHidden ? 'block' : 'none';
+        chevronEl.classList.toggle('open', isHidden);
+      }
     }
 
     function toggleWarrantyStatus(custId, sessionId) {
@@ -1884,23 +2217,25 @@
           saveDB();
           syncCustomerToCloud(custId);
           renderWarrantyList();
+          setTimeout(() => {
+            const collapseEl = document.getElementById(`collapse-${custId}`);
+            const chevronEl = document.getElementById(`chevron-${custId}`);
+            if (collapseEl && chevronEl) {
+              collapseEl.style.display = 'block';
+              chevronEl.classList.add('open');
+            }
+          }, 10);
         }
       }
     }
 
-    /* ============================================================================
-       KHÔI PHỤC HOÀN TOÀN TÍNH NĂNG LỊCH HẸN BẢN GỐC (ĐÃ TRỄ HẸN, ĐÃ ĐẾN, HUỶ, NHẮC)
-       ============================================================================ */
+    /* QUẢN LÝ LỊCH HẸN BẢN GỐC NÂNG CẤP THƯƠNG MẠI */
     function renderAppointmentList() {
       const q = (document.getElementById('appointmentSearchInput').value || '').toLowerCase().trim();
       const container = document.getElementById('appointmentList');
       if (!db.appointments) db.appointments = [];
 
-      let filtered = db.appointments.filter(a =>
-        (a.name && a.name.toLowerCase().includes(q)) ||
-        (a.phone && a.phone.includes(q)) ||
-        (a.service && a.service.toLowerCase().includes(q))
-      );
+      let filtered = db.appointments.filter(a => (a.name && a.name.toLowerCase().includes(q)) || (a.phone && a.phone.includes(q)) || (a.service && a.service.toLowerCase().includes(q)));
 
       if (filtered.length === 0) {
         container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 25px;">Không có lịch hẹn nào. Bấm "Thêm lịch hẹn" để bắt đầu.</div>`;
@@ -1912,8 +2247,7 @@
       const now = new Date();
       const todayStr = formatDateYMD(now);
 
-      let html = '';
-      filtered.forEach(a => {
+      container.innerHTML = filtered.map(a => {
         const dt = new Date(a.dateTime);
         const validDate = !isNaN(dt.getTime());
         const dateDisplay = validDate ? formatDateTimeDisplay(a.dateTime) : 'Chưa xác định';
@@ -1921,19 +2255,13 @@
         const isPast = validDate && dt < now && a.status === 'pending';
 
         let statusBadge = '';
-        if (a.status === 'done') {
-          statusBadge = `<span class="badge badge-success"><i class="fa-solid fa-check"></i> Đã đến</span>`;
-        } else if (a.status === 'cancelled') {
-          statusBadge = `<span class="badge badge-secondary"><i class="fa-solid fa-ban"></i> Đã huỷ</span>`;
-        } else if (isPast) {
-          statusBadge = `<span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Đã trễ hẹn</span>`;
-        } else if (isToday) {
-          statusBadge = `<span class="badge badge-warning"><i class="fa-solid fa-bell"></i> Hôm nay</span>`;
-        } else {
-          statusBadge = `<span class="badge badge-secondary"><i class="fa-regular fa-clock"></i> Sắp tới</span>`;
-        }
+        if (a.status === 'done') statusBadge = `<span class="badge badge-success"><i class="fa-solid fa-check"></i> Đã đến</span>`;
+        else if (a.status === 'cancelled') statusBadge = `<span class="badge badge-secondary"><i class="fa-solid fa-ban"></i> Đã huỷ</span>`;
+        else if (isPast) statusBadge = `<span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Đã trễ hẹn</span>`;
+        else if (isToday) statusBadge = `<span class="badge badge-warning"><i class="fa-solid fa-bell"></i> Hôm nay</span>`;
+        else statusBadge = `<span class="badge badge-secondary"><i class="fa-regular fa-clock"></i> Sắp tới</span>`;
 
-        html += `
+        return `
           <div class="card" style="border-left: 4px solid var(--primary-gold);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px;">
               <div style="font-weight: bold; font-size: 15px;">${escapeHtml(a.name)}</div>
@@ -1958,8 +2286,7 @@
             </div>
           </div>
         `;
-      });
-      container.innerHTML = html;
+      }).join('');
     }
 
     function toggleApptServiceGroup(groupKey, preselectedSub = null) {
@@ -2082,7 +2409,6 @@
       syncAppointmentToCloud(id);
       renderAppointmentList();
 
-      // Nếu khách bấm "Đã đến", tự động mở form thêm khách hàng điền sẵn Tên + SĐT + Dịch vụ như bản gốc
       if (status === 'done') {
         openAddCustomerModalFromAppointment(id);
       }
@@ -2138,30 +2464,7 @@
       document.getElementById('remindModal').style.display = 'block';
     }
 
-    function checkTodayAppointmentsPopup() {
-      const now = new Date();
-      const todayStr = formatDateYMD(now);
-      const candidates = (db.appointments || []).filter(a => a.status === 'pending' && a.dateTime && a.dateTime.slice(0, 10) === todayStr);
-
-      if (candidates.length === 0) return;
-
-      const container = document.getElementById('autoAppointmentReminderList');
-      container.innerHTML = candidates.map(a => {
-        const dt = new Date(a.dateTime);
-        const timeStr = isNaN(dt.getTime()) ? '' : dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-        return `
-          <div class="card" style="padding: 10px; margin-bottom: 8px; border-left: 3px solid var(--primary-gold);">
-            <div style="font-weight: 600; font-size: 13px;">${escapeHtml(a.name)} <span style="color: var(--text-muted); font-size: 11px;">- ${escapeHtml(a.phone)}</span></div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Dịch vụ: ${escapeHtml(a.service) || 'Chưa ghi'}</div>
-            <div style="font-size: 12px; margin-top: 4px; color: var(--primary-gold);"><i class="fa-regular fa-clock"></i> Hẹn lúc: <strong>${timeStr}</strong> hôm nay</div>
-          </div>
-        `;
-      }).join('');
-
-      document.getElementById('autoWarrantyReminderModal').style.display = 'block';
-    }
-
-    /* QUẢN LÝ ẢNH & COMPRESS */
+    /* QUẢN LÝ ẢNH & COMPRESS KÈM XOAY THEO EXIF (CHUẨN BẢN GỐC) */
     let currentImgBefore = "";
     let currentImgAfter = "";
 
@@ -2169,22 +2472,94 @@
       document.getElementById(type === 'before' ? 'imgBeforeInput' : 'imgAfterInput').click();
     }
 
-    function compressImageFile(file, maxDimension, quality, onDone) {
+    function getExifOrientation(file, callback) {
+      if (!file.type || file.type.indexOf('jpeg') === -1) { callback(1); return; }
       const reader = new FileReader();
       reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          let w = img.width, h = img.height;
-          if (w > h && w > maxDimension) { h = Math.round((h * maxDimension) / w); w = maxDimension; }
-          else if (h > maxDimension) { w = Math.round((w * maxDimension) / h); h = maxDimension; }
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          onDone(canvas.toDataURL('image/jpeg', quality));
-        };
-        img.src = e.target.result;
+        try {
+          const view = new DataView(e.target.result);
+          if (view.getUint16(0, false) !== 0xFFD8) { callback(1); return; }
+          const length = view.byteLength;
+          let offset = 2;
+          while (offset < length - 1) {
+            const marker = view.getUint16(offset, false);
+            offset += 2;
+            if (marker === 0xFFE1) {
+              if (view.getUint32(offset + 2, false) !== 0x45786966) { callback(1); return; }
+              const little = view.getUint16(offset + 8, false) === 0x4949;
+              const tiffOffset = offset + 6;
+              const firstIFDOffset = view.getUint32(tiffOffset + 4, little);
+              let dirOffset = tiffOffset + firstIFDOffset;
+              const tags = view.getUint16(dirOffset, little);
+              dirOffset += 2;
+              for (let i = 0; i < tags; i++) {
+                const entryOffset = dirOffset + i * 12;
+                if (view.getUint16(entryOffset, little) === 0x0112) {
+                  callback(view.getUint16(entryOffset + 8, little));
+                  return;
+                }
+              }
+              callback(1);
+              return;
+            } else if ((marker & 0xFF00) !== 0xFF00) {
+              break;
+            } else {
+              offset += view.getUint16(offset, false);
+            }
+          }
+          callback(1);
+        } catch (err) {
+          callback(1);
+        }
       };
-      reader.readAsDataURL(file);
+      reader.onerror = function() { callback(1); };
+      reader.readAsArrayBuffer(file.slice(0, 128 * 1024));
+    }
+
+    function compressImageFile(file, maxDimension, quality, onDone) {
+      getExifOrientation(file, function(orientation) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > maxDimension) { height = Math.round((height * maxDimension) / width); width = maxDimension; }
+            } else {
+              if (height > maxDimension) { width = Math.round((width * maxDimension) / height); height = maxDimension; }
+            }
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (orientation >= 5 && orientation <= 8) {
+              canvas.width = height;
+              canvas.height = width;
+            } else {
+              canvas.width = width;
+              canvas.height = height;
+            }
+
+            switch (orientation) {
+              case 2: ctx.transform(-1, 0, 0, 1, width, 0); break;
+              case 3: ctx.transform(-1, 0, 0, -1, width, height); break;
+              case 4: ctx.transform(1, 0, 0, -1, 0, height); break;
+              case 5: ctx.transform(0, 1, 1, 0, 0, 0); break;
+              case 6: ctx.transform(0, 1, -1, 0, height, 0); break;
+              case 7: ctx.transform(0, -1, -1, 0, height, width); break;
+              case 8: ctx.transform(0, -1, 1, 0, 0, width); break;
+              default: break;
+            }
+
+            ctx.drawImage(img, 0, 0, width, height);
+            onDone(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
     }
 
     function handleImageUpload(event, imgId, textId, type) {
@@ -2421,7 +2796,7 @@
           if (!isSessionOnly) {
             const phoneVal = document.getElementById('custPhone').value.trim();
             if (!isValidPhoneNumber(phoneVal)) {
-              showAppAlert('Số điện thoại không hợp lệ (phải từ 9 đến 11 số)!');
+              showAppAlert('Số điện thoại không hợp lệ (phải từ 9-11 số)!');
               return;
             }
             customer.name = document.getElementById('custName').value.trim();
@@ -2446,7 +2821,7 @@
           return;
         }
         if (!isValidPhoneNumber(phone)) {
-          showAppAlert('Số điện thoại không hợp lệ (phải từ 9 đến 11 số)!');
+          showAppAlert('Số điện thoại không hợp lệ (phải từ 9-11 số)!');
           return;
         }
         const newCustomer = {
@@ -2507,7 +2882,7 @@
             <span>Tổng làm: <strong>${formatMoney(totalCustPrice)}</strong></span>
             <span>Tổng nợ: <strong style="color:${totalDebt > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(totalDebt)}</strong></span>
           </div>
-          ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan ${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
+          ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
         </div>
         <button class="btn-gold" style="width: 100%; margin-bottom: 16px;" onclick="closeModal('customerDetailModal'); openAddCustomerModal('${c.id}')"><i class="fa-solid fa-plus-circle"></i> Thêm lượt xăm mới cho khách này</button>
         ${(c.sessions || []).map((s, idx) => {
@@ -2517,14 +2892,13 @@
           return `
             <div class="card" style="background: var(--bg-input); border-left: 4px solid var(--primary-gold); margin-bottom: 10px; font-size: 13px;">
               <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 6px;">
-                <span>Lần ${idx + 1}: ${escapeHtml(s.service)}</span>
+                <span>Lần ${idx + 1}:${escapeHtml(s.service)}</span>
                 <span style="color: var(--primary-gold);">${formatMoney(s.price)}</span>
               </div>
               <div style="margin-bottom: 6px;">Đã trả: ${formatMoney(pd)} | Nợ: <strong style="color:${d > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(d)}</strong></div>
               <div>Màu đã pha: <strong>${escapeHtml(s.colorMix) || 'Mặc định'}</strong></div>
               <div>Thời gian: ${formatDateTimeDisplay(s.date)}</div>
-              <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>
-              ${(s.imgBefore || s.imgAfter) ? `
+              <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>${(s.imgBefore || s.imgAfter) ? `
                 <div class="detail-images">
                   ${s.imgBefore ? `<div class="detail-img-box"><img src="${s.imgBefore}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'before')"><span>Ảnh Trước</span></div>` : ''}
                   ${s.imgAfter ? `<div class="detail-img-box"><img src="${s.imgAfter}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'after')"><span>Ảnh Sau</span></div>` : ''}
@@ -2537,307 +2911,3 @@
       document.getElementById('customerDetailContent').innerHTML = html;
       document.getElementById('customerDetailModal').style.display = 'block';
     }
-
-    async function deleteCustomer(custId) {
-      if (confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa khách hàng này?')) {
-        db.customers = db.customers.filter(c => c.id !== custId);
-        markDataChanged();
-        await saveDB();
-        cloudDeleteCustomer(custId);
-        closeModal('customerDetailModal');
-        renderCustomerList();
-        renderHome();
-        renderWarrantyList();
-        showAppAlert('Đã xóa thành công!');
-      }
-    }
-
-    /* NHẮC ZALO & SMS */
-    let currentRemindPhone = "";
-    function openRemindModal(custId, sessionId) {
-      const c = db.customers.find(item => item.id === custId);
-      if (!c) return;
-      const s = c.sessions.find(item => item.id === sessionId);
-      if (!s) return;
-
-      const w = calculateWarranty(s.date, s.warrantyMonths);
-      const msg = db.brand.msgTemplate
-        .replace(/{TEN_KH}/g, c.name)
-        .replace(/{DICH_VU}/g, s.service)
-        .replace(/{HAN_BH}/g, w.expiryDateStr)
-        .replace(/{TEN_TIEM}/g, db.brand.title);
-
-      currentRemindPhone = c.phone.replace(/\D/g, '');
-      document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Nhắc bảo hành dặm';
-      document.getElementById('remindCustName').innerText = c.name;
-      document.getElementById('remindCustPhone').innerText = c.phone;
-      document.getElementById('remindMessageBody').value = msg;
-      document.getElementById('remindModal').style.display = 'block';
-    }
-
-    function openQuickMessageModal(custId) {
-      const c = db.customers.find(item => item.id === custId);
-      if (!c) return;
-      const msg = `Xin chào ${c.name}, ${db.brand.title} xin cảm ơn bạn đã sử dụng dịch vụ. Nếu cần hỗ trợ thêm, bạn vui lòng nhắn lại tiệm nhé!`;
-      currentRemindPhone = c.phone.replace(/\D/g, '');
-      document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi tin nhắn chăm sóc';
-      document.getElementById('remindCustName').innerText = c.name;
-      document.getElementById('remindCustPhone').innerText = c.phone;
-      document.getElementById('remindMessageBody').value = msg;
-      document.getElementById('remindModal').style.display = 'block';
-    }
-
-    function sendViaZalo() {
-      const text = document.getElementById('remindMessageBody').value;
-      navigator.clipboard.writeText(text).then(() => {
-        window.open(`https://zalo.me/${currentRemindPhone}`, '_blank');
-      });
-    }
-
-    function sendViaSMS() {
-      const text = encodeURIComponent(document.getElementById('remindMessageBody').value);
-      window.location.href = `sms:${currentRemindPhone}?body=${text}`;
-    }
-
-    function copyReminderText() {
-      navigator.clipboard.writeText(document.getElementById('remindMessageBody').value);
-      showAppAlert('Đã sao chép tin nhắn!');
-    }
-
-    /* MODULE DOANH THU HOÀN CHỈNH 6 NÚT */
-    function unlockRevenue() {
-      if (document.getElementById('passcodeInput').value === db.brand.passcode) {
-        document.getElementById('revenueLockScreen').style.display = 'none';
-        document.getElementById('revenueContent').style.display = 'block';
-        applyRevenuePreset('this_month', document.getElementById('btnPresetThisMonth'));
-      } else {
-        showAppAlert('Sai mật khẩu!');
-      }
-    }
-
-    function lockRevenue() {
-      document.getElementById('revenueLockScreen').style.display = 'block';
-      document.getElementById('revenueContent').style.display = 'none';
-      document.getElementById('passcodeInput').value = '';
-    }
-
-    function clearRevenuePresetActive() {
-      document.querySelectorAll('.rev-preset-btn').forEach(b => b.classList.remove('active'));
-    }
-
-    function applyRevenuePreset(type, btn) {
-      clearRevenuePresetActive();
-      if (btn) btn.classList.add('active');
-      const now = new Date();
-      let start = new Date(now), end = new Date(now);
-
-      if (type === 'this_week') {
-        const day = (now.getDay() + 6) % 7;
-        start.setDate(now.getDate() - day);
-        end.setDate(start.getDate() + 6);
-      } else if (type === 'last_week') {
-        const day = (now.getDay() + 6) % 7;
-        start.setDate(now.getDate() - day - 7);
-        end.setDate(start.getDate() + 6);
-      } else if (type === 'this_month') {
-        start = new Date(now.getFullYear(), now.getMonth(), 1);
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      } else if (type === 'last_month') {
-        start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        end = new Date(now.getFullYear(), now.getMonth(), 0);
-      } else if (type === 'this_year') {
-        start = new Date(now.getFullYear(), 0, 1);
-        end = new Date(now.getFullYear(), 11, 31);
-      } else if (type === 'last_year') {
-        start = new Date(now.getFullYear() - 1, 0, 1);
-        end = new Date(now.getFullYear() - 1, 11, 31);
-      }
-
-      document.getElementById('revStartDate').value = formatDateYMD(start);
-      document.getElementById('revEndDate').value = formatDateYMD(end);
-      filterRevenue();
-    }
-
-    function filterRevenue() {
-      let start = document.getElementById('revStartDate').value;
-      let end = document.getElementById('revEndDate').value;
-      if (!start || !end) return;
-
-      let total = 0;
-      let serviceMap = {};
-      let customerMap = {};
-
-      (db.customers || []).forEach(c => {
-        let custTotal = 0;
-        (c.sessions || []).forEach(s => {
-          let sDate = (s.date || '').substring(0, 10);
-          if (sDate >= start && sDate <= end) {
-            let money = ((s.paid !== undefined) ? s.paid : (s.price || 0));
-            total += money;
-            custTotal += money;
-
-            let sName = s.service || 'Khác';
-            serviceMap[sName] = (serviceMap[sName] || 0) + money;
-          }
-        });
-        if (custTotal > 0) {
-          customerMap[c.name] = (customerMap[c.name] || 0) + custTotal;
-        }
-      });
-
-      document.getElementById('filteredRevResult').innerText = 'Tổng thực thu: ' + formatMoney(total);
-
-      const sContainer = document.getElementById('serviceStatsList');
-      const sKeys = Object.keys(serviceMap);
-      if (sKeys.length === 0) {
-        sContainer.innerHTML = '<div style="color:var(--text-muted); font-size:12.5px; padding:6px 0;">Không có phát sinh doanh thu trong kỳ này.</div>';
-      } else {
-        sContainer.innerHTML = sKeys.map(k => `
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border-color); font-size:13px;">
-            <span>${escapeHtml(k)}</span>
-            <strong style="color:var(--primary-gold);">${formatMoney(serviceMap[k])}</strong>
-          </div>
-        `).join('');
-      }
-
-      const cContainer = document.getElementById('customerRevList');
-      const cKeys = Object.keys(customerMap);
-      if (cKeys.length === 0) {
-        cContainer.innerHTML = '<div style="color:var(--text-muted); font-size:12.5px; padding:6px 0;">Không có khách hàng thanh toán trong kỳ này.</div>';
-      } else {
-        cContainer.innerHTML = cKeys.map(k => `
-          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border-color); font-size:13px;">
-            <span>${escapeHtml(k)}</span>
-            <strong style="color:var(--success);">${formatMoney(customerMap[k])}</strong>
-          </div>
-        `).join('');
-      }
-
-      renderRevenueCards();
-    }
-
-    function renderRevenueCards() {
-      const todayStr = formatDateYMD(new Date());
-      const monthStr = todayStr.substring(0, 7);
-      let revToday = 0, revMonth = 0;
-
-      (db.customers || []).forEach(c => {
-        (c.sessions || []).forEach(s => {
-          let p = (s.paid !== undefined) ? s.paid : (s.price || 0);
-          let dStr = (s.date || '').substring(0, 10);
-          if (dStr === todayStr) revToday += p;
-          if (dStr.startsWith(monthStr)) revMonth += p;
-        });
-      });
-      document.getElementById('revToday').innerText = formatMoney(revToday);
-      document.getElementById('revMonth').innerText = formatMoney(revMonth);
-    }
-
-    /* ĐIỀU HƯỚNG & CÀI ĐẶT */
-    function switchTab(tabId, el) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-      document.getElementById('tab-' + tabId).classList.add('active');
-      el.classList.add('active');
-
-      if (tabId === 'home') renderHome();
-      if (tabId === 'customers') renderCustomerList();
-      if (tabId === 'appointments') renderAppointmentList();
-      if (tabId === 'warranty') renderWarrantyList();
-      if (tabId === 'revenue') renderRevenueCards();
-    }
-
-    function openSettingsModal() {
-      renderBankOptions();
-      document.getElementById('settingTitle').value = db.brand.title;
-      document.getElementById('settingSlogan').value = db.brand.slogan;
-      document.getElementById('settingMsgTemplate').value = db.brand.msgTemplate;
-      document.getElementById('settingBankId').value = db.brand.bankId || '970436';
-      document.getElementById('settingBankAccountNo').value = db.brand.bankAccountNo || '';
-      document.getElementById('settingBankAccountName').value = db.brand.bankAccountName || '';
-      document.getElementById('settingPasscode').value = '';
-      document.getElementById('settingOldPasscode').value = '';
-      document.getElementById('settingsModal').style.display = 'block';
-      renderCloudSettingsBox();
-    }
-
-    function switchSettingsTab(tabName, el) {
-      document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      document.getElementById('settingsTab-' + tabName).classList.add('active');
-    }
-
-    async function saveBrandSettings() {
-      let newPass = document.getElementById('settingPasscode').value.trim();
-      if (newPass) {
-        let oldPass = document.getElementById('settingOldPasscode').value.trim();
-        let currentPass = (db.brand && db.brand.passcode) ? db.brand.passcode : '123456';
-        if (!oldPass) {
-          showAppAlert('Vui lòng nhập mật khẩu hiện tại để đổi mật khẩu mới!');
-          return;
-        }
-        if (oldPass !== currentPass) {
-          showAppAlert('Mật khẩu hiện tại không đúng. Vui lòng kiểm tra lại!');
-          return;
-        }
-        db.brand.passcode = newPass;
-      }
-
-      db.brand.title = document.getElementById('settingTitle').value.trim() || db.brand.title;
-      db.brand.slogan = document.getElementById('settingSlogan').value.trim() || db.brand.slogan;
-      db.brand.msgTemplate = document.getElementById('settingMsgTemplate').value.trim() || db.brand.msgTemplate;
-      db.brand.bankId = document.getElementById('settingBankId').value;
-      db.brand.bankAccountNo = document.getElementById('settingBankAccountNo').value.trim();
-      db.brand.bankAccountName = document.getElementById('settingBankAccountName').value.trim();
-
-      await saveDB();
-      syncBrandToCloud();
-      renderHome();
-      document.getElementById('settingPasscode').value = '';
-      document.getElementById('settingOldPasscode').value = '';
-      showAppAlert('Đã cập nhật cài đặt thành công!');
-    }
-
-    function handleLogoUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      compressImageFile(file, 400, 0.85, function(dataUrl) {
-        document.getElementById('settingLogoPreview').src = dataUrl;
-        db.brand.logo = dataUrl;
-      });
-    }
-
-    async function exportDataFile() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
-      const a = document.createElement('a');
-      a.href = dataStr;
-      a.download = `SaoLuu_PMU_${Date.now()}.json`;
-      a.click();
-    }
-
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function showAppAlert(msg) {
-      document.getElementById('customAlertMessage').innerText = msg;
-      document.getElementById('customAlertModal').style.display = 'block';
-    }
-    function closeCustomAlert() { closeModal('customAlertModal'); }
-
-    window.onload = async function() {
-      try {
-        let saved = await localforage.getItem('na_pmu_db');
-        if (saved) db = saved;
-      } catch (e) {}
-      renderHome();
-      initFirebase();
-      checkTodayAppointmentsPopup();
-
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').catch(function(err) {
-          console.log('SW registration failed: ', err);
-        });
-      }
-    };
-  </script>
-</body>
-</html>
