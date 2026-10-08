@@ -1252,12 +1252,17 @@
           if (!keyDoc.exists) throw new Error('Mã kích hoạt không tồn tại trên hệ thống!');
 
           const keyData = keyDoc.data();
-          if (keyData.used) throw new Error('Mã này đã được sử dụng rồi!');
+          if (keyData.used === true || keyData.used === "true") {
+            throw new Error('Mã này đã được sử dụng rồi!');
+          }
 
           const userDoc = await transaction.get(userRef);
           const userData = userDoc.data() || {};
           const currentExpire = Math.max(Date.now(), userData.expireAt || 0);
-          const addedMs = (keyData.days || 30) * 24 * 60 * 60 * 1000;
+
+          // Tự động nhận diện dù bạn nhập kiểu số hay kiểu chữ:
+          const daysAdded = parseInt(keyData.days) || 30;
+          const addedMs = daysAdded * 24 * 60 * 60 * 1000;
           const newExpire = currentExpire + addedMs;
 
           transaction.update(keyRef, { used: true, usedBy: cloudUser.email, usedAt: Date.now() });
