@@ -2977,21 +2977,38 @@
     }
 
     function sendViaSMS() {
-      if (!currentRemindPhone) {
+      const phoneInput = currentRemindPhone ? currentRemindPhone.replace(/\D/g, '') : '';
+      if (!phoneInput) {
         showAppAlert('Khách hàng chưa có số điện thoại!');
         return;
       }
-      
-      const text = encodeURIComponent(document.getElementById('remindMessageBody').value);
-      
-      // Kiểm tra xem thiết bị có phải là iPhone/iPad hay không
+
+      const bodyText = document.getElementById('remindMessageBody').value || '';
+      const encodedBody = encodeURIComponent(bodyText);
+
+      // Nhận diện iOS / iPadOS
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      // iOS dùng dấu &, Android/PC dùng dấu ?
-      const separator = isIOS ? '&' : '?';
-      
-      window.location.href = `sms:${currentRemindPhone}${separator}body=${text}`;
+
+      // Cú pháp chuẩn RFC cho iOS là dùng dấu & hoặc ; và mở qua anchor element
+      let smsUrl = '';
+      if (isIOS) {
+        // Trên iOS, định dạng sms:NUMBER&body=TEXT hoạt động tốt nhất khi click qua thẻ <a>
+        smsUrl = `sms:${phoneInput}&body=${encodedBody}`;
+      } else {
+        // Trên Android dùng dấu ?
+        smsUrl = `sms:${phoneInput}?body=${encodedBody}`;
+      }
+
+      // Tạo thẻ <a> tạm thời để kích hoạt mở iMessage/SMS chuẩn xác, tránh lỗi parse của Safari
+      const link = document.createElement('a');
+      link.href = smsUrl;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 100);
     }
 
     /* DOANH THU 6 NÚT */
