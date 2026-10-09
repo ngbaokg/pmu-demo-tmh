@@ -2664,11 +2664,14 @@
       const hasMultiple = imageViewerList.length > 1;
       document.getElementById('ivPrevArrow').style.display = (hasMultiple && imageViewerIndex > 0) ? 'flex' : 'none';
       document.getElementById('ivNextArrow').style.display = (hasMultiple && imageViewerIndex < imageViewerList.length - 1) ? 'flex' : 'none';
+      document.getElementById('imageViewerDots').innerHTML = hasMultiple
+        ? imageViewerList.map((_, i) => `<span style="display:inline-block; width:8px; height:8px; margin:0 4px; border-radius:50%; background:${i === imageViewerIndex ? 'var(--primary-gold)' : 'rgba(255,255,255,0.35)'};"></span>`).join('')
+        : '';
     }
 
     /* ZOOM / KÉO ẢNH TRONG LIGHTBOX (pinch 2 ngón, kéo, chạm đúp, lăn chuột, nút +/-) */
     const IV_MAX_SCALE = 5;
-    const ivZ = { scale: 1, x: 0, y: 0, ptrs: new Map(), sDist: 0, sScale: 1, sX: 0, sY: 0, sMid: { x: 0, y: 0 }, moved: false, lastTap: 0 };
+    const ivZ = { scale: 1, x: 0, y: 0, ptrs: new Map(), sDist: 0, sScale: 1, sX: 0, sY: 0, sMid: { x: 0, y: 0 }, moved: false, multi: false, lastTap: 0 };
 
     function ivEls() {
       return { img: document.getElementById('imageViewerImg'), stage: document.getElementById('imageViewerStage') };
@@ -2723,8 +2726,9 @@
 
       stage.addEventListener('pointerdown', function (e) {
         if (e.target.closest('.iv-nav-arrow')) return;
-        if (ivZ.ptrs.size === 0) ivZ.moved = false;
+        if (ivZ.ptrs.size === 0) { ivZ.moved = false; ivZ.multi = false; }
         ivZ.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (ivZ.ptrs.size >= 2) ivZ.multi = true;
         ivRebase();
       });
 
@@ -2741,11 +2745,20 @@
           ivZ.x = mid.x - (ivZ.sMid.x - ivZ.sX) * ratio;
           ivZ.y = mid.y - (ivZ.sMid.y - ivZ.sY) * ratio;
           ivZ.moved = true;
+          ivZ.multi = true;
         } else {
           const p = ivRelToCenter(pts[0].x, pts[0].y);
           const dx = p.x - ivZ.sMid.x, dy = p.y - ivZ.sMid.y;
           if (Math.hypot(dx, dy) > 6) ivZ.moved = true;
           if (ivZ.scale > 1) { ivZ.x = ivZ.sX + dx; ivZ.y = ivZ.sY + dy; }
+          else if (!ivZ.multi && ivZ.moved && imageViewerList.length > 1) {
+            // Ảnh đang ở cỡ gốc: ảnh đi theo ngón tay để vuốt sang ảnh khác
+            const blocked = (dx > 0 && imageViewerIndex <= 0) || (dx < 0 && imageViewerIndex >= imageViewerList.length - 1);
+            ivZ.x = blocked ? dx * 0.3 : dx;
+            ivZ.y = 0;
+            ivApplyZoom();
+            return;
+          }
         }
         ivClampPan();
         ivApplyZoom();
@@ -2755,6 +2768,28 @@
         if (!ivZ.ptrs.has(e.pointerId)) return;
         ivZ.ptrs.delete(e.pointerId);
         if (ivZ.ptrs.size === 0) {
+          // Vuốt trái/phải để đổi ảnh (chỉ khi ảnh ở cỡ gốc)
+          if (ivZ.scale === 1 && !ivZ.multi && ivZ.x !== 0) {
+            const dx = ivZ.x;
+            const th = Math.min(60, ivEls().stage.clientWidth * 0.2);
+            const goNext = e.type === 'pointerup' && dx < -th && imageViewerIndex < imageViewerList.length - 1;
+            const goPrev = e.type === 'pointerup' && dx > th && imageViewerIndex > 0;
+            const imgEl = ivEls().img;
+            if (goNext || goPrev) {
+              if (goNext) ivGoNext(); else ivGoPrev();
+              ivZ.moved = true; // chặn click làm đóng lightbox
+              imgEl.animate(
+                [{ transform: `translateX(${goNext ? 40 : -40}px)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }],
+                { duration: 200, easing: 'ease-out' }
+              );
+            } else {
+              imgEl.style.transition = 'transform 0.18s ease-out';
+              ivZ.x = 0; ivZ.y = 0;
+              ivApplyZoom();
+              setTimeout(function () { imgEl.style.transition = ''; }, 200);
+            }
+            return;
+          }
           // Chạm đúp: bật/tắt zoom tại điểm chạm
           if (e.type === 'pointerup' && !ivZ.moved) {
             const now = Date.now();
@@ -2779,6 +2814,13 @@
       stage.addEventListener('click', function (e) {
         if (ivZ.moved) { e.stopPropagation(); ivZ.moved = false; }
       }, true);
+
+      // Phím mũi tên trái/phải để đổi ảnh (máy tính)
+      document.addEventListener('keydown', function (e) {
+        if (document.getElementById('imageViewerModal').style.display !== 'flex') return;
+        if (e.key === 'ArrowRight') ivGoNext();
+        else if (e.key === 'ArrowLeft') ivGoPrev();
+      });
 
       // Lăn chuột để zoom (máy tính)
       stage.addEventListener('wheel', function (e) {
