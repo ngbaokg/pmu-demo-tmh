@@ -432,7 +432,7 @@
       display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.92); z-index: 3000; justify-content: center; align-items: center; flex-direction: column; padding: 15px;
     }
     #imageViewerStage { position: relative; width: 100%; max-width: 700px; display: flex; justify-content: center; align-items: center; overflow: hidden; touch-action: none; }
-    #imageViewerImg { max-width: 95%; max-height: 80vh; border-radius: 8px; border: 2px solid var(--primary-gold); object-fit: contain; box-shadow: 0 0 25px rgba(197, 160, 89, 0.5); transition: transform 0.05s linear; touch-action: none; }
+    #imageViewerImg { max-width: 95%; max-height: 80vh; border-radius: 8px; border: 2px solid var(--primary-gold); object-fit: contain; box-shadow: 0 0 25px rgba(197, 160, 89, 0.5); transform-origin: center center; will-change: transform; user-select: none; -webkit-user-select: none; -webkit-user-drag: none; touch-action: none; }
     .iv-nav-arrow {
       display: none; position: absolute; top: 50%; transform: translateY(-50%); color: #fff; font-size: 20px; cursor: pointer; background: rgba(0, 0, 0, 0.45); border-radius: 50%; width: 38px; height: 38px; align-items: center; justify-content: center; z-index: 2;
     }
@@ -952,6 +952,8 @@
   <!-- LIGHTBOX XEM ẢNH -->
   <div id="imageViewerModal" onclick="closeImageViewer()">
     <div style="width: 100%; max-width: 700px; text-align: right; margin-bottom: 8px;">
+      <span onclick="event.stopPropagation(); ivZoomBy(1/1.4)" style="color: #fff; font-size: 18px; cursor: pointer; padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 50%; margin-right: 6px; user-select: none;" title="Thu nhỏ"><i class="fa-solid fa-magnifying-glass-minus"></i></span>
+      <span onclick="event.stopPropagation(); ivZoomBy(1.4)" style="color: #fff; font-size: 18px; cursor: pointer; padding: 6px 12px; background: rgba(255,255,255,0.15); border-radius: 50%; margin-right: 6px; user-select: none;" title="Phóng to"><i class="fa-solid fa-magnifying-glass-plus"></i></span>
       <span onclick="event.stopPropagation(); closeImageViewer()" style="color: #fff; font-size: 24px; cursor: pointer; padding: 5px 12px; background: rgba(255,255,255,0.15); border-radius: 50%;"><i class="fa-solid fa-xmark"></i></span>
     </div>
     <div id="imageViewerStage">
@@ -1266,7 +1268,7 @@
           const newExpire = currentExpire + addedMs;
 
           transaction.update(keyRef, { used: true, usedBy: cloudUser.email, usedAt: Date.now() });
-          transaction.set(userRef, { expireAt: newExpire, activatedKey: key, updatedAt: Date.now() }, { merge: true });
+          transaction.set(userRef, { expireAt: newExpire, updatedAt: Date.now() }, { merge: true });
         });
 
         inputEl.value = '';
@@ -2614,6 +2616,7 @@
     function closeImageViewer() {
       document.getElementById('imageViewerModal').style.display = 'none';
       document.getElementById('imageViewerImg').src = '';
+      ivResetZoom();
       imageViewerList = [];
     }
 
@@ -2655,12 +2658,136 @@
     function ivRenderCurrent() {
       const item = imageViewerList[imageViewerIndex];
       if (!item) return;
+      ivResetZoom();
       document.getElementById('imageViewerImg').src = item.src;
       document.getElementById('imageViewerCaption').innerText = item.caption || '';
       const hasMultiple = imageViewerList.length > 1;
       document.getElementById('ivPrevArrow').style.display = (hasMultiple && imageViewerIndex > 0) ? 'flex' : 'none';
       document.getElementById('ivNextArrow').style.display = (hasMultiple && imageViewerIndex < imageViewerList.length - 1) ? 'flex' : 'none';
     }
+
+    /* ZOOM / KÉO ẢNH TRONG LIGHTBOX (pinch 2 ngón, kéo, chạm đúp, lăn chuột, nút +/-) */
+    const IV_MAX_SCALE = 5;
+    const ivZ = { scale: 1, x: 0, y: 0, ptrs: new Map(), sDist: 0, sScale: 1, sX: 0, sY: 0, sMid: { x: 0, y: 0 }, moved: false, lastTap: 0 };
+
+    function ivEls() {
+      return { img: document.getElementById('imageViewerImg'), stage: document.getElementById('imageViewerStage') };
+    }
+    function ivApplyZoom() {
+      const { img } = ivEls();
+      img.style.transform = (ivZ.scale === 1 && ivZ.x === 0 && ivZ.y === 0) ? '' : `translate(${ivZ.x}px, ${ivZ.y}px) scale(${ivZ.scale})`;
+    }
+    function ivClampPan() {
+      const { img, stage } = ivEls();
+      const maxX = Math.max(0, (img.offsetWidth * ivZ.scale - stage.clientWidth) / 2);
+      const maxY = Math.max(0, (img.offsetHeight * ivZ.scale - stage.clientHeight) / 2);
+      ivZ.x = Math.min(maxX, Math.max(-maxX, ivZ.x));
+      ivZ.y = Math.min(maxY, Math.max(-maxY, ivZ.y));
+    }
+    function ivResetZoom() {
+      ivZ.scale = 1; ivZ.x = 0; ivZ.y = 0; ivZ.moved = false; ivZ.lastTap = 0;
+      ivZ.ptrs.clear();
+      ivApplyZoom();
+    }
+    function ivRelToCenter(clientX, clientY) {
+      const r = ivEls().stage.getBoundingClientRect();
+      return { x: clientX - (r.left + r.width / 2), y: clientY - (r.top + r.height / 2) };
+    }
+    function ivZoomAt(newScale, p) {
+      newScale = Math.min(IV_MAX_SCALE, Math.max(1, newScale));
+      const ratio = newScale / ivZ.scale;
+      ivZ.x = p.x - (p.x - ivZ.x) * ratio;
+      ivZ.y = p.y - (p.y - ivZ.y) * ratio;
+      ivZ.scale = newScale;
+      if (newScale <= 1.001) { ivZ.scale = 1; ivZ.x = 0; ivZ.y = 0; }
+      ivClampPan();
+      ivApplyZoom();
+    }
+    function ivZoomBy(factor) { ivZoomAt(ivZ.scale * factor, { x: 0, y: 0 }); }
+
+    function ivRebase() {
+      const pts = Array.from(ivZ.ptrs.values());
+      ivZ.sScale = ivZ.scale; ivZ.sX = ivZ.x; ivZ.sY = ivZ.y;
+      if (pts.length >= 2) {
+        ivZ.sDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y) || 1;
+        ivZ.sMid = ivRelToCenter((pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2);
+      } else if (pts.length === 1) {
+        ivZ.sMid = ivRelToCenter(pts[0].x, pts[0].y);
+      }
+    }
+
+    function ivInitZoom() {
+      const { img, stage } = ivEls();
+      if (!img || !stage) return;
+      img.draggable = false;
+
+      stage.addEventListener('pointerdown', function (e) {
+        if (e.target.closest('.iv-nav-arrow')) return;
+        if (ivZ.ptrs.size === 0) ivZ.moved = false;
+        ivZ.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        ivRebase();
+      });
+
+      stage.addEventListener('pointermove', function (e) {
+        if (!ivZ.ptrs.has(e.pointerId)) return;
+        ivZ.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        const pts = Array.from(ivZ.ptrs.values());
+        if (pts.length >= 2) {
+          const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+          const mid = ivRelToCenter((pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2);
+          const newScale = Math.min(IV_MAX_SCALE, Math.max(1, ivZ.sScale * dist / ivZ.sDist));
+          const ratio = newScale / ivZ.sScale;
+          ivZ.scale = newScale;
+          ivZ.x = mid.x - (ivZ.sMid.x - ivZ.sX) * ratio;
+          ivZ.y = mid.y - (ivZ.sMid.y - ivZ.sY) * ratio;
+          ivZ.moved = true;
+        } else {
+          const p = ivRelToCenter(pts[0].x, pts[0].y);
+          const dx = p.x - ivZ.sMid.x, dy = p.y - ivZ.sMid.y;
+          if (Math.hypot(dx, dy) > 6) ivZ.moved = true;
+          if (ivZ.scale > 1) { ivZ.x = ivZ.sX + dx; ivZ.y = ivZ.sY + dy; }
+        }
+        ivClampPan();
+        ivApplyZoom();
+      });
+
+      function endPointer(e) {
+        if (!ivZ.ptrs.has(e.pointerId)) return;
+        ivZ.ptrs.delete(e.pointerId);
+        if (ivZ.ptrs.size === 0) {
+          // Chạm đúp: bật/tắt zoom tại điểm chạm
+          if (e.type === 'pointerup' && !ivZ.moved) {
+            const now = Date.now();
+            if (now - ivZ.lastTap < 300) {
+              ivZ.lastTap = 0;
+              if (ivZ.scale > 1) ivZoomAt(1, { x: 0, y: 0 });
+              else ivZoomAt(2.5, ivRelToCenter(e.clientX, e.clientY));
+            } else {
+              ivZ.lastTap = now;
+            }
+          }
+          if (ivZ.scale < 1.02) { ivZ.scale = 1; ivZ.x = 0; ivZ.y = 0; ivApplyZoom(); }
+        } else {
+          ivRebase();
+        }
+      }
+      stage.addEventListener('pointerup', endPointer);
+      stage.addEventListener('pointercancel', endPointer);
+      stage.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') endPointer(e); });
+
+      // Sau khi kéo/pinch, không để sự kiện click lan lên làm đóng lightbox
+      stage.addEventListener('click', function (e) {
+        if (ivZ.moved) { e.stopPropagation(); ivZ.moved = false; }
+      }, true);
+
+      // Lăn chuột để zoom (máy tính)
+      stage.addEventListener('wheel', function (e) {
+        e.preventDefault();
+        ivZoomAt(ivZ.scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15), ivRelToCenter(e.clientX, e.clientY));
+      }, { passive: false });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ivInitZoom);
+    else ivInitZoom();
 
     function ivGoNext() { if (imageViewerIndex < imageViewerList.length - 1) { imageViewerIndex++; ivRenderCurrent(); } }
     function ivGoPrev() { if (imageViewerIndex > 0) { imageViewerIndex--; ivRenderCurrent(); } }
@@ -2984,20 +3111,33 @@
       }
 
       const bodyText = document.getElementById('remindMessageBody').value || '';
+      const encodedBody = encodeURIComponent(bodyText);
 
-      // Dùng đúng chuẩn RFC 5724: sms:SỐ?body=NỘI_DUNG cho cả iPhone lẫn Android.
-      // Cú pháp cũ sms:SỐ&body=... (dành cho iOS 8) khiến iOS đời mới hiểu toàn bộ chuỗi
-      // phía sau dấu & là một phần của số điện thoại -> nội dung tin nhắn bị dính vào ô "Đến".
-      const smsUrl = 'sms:' + phoneInput + '?body=' + encodeURIComponent(bodyText);
+      // Chọn dấu ngăn cách "body" theo hệ điều hành / phiên bản iOS
+      //  - iOS 7 trở xuống : sms:SỐ;body=...
+      //  - iOS 8           : sms:SỐ&body=...
+      //  - iOS 9+ / Android: sms:SỐ?body=...   (chuẩn RFC 5724)
+      // Dùng sai dấu thì máy cũ coi cả nội dung là số điện thoại.
+      const ua = navigator.userAgent || '';
+      const isAndroid = /Android/i.test(ua);
+      const iosMatch = ua.match(/OS (\d+)[_.]/);
+      const iosMajor = (!isAndroid && /iPhone|iPad|iPod/.test(ua) && iosMatch) ? parseInt(iosMatch[1], 10) : 99;
 
-      // Sao chép sẵn nội dung vào bộ nhớ tạm để khách dán lại nếu máy nào đó không tự điền nội dung
-      try {
-        if (navigator.clipboard && window.isSecureContext) {
-          navigator.clipboard.writeText(bodyText).catch(function() {});
-        }
-      } catch (e) {}
+      let sep = '?';
+      if (iosMajor <= 7) sep = ';';
+      else if (iosMajor === 8) sep = '&';
 
-      window.location.href = smsUrl;
+      const smsUrl = `sms:${phoneInput}${sep}body=${encodedBody}`;
+
+      // Tạo thẻ <a> tạm thời để kích hoạt mở iMessage/SMS chuẩn xác, tránh lỗi parse của Safari
+      const link = document.createElement('a');
+      link.href = smsUrl;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 100);
     }
 
     /* DOANH THU 6 NÚT */
