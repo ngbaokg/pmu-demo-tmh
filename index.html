@@ -1266,7 +1266,7 @@
           const newExpire = currentExpire + addedMs;
 
           transaction.update(keyRef, { used: true, usedBy: cloudUser.email, usedAt: Date.now() });
-          transaction.set(userRef, { expireAt: newExpire, updatedAt: Date.now() }, { merge: true });
+          transaction.set(userRef, { expireAt: newExpire, activatedKey: key, updatedAt: Date.now() }, { merge: true });
         });
 
         inputEl.value = '';
@@ -2984,31 +2984,20 @@
       }
 
       const bodyText = document.getElementById('remindMessageBody').value || '';
-      const encodedBody = encodeURIComponent(bodyText);
 
-      // Nhận diện iOS / iPadOS
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      // Dùng đúng chuẩn RFC 5724: sms:SỐ?body=NỘI_DUNG cho cả iPhone lẫn Android.
+      // Cú pháp cũ sms:SỐ&body=... (dành cho iOS 8) khiến iOS đời mới hiểu toàn bộ chuỗi
+      // phía sau dấu & là một phần của số điện thoại -> nội dung tin nhắn bị dính vào ô "Đến".
+      const smsUrl = 'sms:' + phoneInput + '?body=' + encodeURIComponent(bodyText);
 
-      // Cú pháp chuẩn RFC cho iOS là dùng dấu & hoặc ; và mở qua anchor element
-      let smsUrl = '';
-      if (isIOS) {
-        // Trên iOS, định dạng sms:NUMBER&body=TEXT hoạt động tốt nhất khi click qua thẻ <a>
-        smsUrl = `sms:${phoneInput}&body=${encodedBody}`;
-      } else {
-        // Trên Android dùng dấu ?
-        smsUrl = `sms:${phoneInput}?body=${encodedBody}`;
-      }
+      // Sao chép sẵn nội dung vào bộ nhớ tạm để khách dán lại nếu máy nào đó không tự điền nội dung
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(bodyText).catch(function() {});
+        }
+      } catch (e) {}
 
-      // Tạo thẻ <a> tạm thời để kích hoạt mở iMessage/SMS chuẩn xác, tránh lỗi parse của Safari
-      const link = document.createElement('a');
-      link.href = smsUrl;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => {
-        document.body.removeChild(link);
-      }, 100);
+      window.location.href = smsUrl;
     }
 
     /* DOANH THU 6 NÚT */
