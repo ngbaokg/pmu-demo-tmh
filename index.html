@@ -374,10 +374,28 @@
     }
     .modal-close-btn:hover { color: #fff; border-color: var(--primary-gold); }
 
-    .settings-tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); }
-    .settings-tabs::-webkit-scrollbar { display: none; }
+    /* THANH TAB CÀI ĐẶT GỌN GÀNG KHÔNG BỊ TRÀN */
+    .settings-tabs { 
+      display: flex; 
+      justify-content: space-between;
+      gap: 4px; 
+      margin-bottom: 16px; 
+      border-bottom: 1px solid var(--border-color); 
+    }
     .settings-tab {
-      flex-shrink: 0; display: flex; align-items: center; gap: 6px; padding: 9px 12px; font-size: 12.5px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.15s;
+      flex: 1;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      gap: 5px; 
+      padding: 10px 4px; 
+      font-size: 12.5px; 
+      font-weight: 600; 
+      color: var(--text-muted); 
+      cursor: pointer; 
+      border-bottom: 2px solid transparent; 
+      white-space: nowrap; 
+      transition: all 0.15s;
     }
     .settings-tab:hover { color: var(--text-main); }
     .settings-tab.active { color: var(--primary-gold); border-bottom-color: var(--primary-gold); }
@@ -526,7 +544,11 @@
       .bottom-nav { max-width: 900px; }
     }
 
-    /* CSS ĐẶC BIỆT KHI IN HÓA ĐƠN QUA MÁY IN (@MEDIA PRINT) */
+    /* CSS TỐI ƯU HÓA ĐÚNG 1 TRANG KHI IN MÁY IN (@MEDIA PRINT) */
+    @page {
+      margin: 8mm;
+      size: auto;
+    }
     @media print {
       body * {
         visibility: hidden !important;
@@ -543,6 +565,8 @@
         color: #000 !important;
         padding: 0 !important;
         margin: 0 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .no-print {
         display: none !important;
@@ -577,7 +601,7 @@
     <div id="tab-home" class="tab-content active">
       <div id="backupReminderBanner" style="display: none;"></div>
       <div class="hero-banner">
-        <h2 style="color: var(--primary-gold); margin-bottom: 8px;" id="heroBrandName">Tiệm Phun Xăm Của Bạn</h2>
+        <h2 style="color: var(--primary-gold); margin-bottom: 8px;" id="heroBrandName">Cửa Hàng Phun Xăm Của Bạn</h2>
         <p style="color: var(--text-muted); font-size: 13px;">Hệ thống lưu trữ hồ sơ, hình ảnh & nhắc dặm tự động</p>
         <button class="quick-add-btn" onclick="openAddCustomerModal()"><i class="fa-solid fa-plus"></i></button>
         <div style="font-size: 13px; font-weight: 600; margin-top: 10px; color: var(--primary-gold);">Thêm khách hàng mới</div>
@@ -705,19 +729,19 @@
 
   <!-- MODAL: XEM TRƯỚC VÀ IN HÓA ĐƠN KIÊM PHIẾU BẢO HÀNH -->
   <div id="printPreviewModal" class="modal">
-    <div class="modal-content" style="max-width: 650px; background: var(--bg-card);">
+    <div class="modal-content" style="max-width: 720px; background: var(--bg-card);">
       <div class="modal-header-top no-print">
         <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn kiêm phiếu bảo hành</h3>
         <div class="modal-close-btn" onclick="closeModal('printPreviewModal')"><i class="fa-solid fa-xmark"></i></div>
       </div>
 
       <!-- KHUNG BẢN IN SẼ ĐƯỢC XUẤT RA MÁY IN HOẶC FILE ẢNH -->
-      <div id="printReceiptContainer" style="background: #ffffff; color: #111111; padding: 22px 20px; border-radius: 8px; font-family: Arial, sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+      <div id="printReceiptContainer" style="background: #ffffff; color: #111111; padding: 18px 20px; border-radius: 8px; font-family: Arial, sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
         <!-- Nội dung hóa đơn được nạp động từ javascript -->
       </div>
 
       <!-- CÁC NÚT THAO TÁC NO-PRINT -->
-      <div class="no-print" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px;">
+      <div class="no-print" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px;">
         <button class="btn-gold" style="padding: 12px;" onclick="executePrintReceipt()"><i class="fa-solid fa-print"></i> In hóa đơn ngay</button>
         <button class="btn-outline" style="justify-content: center; padding: 12px; border-color: var(--zalo-blue); color: #4da3ff; font-weight: 600;" onclick="exportReceiptImageAndSendZalo()"><i class="fa-solid fa-image"></i> Tải ảnh / Gửi Zalo</button>
       </div>
@@ -1054,10 +1078,10 @@
         <h3 style="color: var(--primary-gold); font-size: 18px;"><i class="fa-solid fa-cloud"></i> Đăng nhập tài khoản</h3>
       </div>
       <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
-        Vui lòng đăng nhập để bắt đầu sử dụng phần mềm. Nếu là tiệm mới, bạn nhập email và mật khẩu rồi bấm <strong style="color: var(--primary-gold);">"Tạo tài khoản mới"</strong> để nhận ngay 7 ngày trải nghiệm miễn phí!
+        Vui lòng đăng nhập để bắt đầu sử dụng phần mềm. Nếu là cửa hàng mới, bạn nhập email và mật khẩu rồi bấm <strong style="color: var(--primary-gold);">"Tạo tài khoản mới"</strong> để nhận ngay 7 ngày trải nghiệm miễn phí!
       </p>
       <div class="form-group">
-        <label>Email tiệm (*)</label>
+        <label>Email cửa hàng (*)</label>
         <input type="email" id="cloudEmail" class="form-control" placeholder="vidu@gmail.com">
       </div>
       <div class="form-group" style="margin-bottom: 14px;">
@@ -1081,15 +1105,15 @@
         <div class="modal-close-btn" onclick="closeModal('settingsModal')"><i class="fa-solid fa-xmark"></i></div>
       </div>
 
+      <!-- THANH TAB ĐÃ ĐƯỢC TỐI ƯU CÒN 4 TAB GỌN GÀNG KHÔNG BỊ TRÀN -->
       <div class="settings-tabs">
         <div class="settings-tab active" data-tab="store" onclick="switchSettingsTab('store', this)"><i class="fa-solid fa-store"></i> Cửa hàng</div>
         <div class="settings-tab" data-tab="security" onclick="switchSettingsTab('security', this)"><i class="fa-solid fa-lock"></i> Bảo mật</div>
         <div class="settings-tab" data-tab="payment" onclick="switchSettingsTab('payment', this)"><i class="fa-solid fa-qrcode"></i> Thanh toán</div>
-        <div class="settings-tab" data-tab="printer" onclick="switchSettingsTab('printer', this)"><i class="fa-solid fa-print"></i> Máy in & Mẫu in</div>
         <div class="settings-tab" data-tab="sync" onclick="switchSettingsTab('sync', this)"><i class="fa-solid fa-cloud"></i> Bản quyền & Đồng bộ</div>
       </div>
 
-      <!-- TAB: Cửa hàng -->
+      <!-- TAB: Cửa hàng (ĐÃ TÍCH HỢP TOÀN BỘ CẤU HÌNH IN VÀ DẶN DÒ TÙY Ý) -->
       <div class="settings-tab-content active" id="settingsTab-store">
         <div class="form-group">
           <label>Tên cửa hàng</label>
@@ -1099,9 +1123,18 @@
           <label>Slogan chào mừng</label>
           <input type="text" id="settingSlogan" class="form-control">
         </div>
-        <div class="form-group">
-          <label>Số điện thoại / Hotline tiệm</label>
-          <input type="tel" id="settingHotline" class="form-control" placeholder="VD: 0913.535.344">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label>Hotline cửa hàng</label>
+            <input type="tel" id="settingHotline" class="form-control" placeholder="VD: 0913.535.344">
+          </div>
+          <div class="form-group">
+            <label>Khổ giấy in mặc định</label>
+            <select id="settingPrintPaperSize" class="form-control">
+              <option value="a5">Khổ A5 / A4 (Máy in thường)</option>
+              <option value="k80">Khổ cuộn K80 (Nhiệt 80mm)</option>
+            </select>
+          </div>
         </div>
         <div class="form-group">
           <label>Địa chỉ cửa hàng</label>
@@ -1120,7 +1153,11 @@
         </div>
         <div class="form-group">
           <label>Mẫu tin nhắn nhắc bảo hành ({TEN_KH}, {DICH_VU}, {HAN_BH}, {TEN_TIEM})</label>
-          <textarea id="settingMsgTemplate" class="form-control" style="height: 90px; font-size: 13px;"></textarea>
+          <textarea id="settingMsgTemplate" class="form-control" style="height: 75px; font-size: 13px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Lời dặn dò / Điều khoản bảo hành chân phiếu (Tùy chỉnh của cửa hàng)</label>
+          <textarea id="settingPrintFooterNote" class="form-control" rows="3" placeholder="Nhập lưu ý dặn dò sau làm của cửa hàng..."></textarea>
         </div>
       </div>
 
@@ -1151,24 +1188,6 @@
           <div class="form-group" style="margin-bottom: 0;">
             <label style="font-size: 12px;">Tên chủ tài khoản (viết hoa không dấu)</label>
             <input type="text" id="settingBankAccountName" class="form-control" placeholder="VD: NGUYEN VAN A">
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB: MÁY IN & MẪU IN HÓA ĐƠN -->
-      <div class="settings-tab-content" id="settingsTab-printer">
-        <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
-          <label style="color: var(--primary-gold); font-weight: 600; margin-bottom: 8px; display: block;"><i class="fa-solid fa-print"></i> Cấu hình máy in & Mẫu hóa đơn</label>
-          <div class="form-group">
-            <label style="font-size: 12px;">Khổ giấy in mặc định</label>
-            <select id="settingPrintPaperSize" class="form-control">
-              <option value="k80">Khổ cuộn K80 (Hóa đơn nhiệt 80mm)</option>
-              <option value="a5">Khổ giấy A5 / A4 (Máy in thường)</option>
-            </select>
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
-            <label style="font-size: 12px;">Lời dặn dò / Điều khoản bảo hành chân phiếu</label>
-            <textarea id="settingPrintFooterNote" class="form-control" rows="3" placeholder="Ví dụ: Vui lòng kiêng nước 24h, không tự bóc vảy. Quý khách vui lòng đến dặm lại đúng lịch hẹn để giữ màu đẹp nhất!"></textarea>
           </div>
         </div>
       </div>
@@ -1211,7 +1230,7 @@
 
   <script>
     const defaultBrandLogo = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'><circle cx='250' cy='250' r='240' fill='%231c1e24' stroke='%23c5a059' stroke-width='6'/><text x='250' y='270' font-family='sans-serif' font-size='72' font-weight='bold' fill='%23c5a059' text-anchor='middle'>PMU</text></svg>";
-    const defaultReminderTemplate = "Dạ em chào chị {TEN_KH}, tiệm {TEN_TIEM} xin phép nhắc lịch kiểm tra và dặm bảo hành dịch vụ {DICH_VU} của chị ạ. Hạn bảo hành của chị đến ngày {HAN_BH}. Chị sắp xếp ghé tiệm để bên em hỗ trợ dặm đẹp nhất cho chị nhé!";
+    const defaultReminderTemplate = "Dạ em chào chị {TEN_KH}, cửa hàng {TEN_TIEM} xin phép nhắc lịch kiểm tra và dặm bảo hành dịch vụ {DICH_VU} của chị ạ. Hạn bảo hành của chị đến ngày {HAN_BH}. Chị sắp xếp ghé cửa hàng để bên em hỗ trợ dặm đẹp nhất cho chị nhé!";
     const defaultPrintFooterNote = "• Quý khách kiêng nước trong vòng 24 giờ đầu sau khi làm.\n• Không tự ý dùng tay bóc vảy, để vảy bong tự nhiên.\n• Hỗ trợ dặm bảo hành miễn phí theo đúng thời hạn ghi trên phiếu!";
 
     localforage.config({
@@ -1246,7 +1265,7 @@
         logo: defaultBrandLogo,
         passcode: "123456",
         msgTemplate: defaultReminderTemplate,
-        paperSize: "k80",
+        paperSize: "a5",
         footerNote: defaultPrintFooterNote
       },
       customers: [],
@@ -1681,7 +1700,7 @@
         bankId: db.brand.bankId || '970436',
         bankAccountNo: db.brand.bankAccountNo || '',
         bankAccountName: db.brand.bankAccountName || '',
-        paperSize: db.brand.paperSize || 'k80',
+        paperSize: db.brand.paperSize || 'a5',
         footerNote: db.brand.footerNote || defaultPrintFooterNote,
         updatedAt: Date.now()
       };
@@ -2227,6 +2246,7 @@
               overdueDays: w.overdueDays,
               colorMix: s.colorMix,
               isNoWarranty: w.isNoWarranty,
+              warrantyMonths: s.warrantyMonths || 0,
               warrantyDone: isDone,
               warrantyDate: s.warrantyDate || null
             });
@@ -2346,7 +2366,7 @@
       }
     }
 
-    /* QUẢN LÝ LỊCH HẸN BẢN GỐC NÂNG CẤP THƯƠNG MẠI */
+    /* QUẢN LÝ LỊCH HẸN */
     function renderAppointmentList() {
       const q = (document.getElementById('appointmentSearchInput').value || '').toLowerCase().trim();
       const container = document.getElementById('appointmentList');
@@ -3233,7 +3253,7 @@
     function openQuickMessageModal(custId) {
       const c = db.customers.find(item => item.id === custId);
       if (!c) return;
-      const msg = `Xin chào ${c.name}, ${db.brand.title} xin cảm ơn bạn đã sử dụng dịch vụ. Nếu cần hỗ trợ thêm, bạn vui lòng nhắn lại tiệm nhé!`;
+      const msg = `Xin chào ${c.name}, ${db.brand.title} xin cảm ơn bạn đã sử dụng dịch vụ. Nếu cần hỗ trợ thêm, bạn vui lòng nhắn lại cửa hàng nhé!`;
       currentRemindPhone = c.phone.replace(/\D/g, '');
       document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi tin nhắn chăm sóc';
       document.getElementById('remindCustName').innerText = c.name;
@@ -3335,18 +3355,25 @@
         sessionsToPrint = customer.sessions;
       }
 
-      const paperSize = (db.brand && db.brand.paperSize) || 'k80';
+      const paperSize = (db.brand && db.brand.paperSize) || 'a5';
       const isK80 = paperSize === 'k80';
-      const containerWidth = isK80 ? '360px' : '100%';
+      const containerWidth = isK80 ? '340px' : '650px';
 
       let totalAmount = 0, totalPaid = 0;
+      let warrantySummaryArray = [];
+
       sessionsToPrint.forEach(s => {
         const p = s.price || 0;
         const pd = (s.paid !== undefined) ? s.paid : p;
         totalAmount += p;
         totalPaid += pd;
+
+        const m = parseInt(s.warrantyMonths) || 0;
+        const wTxt = m > 0 ? `${m} tháng` : 'Không bảo hành';
+        warrantySummaryArray.push(`${escapeHtml(s.service)} (${wTxt})`);
       });
       const totalDebt = Math.max(0, totalAmount - totalPaid);
+      const warrantySummaryString = warrantySummaryArray.join(', ');
 
       const today = new Date();
       const printDateStr = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')} - ${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
@@ -3359,13 +3386,13 @@
       let rowsHtml = sessionsToPrint.map((s, idx) => {
         const w = calculateWarranty(s.date, s.warrantyMonths);
         return `
-          <tr style="border-bottom: 1px dashed #ccc;">
-            <td style="padding: 7px 4px; font-size: 13px;">
+          <tr style="border-bottom: 1px dashed #ddd;">
+            <td style="padding: 6px 4px; font-size: 13px;">
               <strong>${idx + 1}. ${escapeHtml(s.service)}</strong>
-              ${s.colorMix ? `<div style="font-size: 11px; color: #555;">Màu: ${escapeHtml(s.colorMix)}</div>` : ''}
-              <div style="font-size: 11px; color: #666;">Hạn dặm BH: <strong>${w.expiryDateStr}</strong></div>
+              ${s.colorMix ? `<span style="font-size: 11.5px; color: #555; margin-left: 6px;">(Màu: ${escapeHtml(s.colorMix)})</span>` : ''}
+              <div style="font-size: 11.5px; color: #666; margin-top: 1px;">Hạn dặm: <strong>${w.expiryDateStr}</strong></div>
             </td>
-            <td style="padding: 7px 4px; text-align: right; font-size: 13px; font-weight: bold; vertical-align: top;">
+            <td style="padding: 6px 4px; text-align: right; font-size: 13px; font-weight: bold; vertical-align: top;">
               ${formatMoney(s.price)}
             </td>
           </tr>
@@ -3373,30 +3400,30 @@
       }).join('');
 
       const receiptHtml = `
-        <div style="max-width: ${containerWidth}; margin: 0 auto; color: #000; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
+        <div style="max-width: ${containerWidth}; margin: 0 auto; color: #000; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; line-height: 1.45;">
           <!-- HEADER HÓA ĐƠN -->
-          <div style="text-align: center; border-bottom: 1px solid #111; padding-bottom: 10px; margin-bottom: 12px;">
-            ${db.brand.logo ? `<img src="${db.brand.logo}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 6px;" alt="Logo">` : ''}
-            <div style="font-size: 17px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(brandTitle)}</div>
-            ${brandAddress ? `<div style="font-size: 11.5px; color: #444; margin-top: 2px;">Đ/C: ${escapeHtml(brandAddress)}</div>` : ''}
-            ${brandHotline ? `<div style="font-size: 12px; font-weight: bold; margin-top: 2px;">Hotline: ${escapeHtml(brandHotline)}</div>` : ''}
-            <div style="font-size: 15px; font-weight: bold; margin-top: 8px; letter-spacing: 0.5px;">PHIẾU BẢO HÀNH & THANH TOÁN</div>
+          <div style="text-align: center; border-bottom: 1.5px solid #111; padding-bottom: 8px; margin-bottom: 10px;">
+            ${db.brand.logo ? `<img src="${db.brand.logo}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; margin-bottom: 4px;" alt="Logo">` : ''}
+            <div style="font-size: 16px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(brandTitle)}</div>
+            ${brandAddress ? `<div style="font-size: 11px; color: #444; margin-top: 1px;">Đ/C: ${escapeHtml(brandAddress)}</div>` : ''}
+            ${brandHotline ? `<div style="font-size: 11.5px; font-weight: bold; margin-top: 1px;">Hotline: ${escapeHtml(brandHotline)}</div>` : ''}
+            <div style="font-size: 15px; font-weight: bold; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px;">HÓA ĐƠN KIÊM PHIẾU BẢO HÀNH</div>
             <div style="font-size: 11px; color: #666;">Ngày in: ${printDateStr}</div>
           </div>
 
           <!-- THÔNG TIN KHÁCH HÀNG -->
-          <div style="font-size: 13px; line-height: 1.6; margin-bottom: 12px;">
+          <div style="font-size: 12.5px; line-height: 1.5; margin-bottom: 10px;">
             <div>Khách hàng: <strong>${escapeHtml(customer.name)}</strong></div>
             <div>Số điện thoại: <strong>${escapeHtml(customer.phone)}</strong></div>
             ${customer.address ? `<div>Địa chỉ: ${escapeHtml(customer.address)}</div>` : ''}
           </div>
 
           <!-- BẢNG CHI TIẾT DỊCH VỤ -->
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px;">
             <thead>
-              <tr style="border-top: 1px solid #000; border-bottom: 1px solid #000;">
-                <th style="padding: 6px 4px; text-align: left; font-size: 12.5px;">Dịch vụ & Bảo hành</th>
-                <th style="padding: 6px 4px; text-align: right; font-size: 12.5px; width: 105px;">Thành tiền</th>
+              <tr style="border-top: 1.5px solid #000; border-bottom: 1.5px solid #000;">
+                <th style="padding: 5px 4px; text-align: left; font-size: 12.5px;">Dịch vụ</th>
+                <th style="padding: 5px 4px; text-align: right; font-size: 12.5px; width: 110px;">Thành tiền</th>
               </tr>
             </thead>
             <tbody>
@@ -3404,8 +3431,8 @@
             </tbody>
           </table>
 
-          <!-- TỔNG KẾT THANH TOÁN -->
-          <div style="border-top: 1px solid #000; padding-top: 8px; font-size: 13px; line-height: 1.7; margin-bottom: 14px;">
+          <!-- TỔNG KẾT THANH TOÁN & THỜI HẠN BẢO HÀNH -->
+          <div style="border-top: 1.5px solid #000; padding-top: 6px; font-size: 12.5px; line-height: 1.6; margin-bottom: 10px;">
             <div style="display: flex; justify-content: space-between;">
               <span>Tổng chi phí:</span>
               <strong>${formatMoney(totalAmount)}</strong>
@@ -3414,35 +3441,38 @@
               <span>Đã thanh toán:</span>
               <strong>${formatMoney(totalPaid)}</strong>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 14px;">
+            <div style="display: flex; justify-content: space-between; font-size: 13.5px;">
               <span>Nợ còn lại:</span>
               <strong style="color: ${totalDebt > 0 ? '#d90429' : '#000'};">${formatMoney(totalDebt)}</strong>
             </div>
+            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px dashed #ccc; font-size: 12px;">
+              Thời hạn bảo hành: <strong style="color: #000;">${warrantySummaryString}</strong>
+            </div>
           </div>
 
-          <!-- LƯU Ý DẶN DÒ BẢO HÀNH -->
-          <div style="background: #f7f7f7; border: 1px dashed #ccc; border-radius: 6px; padding: 10px; font-size: 11px; line-height: 1.5; margin-bottom: 16px;">
-            <div style="font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">Lưu ý dặn dò sau khi làm:</div>
+          <!-- LƯU Ý DẶN DÒ BẢO HÀNH (TÙY CHỈNH THEO CỬA HÀNG) -->
+          <div style="background: #fbfbfb; border: 1px dashed #bbb; border-radius: 6px; padding: 7px 10px; font-size: 11px; line-height: 1.45; margin-bottom: 12px;">
+            <div style="font-weight: bold; margin-bottom: 3px; text-transform: uppercase;">Lưu ý dặn dò sau khi làm:</div>
             <div>${escapeHtmlMultiline(footerNote)}</div>
           </div>
 
           <!-- CHỮ KÝ XÁC NHẬN -->
-          <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 14px; padding-bottom: 10px;">
-            <div style="width: 48%; font-size: 12px;">
+          <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 8px; padding-bottom: 4px;">
+            <div style="width: 48%; font-size: 11.5px;">
               <strong>Khách hàng</strong>
-              <div style="font-size: 10px; color: #777; margin-top: 2px;">(Ký & ghi rõ họ tên)</div>
-              <div style="height: 45px;"></div>
+              <div style="font-size: 10px; color: #777;">(Ký & ghi rõ họ tên)</div>
+              <div style="height: 38px;"></div>
               <div>${escapeHtml(customer.name)}</div>
             </div>
-            <div style="width: 48%; font-size: 12px;">
-              <strong>Người thực hiện / Tiệm</strong>
-              <div style="font-size: 10px; color: #777; margin-top: 2px;">(Ký xác nhận)</div>
-              <div style="height: 45px;"></div>
+            <div style="width: 48%; font-size: 11.5px;">
+              <strong>Người thực hiện / Cửa hàng</strong>
+              <div style="font-size: 10px; color: #777;">(Ký xác nhận)</div>
+              <div style="height: 38px;"></div>
               <div>${escapeHtml(brandTitle)}</div>
             </div>
           </div>
 
-          <div style="text-align: center; font-size: 11px; font-style: italic; color: #555; margin-top: 10px; border-top: 1px dashed #bbb; padding-top: 8px;">
+          <div style="text-align: center; font-size: 10.5px; font-style: italic; color: #555; margin-top: 8px; border-top: 1px dashed #ccc; padding-top: 6px;">
             Cảm ơn quý khách đã tin tưởng và đồng hành cùng ${escapeHtml(brandTitle)}!
           </div>
         </div>
@@ -3469,15 +3499,13 @@
         });
 
         const imgData = canvas.toDataURL('image/png');
-        const fileName = `PhieuBaoHanh_${removeVietnameseTones(customer.name).replace(/\s+/g, '_')}_${Date.now()}.png`;
+        const fileName = `HoaDon_BaoHanh_${removeVietnameseTones(customer.name).replace(/\s+/g, '_')}_${Date.now()}.png`;
 
-        // Tự động tải ảnh về máy tính
         const a = document.createElement('a');
         a.href = imgData;
         a.download = fileName;
         a.click();
 
-        // Mở Zalo số khách hàng để gửi ảnh
         const cleanPhone = (customer.phone || '').replace(/\D/g, '');
         if (cleanPhone) {
           window.open(`https://zalo.me/${cleanPhone}`, '_blank');
@@ -3642,7 +3670,7 @@
       document.getElementById('settingBankId').value = db.brand.bankId || '970436';
       document.getElementById('settingBankAccountNo').value = db.brand.bankAccountNo || '';
       document.getElementById('settingBankAccountName').value = db.brand.bankAccountName || '';
-      document.getElementById('settingPrintPaperSize').value = db.brand.paperSize || 'k80';
+      document.getElementById('settingPrintPaperSize').value = db.brand.paperSize || 'a5';
       document.getElementById('settingPrintFooterNote').value = db.brand.footerNote || defaultPrintFooterNote;
       document.getElementById('settingPasscode').value = '';
       document.getElementById('settingOldPasscode').value = '';
