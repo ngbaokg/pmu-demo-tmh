@@ -16,6 +16,7 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
@@ -62,6 +63,11 @@
     .brand-box > div { min-width: 0; }
     .brand-title { font-size: 16px; font-weight: 700; color: var(--primary-gold); letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .brand-slogan { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* NÚT MÁY IN TRÊN HEADER: MẶC ĐỊNH ẨN TRÊN ĐIỆN THOẠI */
+    #desktopPrintBtn {
+      display: none;
+    }
 
     .bottom-nav {
       position: fixed;
@@ -467,6 +473,11 @@
       #cloudSyncStatus { font-size: 13px !important; gap: 6px !important; }
       header .btn-icon-only { padding: 10px 14px; font-size: 16px; }
 
+      /* KÍCH HOẠT HIỂN THỊ NÚT MÁY IN TRÊN GIAO DIỆN MÁY TÍNH */
+      #desktopPrintBtn {
+        display: inline-flex !important;
+      }
+
       .hero-banner { 
         padding: 40px 20px; 
         margin-bottom: 30px; 
@@ -514,6 +525,29 @@
       #customerList, #homeRecentList, #warrantyList { grid-template-columns: 1fr 1fr 1fr; }
       .bottom-nav { max-width: 900px; }
     }
+
+    /* CSS ĐẶC BIỆT KHI IN HÓA ĐƠN QUA MÁY IN (@MEDIA PRINT) */
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #printReceiptContainer, #printReceiptContainer * {
+        visibility: visible !important;
+      }
+      #printReceiptContainer {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        background: #fff !important;
+        color: #000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
   </style>
 </head>
 
@@ -531,6 +565,8 @@
       <div id="cloudSyncStatus" style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap;" onclick="openSettingsModal()" title="Bấm để mở cài đặt đồng bộ">
         <i class="fa-solid fa-hard-drive"></i> <span id="cloudSyncStatusText">Chưa kết nối</span>
       </div>
+      <!-- NÚT MÁY IN CẠNH NÚT CÀI ĐẶT (CHỈ HIỂN THỊ TRÊN GIAO DIỆN MÁY TÍNH) -->
+      <button id="desktopPrintBtn" class="btn-outline btn-icon-only" onclick="openPrintCustomerSelectModal()" title="In hóa đơn & Phiếu bảo hành"><i class="fa-solid fa-print"></i></button>
       <button class="btn-outline btn-icon-only" onclick="openSettingsModal()" title="Cài đặt"><i class="fa-solid fa-gear"></i></button>
     </div>
   </header>
@@ -651,6 +687,41 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- MODAL: CHỌN KHÁCH HÀNG ĐỂ IN HÓA ĐƠN (KHI BẤM ICON MÁY IN TRÊN PC) -->
+  <div id="printCustomerSelectModal" class="modal">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header-top">
+        <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-print"></i> Chọn khách hàng cần in hóa đơn</h3>
+        <div class="modal-close-btn" onclick="closeModal('printCustomerSelectModal')"><i class="fa-solid fa-xmark"></i></div>
+      </div>
+      <div class="form-group">
+        <input type="text" id="printCustomerSearchInput" class="form-control" placeholder="Tìm theo Tên hoặc Số điện thoại..." oninput="renderPrintCustomerSelectList()">
+      </div>
+      <div id="printCustomerSelectList" style="max-height: 55vh; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: XEM TRƯỚC VÀ IN HÓA ĐƠN KIÊM PHIẾU BẢO HÀNH -->
+  <div id="printPreviewModal" class="modal">
+    <div class="modal-content" style="max-width: 650px; background: var(--bg-card);">
+      <div class="modal-header-top no-print">
+        <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-file-invoice-dollar"></i> Hóa đơn kiêm phiếu bảo hành</h3>
+        <div class="modal-close-btn" onclick="closeModal('printPreviewModal')"><i class="fa-solid fa-xmark"></i></div>
+      </div>
+
+      <!-- KHUNG BẢN IN SẼ ĐƯỢC XUẤT RA MÁY IN HOẶC FILE ẢNH -->
+      <div id="printReceiptContainer" style="background: #ffffff; color: #111111; padding: 22px 20px; border-radius: 8px; font-family: Arial, sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
+        <!-- Nội dung hóa đơn được nạp động từ javascript -->
+      </div>
+
+      <!-- CÁC NÚT THAO TÁC NO-PRINT -->
+      <div class="no-print" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px;">
+        <button class="btn-gold" style="padding: 12px;" onclick="executePrintReceipt()"><i class="fa-solid fa-print"></i> In hóa đơn ngay</button>
+        <button class="btn-outline" style="justify-content: center; padding: 12px; border-color: var(--zalo-blue); color: #4da3ff; font-weight: 600;" onclick="exportReceiptImageAndSendZalo()"><i class="fa-solid fa-image"></i> Tải ảnh / Gửi Zalo</button>
+      </div>
+    </div>
   </div>
 
   <!-- MODAL: NHẮC VIỆC HÀNG NGÀY (LỊCH HẸN HÔM NAY & BẢO HÀNH GẦN ĐẾN HẠN) -->
@@ -1014,6 +1085,7 @@
         <div class="settings-tab active" data-tab="store" onclick="switchSettingsTab('store', this)"><i class="fa-solid fa-store"></i> Cửa hàng</div>
         <div class="settings-tab" data-tab="security" onclick="switchSettingsTab('security', this)"><i class="fa-solid fa-lock"></i> Bảo mật</div>
         <div class="settings-tab" data-tab="payment" onclick="switchSettingsTab('payment', this)"><i class="fa-solid fa-qrcode"></i> Thanh toán</div>
+        <div class="settings-tab" data-tab="printer" onclick="switchSettingsTab('printer', this)"><i class="fa-solid fa-print"></i> Máy in & Mẫu in</div>
         <div class="settings-tab" data-tab="sync" onclick="switchSettingsTab('sync', this)"><i class="fa-solid fa-cloud"></i> Bản quyền & Đồng bộ</div>
       </div>
 
@@ -1026,6 +1098,14 @@
         <div class="form-group">
           <label>Slogan chào mừng</label>
           <input type="text" id="settingSlogan" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Số điện thoại / Hotline tiệm</label>
+          <input type="tel" id="settingHotline" class="form-control" placeholder="VD: 0913.535.344">
+        </div>
+        <div class="form-group">
+          <label>Địa chỉ cửa hàng</label>
+          <input type="text" id="settingAddress" class="form-control" placeholder="VD: 123 Đường ABC, Phường X, Quận Y">
         </div>
         <div class="form-group">
           <label>Logo cửa hàng</label>
@@ -1075,6 +1155,24 @@
         </div>
       </div>
 
+      <!-- TAB: MÁY IN & MẪU IN HÓA ĐƠN -->
+      <div class="settings-tab-content" id="settingsTab-printer">
+        <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
+          <label style="color: var(--primary-gold); font-weight: 600; margin-bottom: 8px; display: block;"><i class="fa-solid fa-print"></i> Cấu hình máy in & Mẫu hóa đơn</label>
+          <div class="form-group">
+            <label style="font-size: 12px;">Khổ giấy in mặc định</label>
+            <select id="settingPrintPaperSize" class="form-control">
+              <option value="k80">Khổ cuộn K80 (Hóa đơn nhiệt 80mm)</option>
+              <option value="a5">Khổ giấy A5 / A4 (Máy in thường)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-size: 12px;">Lời dặn dò / Điều khoản bảo hành chân phiếu</label>
+            <textarea id="settingPrintFooterNote" class="form-control" rows="3" placeholder="Ví dụ: Vui lòng kiêng nước 24h, không tự bóc vảy. Quý khách vui lòng đến dặm lại đúng lịch hẹn để giữ màu đẹp nhất!"></textarea>
+          </div>
+        </div>
+      </div>
+
       <!-- TAB: Đồng bộ & Bản quyền -->
       <div class="settings-tab-content" id="settingsTab-sync">
         <div id="cloudSettingsBox" style="background: var(--bg-dark); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
@@ -1114,6 +1212,7 @@
   <script>
     const defaultBrandLogo = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'><circle cx='250' cy='250' r='240' fill='%231c1e24' stroke='%23c5a059' stroke-width='6'/><text x='250' y='270' font-family='sans-serif' font-size='72' font-weight='bold' fill='%23c5a059' text-anchor='middle'>PMU</text></svg>";
     const defaultReminderTemplate = "Dạ em chào chị {TEN_KH}, tiệm {TEN_TIEM} xin phép nhắc lịch kiểm tra và dặm bảo hành dịch vụ {DICH_VU} của chị ạ. Hạn bảo hành của chị đến ngày {HAN_BH}. Chị sắp xếp ghé tiệm để bên em hỗ trợ dặm đẹp nhất cho chị nhé!";
+    const defaultPrintFooterNote = "• Quý khách kiêng nước trong vòng 24 giờ đầu sau khi làm.\n• Không tự ý dùng tay bóc vảy, để vảy bong tự nhiên.\n• Hỗ trợ dặm bảo hành miễn phí theo đúng thời hạn ghi trên phiếu!";
 
     localforage.config({
       name: 'PMU_PRO_APP_DB',
@@ -1142,9 +1241,13 @@
       brand: {
         title: "Quản Lý Phun Xăm PMU",
         slogan: "Hệ thống quản lý và chăm sóc khách hàng",
+        hotline: "",
+        address: "",
         logo: defaultBrandLogo,
         passcode: "123456",
-        msgTemplate: defaultReminderTemplate
+        msgTemplate: defaultReminderTemplate,
+        paperSize: "k80",
+        footerNote: defaultPrintFooterNote
       },
       customers: [],
       appointments: []
@@ -1262,7 +1365,6 @@
           const userData = userDoc.data() || {};
           const currentExpire = Math.max(Date.now(), userData.expireAt || 0);
 
-          // Tự động nhận diện dù bạn nhập kiểu số hay kiểu chữ:
           const daysAdded = parseInt(keyData.days) || 30;
           const addedMs = daysAdded * 24 * 60 * 60 * 1000;
           const newExpire = currentExpire + addedMs;
@@ -1571,12 +1673,16 @@
       const brandPayload = {
         title: db.brand.title || '',
         slogan: db.brand.slogan || '',
+        hotline: db.brand.hotline || '',
+        address: db.brand.address || '',
         logo: db.brand.logo || '',
         passcode: db.brand.passcode || '123456',
         msgTemplate: db.brand.msgTemplate || '',
         bankId: db.brand.bankId || '970436',
         bankAccountNo: db.brand.bankAccountNo || '',
         bankAccountName: db.brand.bankAccountName || '',
+        paperSize: db.brand.paperSize || 'k80',
+        footerNote: db.brand.footerNote || defaultPrintFooterNote,
         updatedAt: Date.now()
       };
       cloudFirestore.collection('users').doc(cloudUser.uid).set(brandPayload, { merge: true });
@@ -2669,7 +2775,7 @@
         : '';
     }
 
-    /* ZOOM / KÉO ẢNH TRONG LIGHTBOX (pinch 2 ngón, kéo, chạm đúp, lăn chuột, nút +/-) */
+    /* ZOOM / KÉO ẢNH TRONG LIGHTBOX */
     const IV_MAX_SCALE = 5;
     const ivZ = { scale: 1, x: 0, y: 0, ptrs: new Map(), sDist: 0, sScale: 1, sX: 0, sY: 0, sMid: { x: 0, y: 0 }, moved: false, multi: false, lastTap: 0 };
 
@@ -2752,7 +2858,6 @@
           if (Math.hypot(dx, dy) > 6) ivZ.moved = true;
           if (ivZ.scale > 1) { ivZ.x = ivZ.sX + dx; ivZ.y = ivZ.sY + dy; }
           else if (!ivZ.multi && ivZ.moved && imageViewerList.length > 1) {
-            // Ảnh đang ở cỡ gốc: ảnh đi theo ngón tay để vuốt sang ảnh khác
             const blocked = (dx > 0 && imageViewerIndex <= 0) || (dx < 0 && imageViewerIndex >= imageViewerList.length - 1);
             ivZ.x = blocked ? dx * 0.3 : dx;
             ivZ.y = 0;
@@ -2768,7 +2873,6 @@
         if (!ivZ.ptrs.has(e.pointerId)) return;
         ivZ.ptrs.delete(e.pointerId);
         if (ivZ.ptrs.size === 0) {
-          // Vuốt trái/phải để đổi ảnh (chỉ khi ảnh ở cỡ gốc)
           if (ivZ.scale === 1 && !ivZ.multi && ivZ.x !== 0) {
             const dx = ivZ.x;
             const th = Math.min(60, ivEls().stage.clientWidth * 0.2);
@@ -2777,7 +2881,7 @@
             const imgEl = ivEls().img;
             if (goNext || goPrev) {
               if (goNext) ivGoNext(); else ivGoPrev();
-              ivZ.moved = true; // chặn click làm đóng lightbox
+              ivZ.moved = true;
               imgEl.animate(
                 [{ transform: `translateX(${goNext ? 40 : -40}px)`, opacity: 0 }, { transform: 'translateX(0)', opacity: 1 }],
                 { duration: 200, easing: 'ease-out' }
@@ -2790,7 +2894,6 @@
             }
             return;
           }
-          // Chạm đúp: bật/tắt zoom tại điểm chạm
           if (e.type === 'pointerup' && !ivZ.moved) {
             const now = Date.now();
             if (now - ivZ.lastTap < 300) {
@@ -2810,19 +2913,16 @@
       stage.addEventListener('pointercancel', endPointer);
       stage.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') endPointer(e); });
 
-      // Sau khi kéo/pinch, không để sự kiện click lan lên làm đóng lightbox
       stage.addEventListener('click', function (e) {
         if (ivZ.moved) { e.stopPropagation(); ivZ.moved = false; }
       }, true);
 
-      // Phím mũi tên trái/phải để đổi ảnh (máy tính)
       document.addEventListener('keydown', function (e) {
         if (document.getElementById('imageViewerModal').style.display !== 'flex') return;
         if (e.key === 'ArrowRight') ivGoNext();
         else if (e.key === 'ArrowLeft') ivGoPrev();
       });
 
-      // Lăn chuột để zoom (máy tính)
       stage.addEventListener('wheel', function (e) {
         e.preventDefault();
         ivZoomAt(ivZ.scale * (e.deltaY < 0 ? 1.15 : 1 / 1.15), ivRelToCenter(e.clientX, e.clientY));
@@ -3048,7 +3148,8 @@
         <div style="background: var(--bg-input); padding: 14px; border-radius: 10px; margin-bottom: 14px;">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <h2 style="color: var(--primary-gold); font-size: 18px;">${escapeHtml(c.name)}</h2>
-            <div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn-outline" onclick="openPrintPreviewModal('${c.id}')" title="In phiếu bảo hành & Hóa đơn"><i class="fa-solid fa-print"></i> In phiếu</button>
               <button class="btn-outline" onclick="openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
               <button class="btn-danger-outline" onclick="deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
             </div>
@@ -3075,6 +3176,9 @@
               <div>Màu đã pha: <strong>${escapeHtml(s.colorMix) || 'Mặc định'}</strong></div>
               <div>Thời gian: ${formatDateTimeDisplay(s.date)}</div>
               <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>
+              <div style="margin-top: 8px; text-align: right;">
+                <button class="btn-outline" style="font-size: 11.5px; padding: 4px 8px;" onclick="openPrintPreviewModal('${c.id}', '${s.id}')"><i class="fa-solid fa-print"></i> In bill đợt này</button>
+              </div>
               ${(s.imgBefore || s.imgAfter) ? `
                 <div class="detail-images">
                   ${s.imgBefore ? `<div class="detail-img-box"><img src="${s.imgBefore}" onclick="openSessionImageViewer('${c.id}', '${s.id}', 'before')"><span>Ảnh Trước</span></div>` : ''}
@@ -3155,11 +3259,6 @@
       const bodyText = document.getElementById('remindMessageBody').value || '';
       const encodedBody = encodeURIComponent(bodyText);
 
-      // Chọn dấu ngăn cách "body" theo hệ điều hành / phiên bản iOS
-      //  - iOS 7 trở xuống : sms:SỐ;body=...
-      //  - iOS 8           : sms:SỐ&body=...
-      //  - iOS 9+ / Android: sms:SỐ?body=...   (chuẩn RFC 5724)
-      // Dùng sai dấu thì máy cũ coi cả nội dung là số điện thoại.
       const ua = navigator.userAgent || '';
       const isAndroid = /Android/i.test(ua);
       const iosMatch = ua.match(/OS (\d+)[_.]/);
@@ -3171,7 +3270,6 @@
 
       const smsUrl = `sms:${phoneInput}${sep}body=${encodedBody}`;
 
-      // Tạo thẻ <a> tạm thời để kích hoạt mở iMessage/SMS chuẩn xác, tránh lỗi parse của Safari
       const link = document.createElement('a');
       link.href = smsUrl;
       link.style.display = 'none';
@@ -3180,6 +3278,215 @@
       setTimeout(() => {
         document.body.removeChild(link);
       }, 100);
+    }
+
+    /* MODULE IN HÓA ĐƠN KIÊM PHIẾU BẢO HÀNH TRÊN MÁY TÍNH */
+    let currentPrintCustomerId = null;
+    let currentPrintSessionId = null;
+
+    function openPrintCustomerSelectModal() {
+      document.getElementById('printCustomerSearchInput').value = '';
+      renderPrintCustomerSelectList();
+      document.getElementById('printCustomerSelectModal').style.display = 'block';
+    }
+
+    function renderPrintCustomerSelectList() {
+      const q = (document.getElementById('printCustomerSearchInput').value || '').toLowerCase().trim();
+      const container = document.getElementById('printCustomerSelectList');
+      if (!db.customers || db.customers.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 25px;">Chưa có khách hàng nào trong hệ thống.</div>';
+        return;
+      }
+
+      const filtered = db.customers.filter(c => (c.name && c.name.toLowerCase().includes(q)) || (c.phone && c.phone.includes(q)));
+      if (filtered.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 25px;">Không tìm thấy khách hàng phù hợp.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(c => {
+        const lastSession = (c.sessions && c.sessions.length > 0) ? c.sessions[c.sessions.length - 1] : null;
+        const sName = lastSession ? lastSession.service : 'Chưa có dịch vụ';
+        return `
+          <div class="card customer-item" style="cursor: pointer; padding: 12px; margin-bottom: 8px;" onclick="closeModal('printCustomerSelectModal'); openPrintPreviewModal('${c.id}')">
+            <div>
+              <div style="font-weight: 700; font-size: 14px; color: #fff;">${escapeHtml(c.name)} <span style="font-size: 12px; color: var(--primary-gold);">(${escapeHtml(c.phone)})</span></div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">Dịch vụ gần nhất: ${escapeHtml(sName)}</div>
+            </div>
+            <button class="btn-outline" style="font-size: 12px;"><i class="fa-solid fa-chevron-right"></i> Chọn</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openPrintPreviewModal(custId, sessionId = null) {
+      const customer = db.customers.find(c => c.id === custId);
+      if (!customer) return;
+
+      currentPrintCustomerId = custId;
+      currentPrintSessionId = sessionId;
+
+      let sessionsToPrint = [];
+      if (sessionId && customer.sessions) {
+        const found = customer.sessions.find(s => s.id === sessionId);
+        if (found) sessionsToPrint = [found];
+      }
+      if (sessionsToPrint.length === 0 && customer.sessions) {
+        sessionsToPrint = customer.sessions;
+      }
+
+      const paperSize = (db.brand && db.brand.paperSize) || 'k80';
+      const isK80 = paperSize === 'k80';
+      const containerWidth = isK80 ? '360px' : '100%';
+
+      let totalAmount = 0, totalPaid = 0;
+      sessionsToPrint.forEach(s => {
+        const p = s.price || 0;
+        const pd = (s.paid !== undefined) ? s.paid : p;
+        totalAmount += p;
+        totalPaid += pd;
+      });
+      const totalDebt = Math.max(0, totalAmount - totalPaid);
+
+      const today = new Date();
+      const printDateStr = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')} - ${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+
+      const brandTitle = db.brand.title || 'PHUN XĂM THẨM MỸ PMU';
+      const brandHotline = db.brand.hotline || '';
+      const brandAddress = db.brand.address || '';
+      const footerNote = (db.brand && db.brand.footerNote) || defaultPrintFooterNote;
+
+      let rowsHtml = sessionsToPrint.map((s, idx) => {
+        const w = calculateWarranty(s.date, s.warrantyMonths);
+        return `
+          <tr style="border-bottom: 1px dashed #ccc;">
+            <td style="padding: 7px 4px; font-size: 13px;">
+              <strong>${idx + 1}. ${escapeHtml(s.service)}</strong>
+              ${s.colorMix ? `<div style="font-size: 11px; color: #555;">Màu: ${escapeHtml(s.colorMix)}</div>` : ''}
+              <div style="font-size: 11px; color: #666;">Hạn dặm BH: <strong>${w.expiryDateStr}</strong></div>
+            </td>
+            <td style="padding: 7px 4px; text-align: right; font-size: 13px; font-weight: bold; vertical-align: top;">
+              ${formatMoney(s.price)}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const receiptHtml = `
+        <div style="max-width: ${containerWidth}; margin: 0 auto; color: #000; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;">
+          <!-- HEADER HÓA ĐƠN -->
+          <div style="text-align: center; border-bottom: 1px solid #111; padding-bottom: 10px; margin-bottom: 12px;">
+            ${db.brand.logo ? `<img src="${db.brand.logo}" style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-bottom: 6px;" alt="Logo">` : ''}
+            <div style="font-size: 17px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">${escapeHtml(brandTitle)}</div>
+            ${brandAddress ? `<div style="font-size: 11.5px; color: #444; margin-top: 2px;">Đ/C: ${escapeHtml(brandAddress)}</div>` : ''}
+            ${brandHotline ? `<div style="font-size: 12px; font-weight: bold; margin-top: 2px;">Hotline: ${escapeHtml(brandHotline)}</div>` : ''}
+            <div style="font-size: 15px; font-weight: bold; margin-top: 8px; letter-spacing: 0.5px;">PHIẾU BẢO HÀNH & THANH TOÁN</div>
+            <div style="font-size: 11px; color: #666;">Ngày in: ${printDateStr}</div>
+          </div>
+
+          <!-- THÔNG TIN KHÁCH HÀNG -->
+          <div style="font-size: 13px; line-height: 1.6; margin-bottom: 12px;">
+            <div>Khách hàng: <strong>${escapeHtml(customer.name)}</strong></div>
+            <div>Số điện thoại: <strong>${escapeHtml(customer.phone)}</strong></div>
+            ${customer.address ? `<div>Địa chỉ: ${escapeHtml(customer.address)}</div>` : ''}
+          </div>
+
+          <!-- BẢNG CHI TIẾT DỊCH VỤ -->
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
+            <thead>
+              <tr style="border-top: 1px solid #000; border-bottom: 1px solid #000;">
+                <th style="padding: 6px 4px; text-align: left; font-size: 12.5px;">Dịch vụ & Bảo hành</th>
+                <th style="padding: 6px 4px; text-align: right; font-size: 12.5px; width: 105px;">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <!-- TỔNG KẾT THANH TOÁN -->
+          <div style="border-top: 1px solid #000; padding-top: 8px; font-size: 13px; line-height: 1.7; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span>Tổng chi phí:</span>
+              <strong>${formatMoney(totalAmount)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Đã thanh toán:</span>
+              <strong>${formatMoney(totalPaid)}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 14px;">
+              <span>Nợ còn lại:</span>
+              <strong style="color: ${totalDebt > 0 ? '#d90429' : '#000'};">${formatMoney(totalDebt)}</strong>
+            </div>
+          </div>
+
+          <!-- LƯU Ý DẶN DÒ BẢO HÀNH -->
+          <div style="background: #f7f7f7; border: 1px dashed #ccc; border-radius: 6px; padding: 10px; font-size: 11px; line-height: 1.5; margin-bottom: 16px;">
+            <div style="font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">Lưu ý dặn dò sau khi làm:</div>
+            <div>${escapeHtmlMultiline(footerNote)}</div>
+          </div>
+
+          <!-- CHỮ KÝ XÁC NHẬN -->
+          <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 14px; padding-bottom: 10px;">
+            <div style="width: 48%; font-size: 12px;">
+              <strong>Khách hàng</strong>
+              <div style="font-size: 10px; color: #777; margin-top: 2px;">(Ký & ghi rõ họ tên)</div>
+              <div style="height: 45px;"></div>
+              <div>${escapeHtml(customer.name)}</div>
+            </div>
+            <div style="width: 48%; font-size: 12px;">
+              <strong>Người thực hiện / Tiệm</strong>
+              <div style="font-size: 10px; color: #777; margin-top: 2px;">(Ký xác nhận)</div>
+              <div style="height: 45px;"></div>
+              <div>${escapeHtml(brandTitle)}</div>
+            </div>
+          </div>
+
+          <div style="text-align: center; font-size: 11px; font-style: italic; color: #555; margin-top: 10px; border-top: 1px dashed #bbb; padding-top: 8px;">
+            Cảm ơn quý khách đã tin tưởng và đồng hành cùng ${escapeHtml(brandTitle)}!
+          </div>
+        </div>
+      `;
+
+      document.getElementById('printReceiptContainer').innerHTML = receiptHtml;
+      document.getElementById('printPreviewModal').style.display = 'block';
+    }
+
+    function executePrintReceipt() {
+      window.print();
+    }
+
+    async function exportReceiptImageAndSendZalo() {
+      const container = document.getElementById('printReceiptContainer');
+      const customer = db.customers.find(c => c.id === currentPrintCustomerId);
+      if (!container || !customer) return;
+
+      try {
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const fileName = `PhieuBaoHanh_${removeVietnameseTones(customer.name).replace(/\s+/g, '_')}_${Date.now()}.png`;
+
+        // Tự động tải ảnh về máy tính
+        const a = document.createElement('a');
+        a.href = imgData;
+        a.download = fileName;
+        a.click();
+
+        // Mở Zalo số khách hàng để gửi ảnh
+        const cleanPhone = (customer.phone || '').replace(/\D/g, '');
+        if (cleanPhone) {
+          window.open(`https://zalo.me/${cleanPhone}`, '_blank');
+        }
+
+        showAppAlert('Đã lưu ảnh phiếu bảo hành vào máy và mở Zalo! Bạn chỉ cần dán (Ctrl + V) hoặc gửi file ảnh vừa tải cho khách.');
+      } catch (err) {
+        showAppAlert('Lỗi xuất ảnh: ' + err.message);
+      }
     }
 
     /* DOANH THU 6 NÚT */
@@ -3329,10 +3636,14 @@
       renderBankOptions();
       document.getElementById('settingTitle').value = db.brand.title;
       document.getElementById('settingSlogan').value = db.brand.slogan;
+      document.getElementById('settingHotline').value = db.brand.hotline || '';
+      document.getElementById('settingAddress').value = db.brand.address || '';
       document.getElementById('settingMsgTemplate').value = db.brand.msgTemplate;
       document.getElementById('settingBankId').value = db.brand.bankId || '970436';
       document.getElementById('settingBankAccountNo').value = db.brand.bankAccountNo || '';
       document.getElementById('settingBankAccountName').value = db.brand.bankAccountName || '';
+      document.getElementById('settingPrintPaperSize').value = db.brand.paperSize || 'k80';
+      document.getElementById('settingPrintFooterNote').value = db.brand.footerNote || defaultPrintFooterNote;
       document.getElementById('settingPasscode').value = '';
       document.getElementById('settingOldPasscode').value = '';
       document.getElementById('settingsModal').style.display = 'block';
@@ -3364,10 +3675,14 @@
 
       db.brand.title = document.getElementById('settingTitle').value.trim() || db.brand.title;
       db.brand.slogan = document.getElementById('settingSlogan').value.trim() || db.brand.slogan;
+      db.brand.hotline = document.getElementById('settingHotline').value.trim() || '';
+      db.brand.address = document.getElementById('settingAddress').value.trim() || '';
       db.brand.msgTemplate = document.getElementById('settingMsgTemplate').value.trim() || db.brand.msgTemplate;
       db.brand.bankId = document.getElementById('settingBankId').value;
       db.brand.bankAccountNo = document.getElementById('settingBankAccountNo').value.trim();
       db.brand.bankAccountName = document.getElementById('settingBankAccountName').value.trim();
+      db.brand.paperSize = document.getElementById('settingPrintPaperSize').value;
+      db.brand.footerNote = document.getElementById('settingPrintFooterNote').value.trim() || defaultPrintFooterNote;
 
       await saveDB();
       syncBrandToCloud();
