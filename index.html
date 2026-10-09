@@ -2977,13 +2977,21 @@
     }
 
     function sendViaSMS() {
+      if (!currentRemindPhone) {
+        showAppAlert('Khách hàng chưa có số điện thoại!');
+        return;
+      }
+      
       const text = encodeURIComponent(document.getElementById('remindMessageBody').value);
-      window.location.href = `sms:${currentRemindPhone}?body=${text}`;
-    }
-
-    function copyReminderText() {
-      navigator.clipboard.writeText(document.getElementById('remindMessageBody').value);
-      showAppAlert('Đã sao chép tin nhắn!');
+      
+      // Kiểm tra xem thiết bị có phải là iPhone/iPad hay không
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      // iOS dùng dấu &, Android/PC dùng dấu ?
+      const separator = isIOS ? '&' : '?';
+      
+      window.location.href = `sms:${currentRemindPhone}${separator}body=${text}`;
     }
 
     /* DOANH THU 6 NÚT */
