@@ -3198,15 +3198,15 @@
 
       let html = `
         <div style="background: var(--bg-input); padding: 14px; border-radius: 10px; margin-bottom: 14px; border: 1px solid var(--border-color);">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <h2 style="color: var(--primary-gold); font-size: 18px;">${escapeHtml(c.name)}</h2>
-            <div style="display: flex; gap: 6px;">
-              <button class="btn-outline" onclick="openPrintPreviewModal('${c.id}')" title="In phiếu bảo hành & Hóa đơn"><i class="fa-solid fa-print"></i> In phiếu</button>
-              <button class="btn-outline" onclick="openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
-              <button class="btn-danger-outline" onclick="deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
-            </div>
+          <div style="margin-bottom: 8px;">
+            <h2 style="color: var(--primary-gold); font-size: 18px; word-break: break-word;">${escapeHtml(c.name)}</h2>
           </div>
-          <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">SĐT: ${escapeHtml(c.phone)} | ĐC: ${escapeHtml(c.address) || 'Chưa lưu'}</div>
+          <div style="display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap;">
+            <button class="btn-outline" style="flex: 1; justify-content: center; padding: 6px 8px;" onclick="openPrintPreviewModal('${c.id}')" title="In phiếu bảo hành & Hóa đơn"><i class="fa-solid fa-print"></i> In phiếu</button>
+            <button class="btn-outline" style="flex: 1; justify-content: center; padding: 6px 8px;" onclick="openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
+            <button class="btn-danger-outline" style="flex: 1; justify-content: center; padding: 6px 8px;" onclick="deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+          </div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">SĐT: ${escapeHtml(c.phone)} \vert{} ĐC: ${escapeHtml(c.address) || 'Chưa lưu'}</div>
           <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between;">
             <span>Tổng làm: <strong>${formatMoney(totalCustPrice)}</strong></span>
             <span>Tổng nợ: <strong style="color:${totalDebt > 0 ? 'var(--danger)' : 'var(--success)'};">${formatMoney(totalDebt)}</strong></span>
