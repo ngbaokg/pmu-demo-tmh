@@ -2309,11 +2309,11 @@
         let cardBorderColor = group.hasOverdue ? 'var(--danger)' : (group.allDone && !group.allNoWarranty ? 'var(--success)' : 'var(--primary-gold)');
         let outerSummaryBadge = '';
         if (group.allNoWarranty) outerSummaryBadge = `<span class="badge badge-secondary" style="margin-top: 4px;">Không bảo hành</span>`;
-        else if (group.allDone) outerSummaryBadge = `<span class="badge badge-success" style="margin-top: 4px;"><i class="fa-solid fa-check-double"></i> Đã hoàn tất bảo hành</span>`;
+        else if (group.allDone) outerSummaryBadge = `<span class="badge badge-success" style="margin-top: 4px;"><i class="fa-solid fa-check-double"></i> Đã hoàn tất</span>`;
         else if (group.hasOverdue) outerSummaryBadge = `<span class="badge badge-danger" style="margin-top: 4px;"><i class="fa-solid fa-triangle-exclamation"></i> Có dịch vụ quá hạn</span>`;
         else if (group.nearestExpiryDateStr) {
           let warnClass = group.minActiveDaysLeft <= 15 ? 'badge-warning' : 'badge-success';
-          outerSummaryBadge = `<span class="badge ${warnClass}" style="margin-top: 4px;"><i class="fa-regular fa-clock"></i> Hạn gần nhất (${group.nearestServiceName}): ${group.nearestExpiryDateStr} (còn ${group.minActiveDaysLeft} ngày)</span>`;
+          outerSummaryBadge = `<span class="badge ${warnClass}" style="margin-top: 4px;"><i class="fa-regular fa-clock"></i> Hạn gần nhất (${group.nearestServiceName}): ${group.nearestExpiryDateStr}</span>`;
         }
 
         let subItemsHtml = group.sessions.map(item => {
