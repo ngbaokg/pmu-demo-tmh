@@ -3378,10 +3378,11 @@
       }).join('');
     }
 
-    function function openPrintPreviewModal(custId, sessionId = null) {
-      closeModal('customerDetailModal');
+    function openPrintPreviewModal(custId, sessionId = null) {
+      closeModal('customerDetailModal'); // <-- Thêm dòng này để đóng popup khách hàng trước khi mở bill
       const customer = db.customers.find(c => c.id === custId);
       if (!customer) return;
+      // ... phần còn lại giữ nguyên
 
       currentPrintCustomerId = custId;
       currentPrintSessionId = sessionId;
