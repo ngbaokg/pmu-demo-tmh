@@ -3378,7 +3378,8 @@
       }).join('');
     }
 
-    function openPrintPreviewModal(custId, sessionId = null) {
+    function function openPrintPreviewModal(custId, sessionId = null) {
+      closeModal('customerDetailModal');
       const customer = db.customers.find(c => c.id === custId);
       if (!customer) return;
 
