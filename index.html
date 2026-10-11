@@ -79,12 +79,39 @@
     }
     .brand-box { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1 1 auto; }
     .brand-logo-wrapper { position: relative; cursor: pointer; flex-shrink: 0; }
-    .brand-logo { width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--primary-gold); object-fit: cover; background: #fff; box-shadow: 0 2px 8px rgba(179, 135, 56, 0.25); display: block; transition: transform 0.2s, opacity 0.2s; }
+    .brand-logo { width: 68px; height: 68px; border-radius: 50%; border: 2px solid var(--primary-gold); object-fit: cover; background: #fff; box-shadow: 0 2px 8px rgba(179, 135, 56, 0.25); display: block; transition: transform 0.2s, opacity 0.2s; }
     .brand-logo-wrapper:active .brand-logo { transform: scale(0.92); opacity: 0.85; }
-    .brand-logo-badge { position: absolute; bottom: -2px; right: -2px; background: #ffffff; border: 1.5px solid var(--primary-gold); color: var(--primary-gold); border-radius: 50%; width: 17px; height: 17px; font-size: 9px; display: flex; align-items: center; justify-content: center; }
+    .brand-logo-badge { position: absolute; bottom: -2px; right: -2px; background: #ffffff; border: 1.5px solid var(--primary-gold); color: var(--primary-gold); border-radius: 50%; width: 22px; height: 22px; font-size: 11px; display: flex; align-items: center; justify-content: center; }
     .brand-box > div { min-width: 0; }
-    .brand-title { font-size: 16px; font-weight: 700; color: var(--primary-gold); letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .brand-slogan { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .brand-title { font-size: 21px; font-weight: 700; color: var(--primary-gold); letter-spacing: 0.5px; line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
+    .brand-slogan { font-size: 13px; color: var(--text-muted); margin-top: 2px; white-space: normal; }
+    .brand-contact { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 12px; color: var(--text-muted); line-height: 1.35; }
+    .brand-contact:empty { display: none; }
+    .brand-contact a, .brand-contact span { color: inherit; text-decoration: none; }
+    .brand-contact i { color: var(--primary-gold); width: 14px; text-align: center; margin-right: 4px; font-size: 11px; }
+    .brand-contact .bc-phone { font-weight: 600; }
+
+    /* Ô ngày giờ: không tràn khỏi khung */
+    input[type="datetime-local"].form-control,
+    input[type="date"].form-control,
+    input[type="time"].form-control {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      min-height: 42px;
+      padding: 10px 8px;
+      font-size: 13px;
+      -webkit-appearance: none;
+      appearance: none;
+      overflow: hidden;
+    }
+    input[type="datetime-local"].form-control::-webkit-datetime-edit,
+    input[type="date"].form-control::-webkit-datetime-edit { padding: 0; }
+    input[type="datetime-local"].form-control::-webkit-datetime-edit-fields-wrapper,
+    input[type="date"].form-control::-webkit-datetime-edit-fields-wrapper { padding: 0; }
+    input[type="datetime-local"].form-control::-webkit-calendar-picker-indicator,
+    input[type="date"].form-control::-webkit-calendar-picker-indicator { margin: 0 0 0 2px; padding: 0; }
 
     #desktopPrintBtn { display: none; }
 
@@ -529,10 +556,12 @@
       .container { max-width: 1200px; padding: 30px 24px; }
       header { padding: 18px 40px; }
       .brand-box { gap: 18px; }
-      .brand-logo { width: 64px; height: 64px; border-width: 3px; }
-      .brand-logo-badge { width: 22px; height: 22px; font-size: 11px; bottom: 0; right: 0; }
-      .brand-title { font-size: 22px; letter-spacing: 0.8px; margin-bottom: 4px; }
-      .brand-slogan { font-size: 14px; }
+      .brand-logo { width: 92px; height: 92px; border-width: 3px; }
+      .brand-logo-badge { width: 26px; height: 26px; font-size: 13px; bottom: 0; right: 0; }
+      .brand-title { font-size: 30px; letter-spacing: 0.8px; margin-bottom: 4px; }
+      .brand-slogan { font-size: 15px; }
+      .brand-contact { font-size: 14px; flex-direction: row; flex-wrap: wrap; gap: 4px 18px; }
+      .brand-contact i { font-size: 13px; }
       #cloudSyncStatus { font-size: 13px !important; gap: 6px !important; }
       header .btn-icon-only { padding: 10px 14px; font-size: 16px; }
 
@@ -608,6 +637,7 @@
       <div>
         <div class="brand-title" id="brandTitle">Quản Lý Phun Xăm PMU</div>
         <div class="brand-slogan" id="brandSlogan">Hệ thống quản lý và chăm sóc khách hàng</div>
+        <div class="brand-contact" id="brandContact"></div>
       </div>
     </div>
     <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
@@ -2338,9 +2368,36 @@
       `;
     }
 
+    function renderBrandContact() {
+      const box = document.getElementById('brandContact');
+      if (!box) return;
+      box.textContent = '';
+      const phone = (db.brand.hotline || '').trim();
+      const addr = (db.brand.address || '').trim();
+      if (phone) {
+        const a = document.createElement('a');
+        a.className = 'bc-phone';
+        a.href = 'tel:' + phone.replace(/[^0-9+]/g, '');
+        const i = document.createElement('i');
+        i.className = 'fa-solid fa-phone';
+        a.appendChild(i);
+        a.appendChild(document.createTextNode(phone));
+        box.appendChild(a);
+      }
+      if (addr) {
+        const s = document.createElement('span');
+        const i = document.createElement('i');
+        i.className = 'fa-solid fa-location-dot';
+        s.appendChild(i);
+        s.appendChild(document.createTextNode(addr));
+        box.appendChild(s);
+      }
+    }
+
     function renderHome() {
       document.getElementById('brandTitle').innerText = db.brand.title;
       document.getElementById('brandSlogan').innerText = db.brand.slogan;
+      renderBrandContact();
       document.getElementById('heroBrandName').innerText = db.brand.title;
       document.getElementById('brandLogo').src = db.brand.logo || defaultBrandLogo;
 
