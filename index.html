@@ -919,33 +919,6 @@
         <label>Thời gian làm</label>
         <input type="datetime-local" id="custDate" class="form-control">
       </div>
-      <div class="form-group">
-        <label>Tổng giá tiền (VNĐ)</label>
-        <input type="text" id="custPrice" class="form-control" placeholder="2.000.000" oninput="handlePriceOrPaidChange()">
-      </div>
-
-      <div class="debt-panel">
-        <label style="font-size: 13px; font-weight: 700; color: var(--primary-gold); display: block; margin-bottom: 10px;"><i class="fa-solid fa-receipt"></i> Thanh toán & Công nợ</label>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-          <button type="button" class="debt-quick-btn" onclick="setFullPayment()"><i class="fa-solid fa-check"></i> Trả đủ</button>
-          <button type="button" class="debt-quick-btn" onclick="setZeroPayment()"><i class="fa-solid fa-hand-holding-dollar"></i> Nợ 100%</button>
-        </div>
-        <button type="button" class="debt-quick-btn" style="width: 100%; padding: 10px; font-size: 13px; font-weight: 600; border-color: var(--primary-gold); color: var(--primary-gold); background: rgba(212, 175, 55, 0.08); margin-bottom: 14px;" onclick="saveCustomerData(true)">
-          <i class="fa-solid fa-qrcode"></i> Lưu & Tạo mã thanh toán
-        </button>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-          <div>
-            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Đã trả (VNĐ)</label>
-            <input type="text" id="custPaid" class="form-control" placeholder="0" oninput="handlePriceOrPaidChange()" style="border-color: rgba(22, 163, 74, 0.4);">
-          </div>
-          <div>
-            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Nợ còn lại (VNĐ)</label>
-            <input type="text" id="custDebt" class="form-control" placeholder="0 đ" readonly style="background: #ffffff; color: var(--danger); font-weight: bold; border-color: rgba(220, 38, 38, 0.4);">
-          </div>
-        </div>
-      </div>
 
       <div class="form-group">
         <label>Thời hạn bảo hành (Tháng)</label>
@@ -958,6 +931,38 @@
           <div class="chip" onclick="selectWarranty(this, 12)">12T</div>
         </div>
         <input type="hidden" id="custWarrantyMonths" value="1">
+      </div>
+      
+      <div class="form-group">
+        <label>Tổng giá tiền (VNĐ)</label>
+        <input type="text" id="custPrice" class="form-control" placeholder="2.000.000" oninput="handlePriceOrPaidChange()">
+      </div>
+
+      <div class="debt-panel">
+        <label style="font-size: 13px; font-weight: 700; color: var(--primary-gold); display: block; margin-bottom: 10px;">
+          <i class="fa-solid fa-receipt"></i> Thanh toán & Công nợ
+        </label>
+
+        <!-- 2 NÚT HÌNH THỨC THANH TOÁN -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+          <button type="button" class="debt-quick-btn" onclick="handleCashPayment()">
+            <i class="fa-solid fa-money-bill-wave" style="color: var(--success);"></i> Thanh toán tiền mặt
+          </button>
+          <button type="button" class="debt-quick-btn" style="border-color: var(--primary-gold); color: var(--primary-gold);" onclick="openTransferPaymentModal()">
+            <i class="fa-solid fa-qrcode"></i> Thanh toán chuyển khoản
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Đã trả (VNĐ)</label>
+            <input type="text" id="custPaid" class="form-control" placeholder="0" oninput="handlePriceOrPaidChange()" style="border-color: rgba(22, 163, 74, 0.4);">
+          </div>
+          <div>
+            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Nợ còn lại (VNĐ)</label>
+            <input type="text" id="custDebt" class="form-control" placeholder="0 đ" readonly style="background: #ffffff; color: var(--danger); font-weight: bold; border-color: rgba(220, 38, 38, 0.4);">
+          </div>
+        </div>
       </div>
 
       <button class="btn-gold" style="margin-top: 10px;" onclick="saveCustomerData()"><i class="fa-solid fa-floppy-disk"></i> Lưu hồ sơ</button>
@@ -1092,6 +1097,36 @@
         <div class="modal-close-btn" onclick="closeModal('paymentQrModal')"><i class="fa-solid fa-xmark"></i></div>
       </div>
       <div id="paymentQrContent"></div>
+    </div>
+  </div>
+
+  <!-- MODAL: TÙY CHỌN CHUYỂN KHOẢN QR -->
+  <div id="transferQrModal" class="modal" style="z-index: 2600;">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <div class="modal-header-top">
+        <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-qrcode"></i> Chuyển khoản VietQR</h3>
+        <div class="modal-close-btn" onclick="closeModal('transferQrModal')"><i class="fa-solid fa-xmark"></i></div>
+      </div>
+
+      <!-- 3 TÙY CHỌN THANH TOÁN -->
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 12px;">
+        <button type="button" class="debt-quick-btn" id="btnQrFull" onclick="selectTransferOption('full')">Chuyển đủ</button>
+        <button type="button" class="debt-quick-btn" id="btnQrDebt" onclick="selectTransferOption('debt')">Nợ 100%</button>
+        <button type="button" class="debt-quick-btn" id="btnQrPart" onclick="selectTransferOption('part')">Trả trước</button>
+      </div>
+
+      <!-- Ô NHẬP SỐ TIỀN CHUYỂN KHOẢN -->
+      <div class="form-group" style="text-align: left; margin-bottom: 12px;">
+        <label style="font-size: 12px; color: var(--text-muted);">Số tiền khách chuyển (VNĐ):</label>
+        <input type="text" id="transferCustomAmount" class="form-control" style="font-size: 16px; font-weight: bold; color: var(--primary-gold);" oninput="onTransferAmountChanged(this)">
+      </div>
+
+      <!-- VÙNG HIỂN THỊ MÃ QR DỰA TRÊN SỐ TIỀN -->
+      <div id="transferQrDisplayArea" style="margin-top: 10px;"></div>
+
+      <button type="button" class="btn-gold" style="width: 100%; margin-top: 14px; padding: 11px;" onclick="confirmTransferToForm()">
+        <i class="fa-solid fa-check"></i> Xác nhận số tiền này
+      </button>
     </div>
   </div>
 
@@ -1934,7 +1969,104 @@
       document.getElementById('custPaid').value = '0';
       handlePriceOrPaidChange();
     }
+// 1. Khi bấm "Thanh toán tiền mặt": mặc định khách trả đủ 100%
+    function handleCashPayment() {
+      setFullPayment();
+      showAppAlert('Đã ghi nhận khách thanh toán đủ tiền mặt!');
+    }
 
+    // 2. Mở popup chuyển khoản VietQR từ form khách hàng
+    function openTransferPaymentModal() {
+      const priceVal = parseInt((document.getElementById('custPrice').value || '').replace(/\D/g, '')) || 0;
+      if (priceVal <= 0) {
+        showAppAlert('Vui lòng nhập Tổng giá tiền trước khi tạo chuyển khoản!');
+        return;
+      }
+
+      const bankId = db.brand && db.brand.bankId;
+      const accountNo = db.brand && db.brand.bankAccountNo;
+      if (!bankId || !accountNo) {
+        showAppAlert('Vui lòng cấu hình Ngân hàng và STK trong mục Cài đặt trước!');
+        openSettingsModal();
+        return;
+      }
+
+      // Mặc định chọn chuyển đủ 100%
+      document.getElementById('transferQrModal').style.display = 'block';
+      selectTransferOption('full');
+    }
+
+    // Xử lý khi bấm 3 nút (Chuyển đủ / Nợ 100% / Trả trước)
+    function selectTransferOption(opt) {
+      const priceVal = parseInt((document.getElementById('custPrice').value || '').replace(/\D/g, '')) || 0;
+      const amtInput = document.getElementById('transferCustomAmount');
+      
+      document.getElementById('btnQrFull').classList.toggle('active', opt === 'full');
+      document.getElementById('btnQrDebt').classList.toggle('active', opt === 'debt');
+      document.getElementById('btnQrPart').classList.toggle('active', opt === 'part');
+
+      if (opt === 'full') {
+        amtInput.value = new Intl.NumberFormat('vi-VN').format(priceVal);
+        amtInput.readOnly = true;
+        renderTransferQrCode(priceVal);
+      } else if (opt === 'debt') {
+        amtInput.value = '0';
+        amtInput.readOnly = true;
+        renderTransferQrCode(0);
+      } else if (opt === 'part') {
+        amtInput.readOnly = false;
+        amtInput.focus();
+        const currentPart = parseInt(amtInput.value.replace(/\D/g, '')) || Math.round(priceVal / 2);
+        amtInput.value = new Intl.NumberFormat('vi-VN').format(currentPart);
+        renderTransferQrCode(currentPart);
+      }
+    }
+
+    // Khi người dùng gõ số tiền tùy chỉnh
+    function onTransferAmountChanged(input) {
+      formatCurrencyInput(input);
+      const val = parseInt(input.value.replace(/\D/g, '')) || 0;
+      renderTransferQrCode(val);
+    }
+
+    // Sinh mã QR tự động theo số tiền thực tế
+    function renderTransferQrCode(amount) {
+      const displayArea = document.getElementById('transferQrDisplayArea');
+      if (amount <= 0) {
+        displayArea.innerHTML = `
+          <div style="background: #fdf2f2; border: 1px dashed var(--danger); border-radius: 8px; padding: 14px; color: var(--danger); font-size: 13px;">
+            <i class="fa-solid fa-hand-holding-dollar"></i> Khách nợ 100% (Số tiền chuyển là 0 đ, không tạo mã QR).
+          </div>
+        `;
+        return;
+      }
+
+      const bankId = db.brand && db.brand.bankId;
+      const accountNo = db.brand && db.brand.bankAccountNo;
+      const accountName = db.brand && db.brand.bankAccountName;
+      const custName = document.getElementById('custName').value.trim() || 'Khach';
+      const cleanNote = removeVietnameseTones('TT ' + custName).replace(/[^a-zA-Z0-9 ]/g, '').trim();
+
+      const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(cleanNote)}${accountName ? '&accountName=' + encodeURIComponent(removeVietnameseTones(accountName)) : ''}`;
+
+      displayArea.innerHTML = `
+        <img src="${qrUrl}" style="width: 100%; max-width: 270px; border-radius: 8px; background: #fff; padding: 6px; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" alt="Mã QR Chuyển khoản">
+        <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+          Quét mã để chuyển: <strong style="color: var(--primary-gold); font-size: 15px;">${formatMoney(amount)}</strong>
+        </div>
+      `;
+    }
+
+    // Khi bấm "Xác nhận số tiền này": Ghi số tiền vào form và tính nợ
+    function confirmTransferToForm() {
+      const raw = document.getElementById('transferCustomAmount').value.replace(/\D/g, '');
+      const transferAmount = parseInt(raw) || 0;
+
+      document.getElementById('custPaid').value = new Intl.NumberFormat('vi-VN').format(transferAmount);
+      handlePriceOrPaidChange();
+      closeModal('transferQrModal');
+      showAppAlert(`Đã cập nhật số tiền khách thanh toán: ${formatMoney(transferAmount)}`);
+    }
     function calculateWarranty(dateStr, months) {
       const m = parseInt(months);
       if (isNaN(m) || m <= 0) {
@@ -2333,6 +2465,7 @@
               </div>
               <div class="warranty-actions-row">
                 <div style="display: flex; flex: 1; gap: 6px;">
+                  <button class="btn-outline" style="padding: 6px 10px; font-size: 12px;" onclick="event.stopPropagation(); openCustomerDetail('${c.id}')" title="Xem chi tiết hồ sơ"><i class="fa-solid fa-eye"></i></button>
                   <a class="btn-call" href="tel:${escapeHtml(c.phone)}" onclick="event.stopPropagation();"><i class="fa-solid fa-phone"></i></a>
                   <button class="btn-remind" onclick="event.stopPropagation(); openRemindModal('${c.id}', '${item.sessionId}')"><i class="fa-solid fa-comment-dots"></i></button>
                 </div>
