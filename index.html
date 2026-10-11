@@ -256,6 +256,26 @@
     .form-control:focus { outline: none; border-color: var(--primary-gold); background: #ffffff; }
     textarea.form-control { resize: vertical; line-height: 1.5; }
     
+    /* KHUNG CHỨA Ô TIỀN KÈM NHÃN VNĐ BÊN TRONG */
+    .input-vnd-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .input-vnd-wrapper .form-control {
+      padding-right: 50px;
+    }
+    .input-vnd-suffix {
+      position: absolute;
+      right: 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--primary-gold);
+      pointer-events: none;
+      user-select: none;
+    }
+
     .service-btn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
     .service-parent-btn {
       background: var(--bg-input);
@@ -360,7 +380,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
-    /* ĐỊNH VỊ CHUẨN CỐ ĐỊNH CHO MODAL */
+    /* ĐỊNH VỊ MODAL */
     .modal {
       display: none;
       position: fixed;
@@ -563,7 +583,7 @@
       .bottom-nav { max-width: 900px; }
     }
 
-    /* CSS ĐẶC BIỆT KHI IN HÓA ĐƠN TRÊN KHỔ A4 (ĐẢM BẢO CHÍNH XÁC 1 TRANG DUY NHẤT) */
+    /* IN HÓA ĐƠN A4 */
     @page {
       size: A4 portrait;
       margin: 12mm 15mm;
@@ -600,7 +620,6 @@
 
   <header>
     <div class="brand-box">
-      <!-- LOGO CỬA HÀNG -->
       <div class="brand-logo-wrapper" onclick="triggerDirectLogoChange()" title="Chạm để thay đổi logo cửa hàng">
         <img id="brandLogo" class="brand-logo" src="" alt="Logo">
         <div class="brand-logo-badge"><i class="fa-solid fa-camera"></i></div>
@@ -616,7 +635,6 @@
       <div id="cloudSyncStatus" style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; cursor: pointer; white-space: nowrap;" onclick="openSettingsModal()" title="Bấm để mở cài đặt đồng bộ">
         <i class="fa-solid fa-hard-drive"></i> <span id="cloudSyncStatusText">Chưa kết nối</span>
       </div>
-      <!-- NÚT MÁY IN TRÊN GIAO DIỆN MÁY TÍNH -->
       <button id="desktopPrintBtn" class="btn-outline btn-icon-only" onclick="openPrintCustomerSelectModal()" title="In hóa đơn & Phiếu bảo hành"><i class="fa-solid fa-print"></i></button>
       <button class="btn-outline btn-icon-only" onclick="openSettingsModal()" title="Cài đặt"><i class="fa-solid fa-gear"></i></button>
     </div>
@@ -762,9 +780,7 @@
         <div class="modal-close-btn" onclick="closeModal('printPreviewModal')"><i class="fa-solid fa-xmark"></i></div>
       </div>
 
-      <div id="printReceiptContainer" style="background: #ffffff; color: #111111; padding: 25px 30px; border-radius: 8px; font-family: Arial, sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-        <!-- Nội dung nạp động từ javascript -->
-      </div>
+      <div id="printReceiptContainer" style="background: #ffffff; color: #111111; padding: 25px 30px; border-radius: 8px; font-family: Arial, sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.15);"></div>
 
       <div class="no-print" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px;">
         <button class="btn-gold" style="padding: 12px;" onclick="executePrintReceipt()"><i class="fa-solid fa-print"></i> In hóa đơn (Khổ A4)</button>
@@ -921,12 +937,16 @@
         <input type="datetime-local" id="custDate" class="form-control">
       </div>
 
+      <!-- Ô TỔNG GIÁ TIỀN (CÓ CHỮ VNĐ BÊN TRONG) -->
       <div class="form-group">
-        <label>Tổng giá tiền (VNĐ)</label>
-        <input type="text" id="custPrice" class="form-control" placeholder="2.000.000" oninput="handlePriceOrPaidChange()">
+        <label>Tổng giá tiền</label>
+        <div class="input-vnd-wrapper">
+          <input type="text" id="custPrice" class="form-control" placeholder="2.000.000" oninput="handlePriceOrPaidChange()">
+          <span class="input-vnd-suffix">VNĐ</span>
+        </div>
       </div>
 
-      <!-- ĐƯA THỜI HẠN BẢO HÀNH LÊN TRÊN THANH TOÁN & CÔNG NỢ -->
+      <!-- THỜI HẠN BẢO HÀNH -->
       <div class="form-group">
         <label>Thời hạn bảo hành (Tháng)</label>
         <div class="warranty-options">
@@ -940,7 +960,7 @@
         <input type="hidden" id="custWarrantyMonths" value="1">
       </div>
 
-      <!-- KHỐI THANH TOÁN TIỀN MẶT & CHUYỂN KHOẢN -->
+      <!-- THANH TOÁN TIỀN MẶT & CHUYỂN KHOẢN -->
       <div class="debt-panel">
         <label style="font-size: 13px; font-weight: 700; color: var(--primary-gold); display: block; margin-bottom: 10px;">
           <i class="fa-solid fa-receipt"></i> Thanh toán & Công nợ
@@ -957,12 +977,18 @@
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <div>
-            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Đã trả (VNĐ)</label>
-            <input type="text" id="custPaid" class="form-control" placeholder="0" oninput="handlePriceOrPaidChange()" style="border-color: rgba(22, 163, 74, 0.4);">
+            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Đã trả</label>
+            <div class="input-vnd-wrapper">
+              <input type="text" id="custPaid" class="form-control" placeholder="0" oninput="handlePriceOrPaidChange()" style="border-color: rgba(22, 163, 74, 0.4);">
+              <span class="input-vnd-suffix" style="color: var(--success);">VNĐ</span>
+            </div>
           </div>
           <div>
-            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Nợ còn lại (VNĐ)</label>
-            <input type="text" id="custDebt" class="form-control" placeholder="0 đ" readonly style="background: #ffffff; color: var(--danger); font-weight: bold; border-color: rgba(220, 38, 38, 0.4);">
+            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Nợ còn lại</label>
+            <div class="input-vnd-wrapper">
+              <input type="text" id="custDebt" class="form-control" placeholder="0" readonly style="background: #ffffff; color: var(--danger); font-weight: bold; border-color: rgba(220, 38, 38, 0.4);">
+              <span class="input-vnd-suffix" style="color: var(--danger);">VNĐ</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1026,10 +1052,13 @@
         <input type="datetime-local" id="apptDateTime" class="form-control">
       </div>
 
-      <!-- Ô TIỀN ĐẶT CỌC GIỮ KHUYẾN MÃI -->
+      <!-- Ô TIỀN CỌC (CÓ CHỮ VNĐ BÊN TRONG) -->
       <div class="form-group">
-        <label>Tiền đặt cọc giữ khuyến mãi (VNĐ - bỏ trống nếu không cọc)</label>
-        <input type="text" id="apptDeposit" class="form-control" placeholder="Ví dụ: 500.000" oninput="formatCurrencyInput(this)" style="border-color: rgba(179, 135, 56, 0.4); font-weight: bold; color: var(--primary-gold);">
+        <label>Tiền đặt cọc giữ khuyến mãi (Bỏ trống nếu không cọc)</label>
+        <div class="input-vnd-wrapper">
+          <input type="text" id="apptDeposit" class="form-control" placeholder="Ví dụ: 500.000" oninput="formatCurrencyInput(this)" style="border-color: rgba(179, 135, 56, 0.4); font-weight: bold; color: var(--primary-gold);">
+          <span class="input-vnd-suffix">VNĐ</span>
+        </div>
       </div>
 
       <div class="form-group">
@@ -1041,7 +1070,7 @@
     </div>
   </div>
 
-  <!-- MODAL: GỬI TIN NHẮN NHẮC LỊCH HẸN / BẢO HÀNH -->
+  <!-- MODAL: GỬI TIN NHẮN NHẮC LỊCH -->
   <div id="remindModal" class="modal">
     <div class="modal-content">
       <div class="modal-header-top">
@@ -1098,7 +1127,7 @@
     <div id="imageViewerCaption" style="color: var(--primary-gold); margin-top: 10px; font-weight: 600; font-size: 14px;"></div>
   </div>
 
-  <!-- MODAL: VIETQR THANH TOÁN TOÀN BỘ TRONG CHI TIẾT KHÁCH HÀNG -->
+  <!-- MODAL: VIETQR THANH TOÁN TOÀN BỘ -->
   <div id="paymentQrModal" class="modal">
     <div class="modal-content" style="max-width: 380px; text-align: center;">
       <div class="modal-header-top">
@@ -1109,7 +1138,7 @@
     </div>
   </div>
 
-  <!-- MODAL: TÙY CHỌN CHUYỂN KHOẢN QR TRONG FORM THÊM/SỬA KHÁCH -->
+  <!-- MODAL: TÙY CHỌN CHUYỂN KHOẢN QR -->
   <div id="transferQrModal" class="modal">
     <div class="modal-content" style="max-width: 400px; text-align: center;">
       <div class="modal-header-top">
@@ -1123,11 +1152,12 @@
         <button type="button" class="debt-quick-btn" id="btnQrPart" onclick="selectTransferOption('part')">Trả trước</button>
       </div>
 
+      <!-- Ô TIỀN CHUYỂN TRONG QR (CÓ CHỮ VNĐ BÊN TRONG) -->
       <div class="form-group" style="text-align: left; margin-bottom: 12px;">
         <label style="font-size: 12px; color: var(--text-muted);">Số tiền cần thu sau khi trừ cọc (nếu có):</label>
-        <div style="position: relative; display: flex; align-items: center;">
-          <input type="text" id="transferCustomAmount" class="form-control" style="font-size: 16px; font-weight: bold; color: var(--primary-gold); padding-right: 55px;" oninput="onTransferAmountChanged(this)">
-          <span style="position: absolute; right: 12px; font-weight: 700; font-size: 13px; color: var(--primary-gold); pointer-events: none;">VNĐ</span>
+        <div class="input-vnd-wrapper">
+          <input type="text" id="transferCustomAmount" class="form-control" style="font-size: 16px; font-weight: bold; color: var(--primary-gold);" oninput="onTransferAmountChanged(this)">
+          <span class="input-vnd-suffix">VNĐ</span>
         </div>
       </div>
 
@@ -1372,7 +1402,6 @@
       return `Còn ${diffHours} giờ ${diffMins} phút`;
     }
 
-    /* ĐỔI LOGO TRỰC TIẾP */
     function triggerDirectLogoChange() {
       document.getElementById('directLogoFileInput').click();
     }
@@ -1392,7 +1421,6 @@
       });
     }
 
-    /* MODULE BẢN QUYỀN */
     function checkLicenseExpiry(userData) {
       const lockModal = document.getElementById('licenseLockModal');
       if (!lockModal) return;
@@ -1474,7 +1502,6 @@
       }
     }
 
-    /* FIREBASE AUTH & SYNC */
     function setCloudStatus(text, iconClass) {
       const textEl = document.getElementById('cloudSyncStatusText');
       const boxEl = document.getElementById('cloudSyncStatus');
@@ -1699,7 +1726,7 @@
           if (!db.appointments) db.appointments = [];
           let changed = false;
 
-          snapshot.docChanges().forEach(function(change) {
+          snapshot.docChanges().forEach(change => {
             const remoteAppt = change.doc.data();
             const idx = db.appointments.findIndex(a => a.id === remoteAppt.id);
 
@@ -1862,7 +1889,10 @@
         </div>
         <div class="form-group" style="margin-top: 14px; text-align: left;">
           <label style="font-size: 12px;">Số tiền khách ĐÃ TRẢ:</label>
-          <input type="text" id="paymentConfirmAmount" class="form-control" value="${new Intl.NumberFormat('vi-VN').format(amount)}" oninput="formatCurrencyInput(this)">
+          <div class="input-vnd-wrapper">
+            <input type="text" id="paymentConfirmAmount" class="form-control" value="${new Intl.NumberFormat('vi-VN').format(amount)}" oninput="formatCurrencyInput(this)">
+            <span class="input-vnd-suffix">VNĐ</span>
+          </div>
         </div>
         <button class="btn-gold" style="width: 100%; margin-top: 8px; padding: 10px;" onclick="confirmPaymentReceived()"><i class="fa-solid fa-check"></i> Xác nhận đã nhận tiền</button>
       `;
@@ -1965,7 +1995,7 @@
 
       const price = parseInt(priceInput.value.replace(/\D/g, '')) || 0;
       const paid = parseInt(paidInput.value.replace(/\D/g, '')) || 0;
-      debtInput.value = formatMoney(Math.max(0, price - paid));
+      debtInput.value = new Intl.NumberFormat('vi-VN').format(Math.max(0, price - paid));
     }
 
     function setFullPayment() {
@@ -1978,13 +2008,12 @@
       handlePriceOrPaidChange();
     }
 
-    /* THANH TOÁN TIỀN MẶT & CHUYỂN KHOẢN QR MỚI TRÊN FORM */
+    /* THANH TOÁN TIỀN MẶT & CHUYỂN KHOẢN (TRỪ CỌC NẾU CÓ) */
     function handleCashPayment() {
       setFullPayment();
       showAppAlert('Đã ghi nhận khách thanh toán đủ tiền mặt!');
     }
 
-    // 1. Mở popup chuyển khoản VietQR: Tính toán sẵn tiền cọc / tiền đã trả trước
     function openTransferPaymentModal() {
       const priceVal = parseInt((document.getElementById('custPrice').value || '').replace(/\D/g, '')) || 0;
       if (priceVal <= 0) {
@@ -2004,12 +2033,9 @@
       selectTransferOption('full');
     }
 
-    // 2. Xử lý các lựa chọn: TỰ ĐỘNG TRỪ TIỀN ĐÃ CỌC KHI CHỌN "CHUYỂN ĐỦ"
     function selectTransferOption(opt) {
       const priceVal = parseInt((document.getElementById('custPrice').value || '').replace(/\D/g, '')) || 0;
       const paidBefore = parseInt((document.getElementById('custPaid').value || '').replace(/\D/g, '')) || 0;
-      
-      // Số tiền thực tế khách còn thiếu sau khi đã trừ cọc
       const remainingDebt = Math.max(0, priceVal - paidBefore);
 
       const amtInput = document.getElementById('transferCustomAmount');
@@ -2022,7 +2048,6 @@
       if (btnPart) btnPart.classList.toggle('active', opt === 'part');
 
       if (opt === 'full') {
-        // Nếu có cọc: Chuyển đủ phần còn lại (remainingDebt). Nếu chưa cọc: Chuyển full tổng bill (priceVal)
         const targetAmount = (paidBefore > 0) ? remainingDebt : priceVal;
         amtInput.value = new Intl.NumberFormat('vi-VN').format(targetAmount);
         amtInput.readOnly = true;
@@ -2041,7 +2066,40 @@
       }
     }
 
-    // 3. Khi bấm "Xác nhận số tiền này": Tự động CỘNG DỒN với tiền cọc cũ
+    function onTransferAmountChanged(input) {
+      formatCurrencyInput(input);
+      const val = parseInt(input.value.replace(/\D/g, '')) || 0;
+      renderTransferQrCode(val);
+    }
+
+    function renderTransferQrCode(amount) {
+      const displayArea = document.getElementById('transferQrDisplayArea');
+      if (!displayArea) return;
+      if (amount <= 0) {
+        displayArea.innerHTML = `
+          <div style="background: #fdf2f2; border: 1px dashed var(--danger); border-radius: 8px; padding: 14px; color: var(--danger); font-size: 13px;">
+            <i class="fa-solid fa-hand-holding-dollar"></i> Khách nợ 100% (Số tiền chuyển là 0 đ, không tạo mã QR).
+          </div>
+        `;
+        return;
+      }
+
+      const bankId = db.brand && db.brand.bankId;
+      const accountNo = db.brand && db.brand.bankAccountNo;
+      const accountName = db.brand && db.brand.bankAccountName;
+      const custName = document.getElementById('custName').value.trim() || 'Khach';
+      const cleanNote = removeVietnameseTones('TT ' + custName).replace(/[^a-zA-Z0-9 ]/g, '').trim();
+
+      const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(cleanNote)}${accountName ? '&accountName=' + encodeURIComponent(removeVietnameseTones(accountName)) : ''}`;
+
+      displayArea.innerHTML = `
+        <img src="${qrUrl}" style="width: 100%; max-width: 270px; border-radius: 8px; background: #fff; padding: 6px; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" alt="Mã QR Chuyển khoản">
+        <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+          Quét mã để chuyển: <strong style="color: var(--primary-gold); font-size: 15px;">${formatMoney(amount)}</strong>
+        </div>
+      `;
+    }
+
     function confirmTransferToForm() {
       const priceVal = parseInt((document.getElementById('custPrice').value || '').replace(/\D/g, '')) || 0;
       const paidBefore = parseInt((document.getElementById('custPaid').value || '').replace(/\D/g, '')) || 0;
@@ -2049,7 +2107,6 @@
       const rawTransfer = document.getElementById('transferCustomAmount').value.replace(/\D/g, '');
       const transferAmount = parseInt(rawTransfer) || 0;
 
-      // Tổng đã trả = Tiền cọc trước đó + Tiền vừa quét chuyển khoản
       const newTotalPaid = Math.min(priceVal, paidBefore + transferAmount);
 
       document.getElementById('custPaid').value = new Intl.NumberFormat('vi-VN').format(newTotalPaid);
@@ -2062,6 +2119,7 @@
         showAppAlert(`Đã cập nhật số tiền thanh toán: ${formatMoney(newTotalPaid)}`);
       }
     }
+
     function calculateWarranty(dateStr, months) {
       const m = parseInt(months);
       if (isNaN(m) || m <= 0) {
@@ -2173,7 +2231,7 @@
       }
     }
 
-    /* CHỌN NHIỀU KHÁCH HÀNG ĐỂ XÓA (BULK DELETE) */
+    /* BULK DELETE KHÁCH HÀNG */
     let customerSelectMode = false;
     let selectedCustomerIds = new Set();
     let custLongPressTimer = null;
@@ -2574,7 +2632,6 @@
             <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-regular fa-clock"></i> ${dateDisplay}</div>
             ${a.note ? `<div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-style: italic;">Ghi chú: ${escapeHtml(a.note)}</div>` : ''}
 
-            <!-- HÀNG NÚT THUẦN ICON ĐỒNG ĐỀU -->
             <div style="display: flex; gap: 8px; margin-top: 10px; align-items: center;">
               <a class="btn-call" style="padding: 7px 12px; font-size: 13px;" href="tel:${escapeHtml(a.phone)}" title="Gọi điện"><i class="fa-solid fa-phone"></i></a>
               <button class="btn-remind" style="padding: 7px 12px; font-size: 13px;" onclick="openAppointmentRemindModal('${a.id}')" title="Nhắn tin nhắc hẹn"><i class="fa-solid fa-comment-dots"></i></button>
@@ -2975,7 +3032,6 @@
         : '';
     }
 
-    /* ZOOM / KÉO ẢNH TRONG LIGHTBOX */
     const IV_MAX_SCALE = 5;
     const ivZ = { scale: 1, x: 0, y: 0, ptrs: new Map(), sDist: 0, sScale: 1, sX: 0, sY: 0, sMid: { x: 0, y: 0 }, moved: false, multi: false, lastTap: 0 };
 
@@ -3189,7 +3245,7 @@
       document.getElementById('custColorMix').value = '';
       document.getElementById('custPrice').value = '';
       document.getElementById('custPaid').value = '';
-      document.getElementById('custDebt').value = '0 đ';
+      document.getElementById('custDebt').value = '0';
       document.getElementById('custDate').value = getTodayDateTimeString();
       toggleServiceGroup('moi');
       document.getElementById('customerModal').style.display = 'block';
@@ -3321,7 +3377,6 @@
       showAppAlert('Lưu hồ sơ thành công!');
     }
 
-    /* CHI TIẾT KHÁCH HÀNG: 3 NÚT NẰM DƯỚI TỔNG LÀM / TỔNG NỢ, NÚT "THÊM LƯỢT MỚI" FULL WIDTH */
     function openCustomerDetail(custId) {
       const c = db.customers.find(item => item.id === custId);
       if (!c) return;
@@ -3476,7 +3531,7 @@
       }, 100);
     }
 
-    /* MODULE IN HÓA ĐƠN KIÊM PHIẾU BẢO HÀNH A4 TRÊN MÁY TÍNH */
+    /* MODULE IN HÓA ĐƠN KIÊM PHIẾU BẢO HÀNH A4 */
     let currentPrintCustomerId = null;
     let currentPrintSessionId = null;
 
@@ -3574,7 +3629,6 @@
 
       const receiptHtml = `
         <div style="width: 100%; max-width: 720px; margin: 0 auto; color: #000; font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; line-height: 1.5;">
-          <!-- HEADER HÓA ĐƠN A4 -->
           <div style="text-align: center; border-bottom: 2px solid #111; padding-bottom: 12px; margin-bottom: 14px;">
             ${db.brand.logo ? `<img src="${db.brand.logo}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; margin-bottom: 6px;" alt="Logo">` : ''}
             <div style="font-size: 20px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.8px;">${escapeHtml(brandTitle)}</div>
@@ -3584,7 +3638,6 @@
             <div style="font-size: 12px; color: #666;">Ngày in: ${printDateStr}</div>
           </div>
 
-          <!-- THÔNG TIN KHÁCH HÀNG -->
           <div style="font-size: 13.5px; line-height: 1.6; margin-bottom: 14px; background: #fafafa; padding: 10px 14px; border-radius: 6px; border: 1px solid #eee;">
             <div style="display: flex; justify-content: space-between;">
               <div>Khách hàng: <strong>${escapeHtml(customer.name)}</strong></div>
@@ -3593,7 +3646,6 @@
             ${customer.address ? `<div style="margin-top: 3px;">Địa chỉ: ${escapeHtml(customer.address)}</div>` : ''}
           </div>
 
-          <!-- BẢNG CHI TIẾT DỊCH VỤ -->
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 12px;">
             <thead>
               <tr style="border-top: 1.5px solid #000; border-bottom: 1.5px solid #000; background: #f5f5f5;">
@@ -3606,7 +3658,6 @@
             </tbody>
           </table>
 
-          <!-- TỔNG KẾT THANH TOÁN & THỜI HẠN BẢO HÀNH -->
           <div style="border-top: 1.5px solid #000; padding-top: 10px; font-size: 13.5px; line-height: 1.7; margin-bottom: 14px;">
             <div style="display: flex; justify-content: space-between;">
               <span>Tổng chi phí dịch vụ:</span>
@@ -3625,13 +3676,11 @@
             </div>
           </div>
 
-          <!-- LƯU Ý DẶN DÒ BẢO HÀNH -->
           <div style="background: #fdfdfd; border: 1px dashed #aaa; border-radius: 6px; padding: 10px 14px; font-size: 12px; line-height: 1.55; margin-bottom: 18px;">
             <div style="font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">Lưu ý dặn dò sau khi làm:</div>
             <div>${escapeHtmlMultiline(footerNote)}</div>
           </div>
 
-          <!-- CHỮ KÝ XÁC NHẬN -->
           <div style="display: flex; justify-content: space-between; text-align: center; margin-top: 16px; padding-bottom: 8px;">
             <div style="width: 45%; font-size: 13px;">
               <strong>Khách hàng</strong>
@@ -3692,7 +3741,7 @@
       }
     }
 
-    /* DOANH THU 6 NÚT */
+    /* DOANH THU & FIX CHUẨN LỌC TUẦN NÀY / TUẦN TRƯỚC */
     function unlockRevenue() {
       if (document.getElementById('passcodeInput').value === db.brand.passcode) {
         document.getElementById('revenueLockScreen').style.display = 'none';
@@ -3719,14 +3768,16 @@
       const now = new Date();
       let start = new Date(now), end = new Date(now);
 
+      // Tính khoảng ngày Thứ 2 đến Chủ Nhật chuẩn lịch Việt Nam
+      const currentDay = now.getDay(); // 0 là Chủ Nhật, 1 là Thứ Hai...
+      const diffToMonday = (currentDay === 0 ? -6 : 1 - currentDay);
+
       if (type === 'this_week') {
-        const day = (now.getDay() + 6) % 7;
-        start.setDate(now.getDate() - day);
-        end.setDate(start.getDate() + 6);
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday);
+        end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
       } else if (type === 'last_week') {
-        const day = (now.getDay() + 6) % 7;
-        start.setDate(now.getDate() - day - 7);
-        end.setDate(start.getDate() + 6);
+        start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday - 7);
+        end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
       } else if (type === 'this_month') {
         start = new Date(now.getFullYear(), now.getMonth(), 1);
         end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -3737,7 +3788,7 @@
         start = new Date(now.getFullYear(), 0, 1);
         end = new Date(now.getFullYear(), 11, 31);
       } else if (type === 'last_year') {
-        start = new Date(now.getFullYear(), -1, 1);
+        start = new Date(now.getFullYear() - 1, 0, 1);
         end = new Date(now.getFullYear() - 1, 11, 31);
       }
 
