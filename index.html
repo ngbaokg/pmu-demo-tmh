@@ -256,7 +256,7 @@
     .form-control:focus { outline: none; border-color: var(--primary-gold); background: #ffffff; }
     textarea.form-control { resize: vertical; line-height: 1.5; }
     
-    /* KHUNG CHỨA Ô TIỀN KÈM NHÃN VNĐ BÊN TRONG */
+    /* KHUNG CHỨA Ô TIỀN KÈM NHÃN VNĐ */
     .input-vnd-wrapper {
       position: relative;
       display: flex;
@@ -264,7 +264,7 @@
       width: 100%;
     }
     .input-vnd-wrapper .form-control {
-      padding-right: 50px;
+      padding-right: 52px;
     }
     .input-vnd-suffix {
       position: absolute;
@@ -380,7 +380,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
-    /* ĐỊNH VỊ MODAL */
+    /* MODAL */
     .modal {
       display: none;
       position: fixed;
@@ -429,7 +429,6 @@
     }
     .modal-close-btn:hover { color: var(--text-main); border-color: var(--primary-gold); }
 
-    /* THANH TAB CÀI ĐẶT */
     .settings-tabs { 
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -527,12 +526,10 @@
     #ivNextArrow { right: 6px; }
     #imageViewerDots { margin-top: 10px; text-align: center; }
 
-    /* GIAO DIỆN MÁY TÍNH */
+    /* MÁY TÍNH */
     @media (min-width: 900px) {
       .container { max-width: 1200px; padding: 30px 24px; }
-      header { 
-        padding: 18px 40px; 
-      }
+      header { padding: 18px 40px; }
       .brand-box { gap: 18px; }
       .brand-logo { width: 64px; height: 64px; border-width: 3px; }
       .brand-logo-badge { width: 22px; height: 22px; font-size: 11px; bottom: 0; right: 0; }
@@ -541,14 +538,9 @@
       #cloudSyncStatus { font-size: 13px !important; gap: 6px !important; }
       header .btn-icon-only { padding: 10px 14px; font-size: 16px; }
 
-      #desktopPrintBtn {
-        display: inline-flex !important;
-      }
+      #desktopPrintBtn { display: inline-flex !important; }
 
-      .hero-banner { 
-        padding: 40px 20px; 
-        margin-bottom: 30px; 
-      }
+      .hero-banner { padding: 40px 20px; margin-bottom: 30px; }
       .hero-banner h2 { font-size: 26px !important; margin-bottom: 10px !important; }
       .hero-banner p { font-size: 15px !important; }
       .quick-add-btn { width: 72px; height: 72px; font-size: 28px; margin-top: 20px; }
@@ -583,35 +575,24 @@
       .bottom-nav { max-width: 900px; }
     }
 
-    /* IN HÓA ĐƠN A4 */
+    /* IN A4 */
     @page {
       size: A4 portrait;
       margin: 12mm 15mm;
     }
     @media print {
-      body * {
-        visibility: hidden !important;
-      }
-      #printReceiptContainer, #printReceiptContainer * {
-        visibility: visible !important;
-      }
+      body * { visibility: hidden !important; }
+      #printReceiptContainer, #printReceiptContainer * { visibility: visible !important; }
       #printReceiptContainer {
         position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        background: #fff !important;
-        color: #000 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
+        left: 0 !important; top: 0 !important;
+        width: 100% !important; max-width: 100% !important;
+        background: #fff !important; color: #000 !important;
+        padding: 0 !important; margin: 0 !important;
+        page-break-inside: avoid !important; break-inside: avoid !important;
         box-shadow: none !important;
       }
-      .no-print {
-        display: none !important;
-      }
+      .no-print { display: none !important; }
     }
   </style>
 </head>
@@ -710,11 +691,11 @@
         <div class="stats-grid">
           <div class="stat-card">
             <div style="font-size: 12px; color: var(--text-muted);">Doanh thu hôm nay (Thực thu)</div>
-            <div class="value" id="revToday">0 đ</div>
+            <div class="value" id="revToday">0 VNĐ</div>
           </div>
           <div class="stat-card">
             <div style="font-size: 12px; color: var(--text-muted);">Doanh thu tháng này (Thực thu)</div>
-            <div class="value" id="revMonth">0 đ</div>
+            <div class="value" id="revMonth">0 VNĐ</div>
           </div>
         </div>
 
@@ -741,7 +722,7 @@
             </div>
           </div>
           <button class="btn-gold" style="padding: 10px;" onclick="filterRevenue()"><i class="fa-solid fa-magnifying-glass"></i> Xem thống kê</button>
-          <div style="margin-top: 12px; font-weight: bold; text-align: right; color: var(--primary-gold); font-size: 15px;" id="filteredRevResult">Tổng: 0 đ</div>
+          <div style="margin-top: 12px; font-weight: bold; text-align: right; color: var(--primary-gold); font-size: 15px;" id="filteredRevResult">Tổng thực thu: 0 VNĐ</div>
         </div>
 
         <div class="card">
@@ -937,7 +918,7 @@
         <input type="datetime-local" id="custDate" class="form-control">
       </div>
 
-      <!-- Ô TỔNG GIÁ TIỀN (CÓ CHỮ VNĐ BÊN TRONG) -->
+      <!-- Ô TỔNG GIÁ TIỀN -->
       <div class="form-group">
         <label>Tổng giá tiền</label>
         <div class="input-vnd-wrapper">
@@ -1052,7 +1033,7 @@
         <input type="datetime-local" id="apptDateTime" class="form-control">
       </div>
 
-      <!-- Ô TIỀN CỌC (CÓ CHỮ VNĐ BÊN TRONG) -->
+      <!-- Ô TIỀN CỌC -->
       <div class="form-group">
         <label>Tiền đặt cọc giữ khuyến mãi (Bỏ trống nếu không cọc)</label>
         <div class="input-vnd-wrapper">
@@ -1152,7 +1133,6 @@
         <button type="button" class="debt-quick-btn" id="btnQrPart" onclick="selectTransferOption('part')">Trả trước</button>
       </div>
 
-      <!-- Ô TIỀN CHUYỂN TRONG QR (CÓ CHỮ VNĐ BÊN TRONG) -->
       <div class="form-group" style="text-align: left; margin-bottom: 12px;">
         <label style="font-size: 12px; color: var(--text-muted);">Số tiền cần thu sau khi trừ cọc (nếu có):</label>
         <div class="input-vnd-wrapper">
@@ -1940,18 +1920,9 @@
       showAppAlert('Đã ghi nhận thanh toán ' + formatMoney(receivedAmount));
     }
 
-    /* DỊCH VỤ */
-    const serviceCategories = {
-      'moi': { name: 'Môi', title: 'Chọn loại dịch vụ Môi:', items: ['Phun môi', 'Khử thâm', 'Phụ thu'] },
-      'may': { name: 'Mày', title: 'Chọn loại dịch vụ Mày:', items: ['Phun Ombre', 'Sợi đầu phun đuôi', 'Điêu khắc sợi', 'Phụ thu'] },
-      'mi': { name: 'Mí mắt', title: 'Chọn loại dịch vụ Mí mắt:', items: ['Mí trên', 'Mí dưới', 'Phụ thu'] },
-      'combo': { name: 'Combo', title: 'Chọn loại dịch vụ Combo:', items: ['Mày và môi', 'Mày và mí', 'Mí và môi', 'Phụ thu'] },
-      'nhuhoa': { name: 'Nhũ hoa', title: 'Chọn dịch vụ Nhũ hoa:', items: ['Làm hồng nhũ', 'Phụ thu'] },
-      'xoa': { name: 'Xóa', title: 'Chọn loại dịch vụ Xóa:', items: ['Xóa mày', 'Xóa hình xăm', 'Xóa môi', 'Xóa mí', 'Phụ thu'] }
-    };
-
+    /* ĐỔI ĐỒNG BỘ ĐƠN VỊ THÀNH VNĐ */
     function formatMoney(amount) {
-      return new Intl.NumberFormat('vi-VN').format(amount || 0) + ' đ';
+      return new Intl.NumberFormat('vi-VN').format(amount || 0) + ' VNĐ';
     }
 
     function escapeHtml(str) {
@@ -2078,7 +2049,7 @@
       if (amount <= 0) {
         displayArea.innerHTML = `
           <div style="background: #fdf2f2; border: 1px dashed var(--danger); border-radius: 8px; padding: 14px; color: var(--danger); font-size: 13px;">
-            <i class="fa-solid fa-hand-holding-dollar"></i> Khách nợ 100% (Số tiền chuyển là 0 đ, không tạo mã QR).
+            <i class="fa-solid fa-hand-holding-dollar"></i> Khách nợ 100% (Số tiền chuyển là 0 VNĐ, không tạo mã QR).
           </div>
         `;
         return;
@@ -2201,6 +2172,15 @@
       closeModal('autoWarrantyReminderModal');
     }
 
+    /* NHẮC SAO LƯU ĐÚNG 7 NGÀY MỘT LẦN KHI CÓ DỮ LIỆU MỚI (FIX DỨT ĐIỂM GÂY PHIỀN) */
+    function dismissBackupBanner() {
+      const el = document.getElementById('backupReminderBanner');
+      if (el) el.style.display = 'none';
+      if (!db.brand) db.brand = {};
+      db.brand.backupBannerDismissedTime = Date.now();
+      saveDBLocalOnly();
+    }
+
     function renderBackupReminder() {
       const el = document.getElementById('backupReminderBanner');
       if (!el) return;
@@ -2208,21 +2188,38 @@
         el.style.display = 'none';
         return;
       }
+
+      const now = Date.now();
+      const lastDismissedTime = (db.brand && db.brand.backupBannerDismissedTime) || 0;
+      if (lastDismissedTime && (now - lastDismissedTime < 7 * 24 * 60 * 60 * 1000)) {
+        el.style.display = 'none';
+        return;
+      }
+
       const lastExportStr = db.brand && db.brand.lastExportDate;
       const lastExportTime = lastExportStr ? new Date(lastExportStr).getTime() : 0;
       const lastModifiedTime = (db.brand && db.brand.lastDataModifiedTime) || 0;
-      let daysSince = Infinity;
-      if (lastExportTime && !isNaN(lastExportTime)) {
-        daysSince = Math.floor((Date.now() - lastExportTime) / (1000 * 60 * 60 * 24));
-      }
-      const hasUnsavedChanges = !lastExportTime || (lastModifiedTime > lastExportTime);
 
-      if (daysSince >= 14 && hasUnsavedChanges) {
+      let daysSinceExport = 0;
+      if (lastExportTime && !isNaN(lastExportTime)) {
+        daysSinceExport = Math.floor((now - lastExportTime) / (1000 * 60 * 60 * 24));
+      } else {
+        daysSinceExport = 8;
+      }
+
+      const hasNewDataAfterExport = (!lastExportTime) || (lastModifiedTime > lastExportTime);
+
+      if (daysSinceExport >= 7 && hasNewDataAfterExport) {
         el.innerHTML = `
-          <div class="card" style="border: 1px solid var(--warning); background: rgba(217, 119, 6, 0.08); margin-bottom: 14px; display: flex; align-items: center; gap: 10px;">
-            <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning); font-size: 20px;"></i>
-            <div style="flex: 1; font-size: 12.5px; color: var(--text-main); line-height: 1.5;">Đã lâu chưa sao lưu dữ liệu ra file! Hãy tải file sao lưu để phòng trường hợp đổi máy hoặc xóa bộ nhớ.</div>
-            <button class="btn-outline" style="flex-shrink: 0; font-size: 12px;" onclick="openSettingsModal()"><i class="fa-solid fa-download"></i> Sao lưu ngay</button>
+          <div class="card" style="border: 1px solid var(--warning); background: rgba(217, 119, 6, 0.08); margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+              <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning); font-size: 20px; flex-shrink: 0;"></i>
+              <div style="font-size: 12.5px; color: var(--text-main); line-height: 1.5;">Đã hơn 7 ngày chưa sao lưu dữ liệu mới ra file (.json). Hãy tải file để phòng mất dữ liệu.</div>
+            </div>
+            <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
+              <button class="btn-outline" style="font-size: 12px; padding: 6px 10px;" onclick="openSettingsModal()" title="Mở cài đặt sao lưu"><i class="fa-solid fa-download"></i></button>
+              <button class="btn-outline" style="font-size: 12px; padding: 6px 10px; color: var(--text-muted);" onclick="dismissBackupBanner()" title="Nhắc lại sau 7 ngày"><i class="fa-solid fa-xmark"></i></button>
+            </div>
           </div>
         `;
         el.style.display = 'block';
@@ -2319,8 +2316,8 @@
         <div class="card" style="border: 1px solid var(--primary-gold); background: rgba(212,175,55,0.08); display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px;">
           <div style="font-size: 13px; font-weight: 600;">Đã chọn: <span style="color: var(--primary-gold);">${count}</span> khách hàng</div>
           <div style="display: flex; gap: 8px;">
-            <button class="btn-outline" style="padding: 7px 12px; font-size: 12px;" onclick="exitCustomerSelectMode()"><i class="fa-solid fa-xmark"></i> Hủy</button>
-            <button class="btn-outline" style="padding: 7px 12px; font-size: 12px; border-color: var(--danger); color: var(--danger);" ${count === 0 ? 'disabled' : ''} onclick="deleteSelectedCustomers()"><i class="fa-solid fa-trash"></i> Xóa đã chọn</button>
+            <button class="btn-outline" style="padding: 7px 12px; font-size: 13px;" onclick="exitCustomerSelectMode()" title="Hủy chọn"><i class="fa-solid fa-xmark"></i></button>
+            <button class="btn-outline" style="padding: 7px 12px; font-size: 13px; border-color: var(--danger); color: var(--danger);" ${count === 0 ? 'disabled' : ''} onclick="deleteSelectedCustomers()" title="Xóa các khách hàng đã chọn"><i class="fa-solid fa-trash"></i></button>
           </div>
         </div>
       `;
@@ -2358,6 +2355,7 @@
       }).join('');
     }
 
+    /* DANH SÁCH KHÁCH HÀNG: CÁC NÚT THUẦN ICON */
     function renderCustomerList() {
       const q = (document.getElementById('customerSearchInput').value || '').toLowerCase().trim();
       const container = document.getElementById('customerList');
@@ -2405,11 +2403,11 @@
               </div>
             </div>
             ${!customerSelectMode ? `
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 128px; flex-shrink: 0;">
-              <button class="btn-outline" style="padding: 6px 8px; font-size: 12px;" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation(); openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
-              <a class="btn-call" href="tel:${escapeHtml(c.phone)}" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();"><i class="fa-solid fa-phone"></i></a>
-              <button class="btn-outline" style="padding: 6px 8px; font-size: 12px; border-color: var(--danger); color: var(--danger);" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation(); deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
-              <button class="btn-remind" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation(); openQuickMessageModal('${c.id}')"><i class="fa-solid fa-comment-dots"></i></button>
+            <div style="display: flex; gap: 6px; flex-shrink: 0;">
+              <a class="btn-call" style="padding: 7px 11px; font-size: 13px;" href="tel:${escapeHtml(c.phone)}" title="Gọi điện" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation();"><i class="fa-solid fa-phone"></i></a>
+              <button class="btn-remind" style="padding: 7px 11px; font-size: 13px;" title="Nhắn tin Zalo/SMS" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation(); openQuickMessageModal('${c.id}')"><i class="fa-solid fa-comment-dots"></i></button>
+              <button class="btn-outline" style="padding: 7px 11px; font-size: 13px;" title="Chỉnh sửa hồ sơ" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation(); openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-danger-outline" style="padding: 7px 11px; font-size: 13px;" title="Xóa hồ sơ" onpointerdown="event.stopPropagation();" onclick="event.stopPropagation(); deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i></button>
             </div>` : ''}
           </div>
         `;
@@ -2632,6 +2630,7 @@
             <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;"><i class="fa-regular fa-clock"></i> ${dateDisplay}</div>
             ${a.note ? `<div style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; font-style: italic;">Ghi chú: ${escapeHtml(a.note)}</div>` : ''}
 
+            <!-- HÀNG NÚT THUẦN ICON -->
             <div style="display: flex; gap: 8px; margin-top: 10px; align-items: center;">
               <a class="btn-call" style="padding: 7px 12px; font-size: 13px;" href="tel:${escapeHtml(a.phone)}" title="Gọi điện"><i class="fa-solid fa-phone"></i></a>
               <button class="btn-remind" style="padding: 7px 12px; font-size: 13px;" onclick="openAppointmentRemindModal('${a.id}')" title="Nhắn tin nhắc hẹn"><i class="fa-solid fa-comment-dots"></i></button>
@@ -3102,7 +3101,7 @@
           const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
           const mid = ivRelToCenter((pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2);
           const newScale = Math.min(IV_MAX_SCALE, Math.max(1, ivZ.sScale * dist / ivZ.sDist));
-          const ratio = newScale / ivZ.sScale;
+          const ratio = newScale / ivZ.scale;
           ivZ.scale = newScale;
           ivZ.x = mid.x - (ivZ.sMid.x - ivZ.sX) * ratio;
           ivZ.y = mid.y - (ivZ.sMid.y - ivZ.sY) * ratio;
@@ -3377,6 +3376,7 @@
       showAppAlert('Lưu hồ sơ thành công!');
     }
 
+    /* CHI TIẾT KHÁCH HÀNG: CÁC NÚT THUẦN ICON */
     function openCustomerDetail(custId) {
       const c = db.customers.find(item => item.id === custId);
       if (!c) return;
@@ -3404,10 +3404,11 @@
           </div>
           ${totalDebt > 0 ? `<button class="btn-gold" style="margin-top: 10px; padding: 8px;" onclick="openPaymentQR('${c.id}', null, ${totalDebt}, 'Thanh toan ${escapeJsAttr(c.name)}')"><i class="fa-solid fa-qrcode"></i> Thanh toán toàn bộ</button>` : ''}
           
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color);">
-            <button class="btn-outline" style="justify-content: center; padding: 8px 4px; font-size: 12px;" onclick="openPrintPreviewModal('${c.id}')" title="In phiếu"><i class="fa-solid fa-print"></i> In phiếu</button>
-            <button class="btn-outline" style="justify-content: center; padding: 8px 4px; font-size: 12px;" onclick="openEditFullCustomerModal('${c.id}')"><i class="fa-solid fa-pen"></i> Sửa</button>
-            <button class="btn-danger-outline" style="justify-content: center; padding: 8px 4px; font-size: 12px;" onclick="deleteCustomer('${c.id}')"><i class="fa-solid fa-trash"></i> Xóa</button>
+          <!-- 3 NÚT THAO TÁC THUẦN ICON -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color);">
+            <button class="btn-outline" style="justify-content: center; padding: 9px 4px; font-size: 14px;" onclick="openPrintPreviewModal('${c.id}')" title="In phiếu bảo hành & Hóa đơn"><i class="fa-solid fa-print"></i></button>
+            <button class="btn-outline" style="justify-content: center; padding: 9px 4px; font-size: 14px;" onclick="openEditFullCustomerModal('${c.id}')" title="Chỉnh sửa hồ sơ"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn-danger-outline" style="justify-content: center; padding: 9px 4px; font-size: 14px;" onclick="deleteCustomer('${c.id}')" title="Xóa khách hàng"><i class="fa-solid fa-trash"></i></button>
           </div>
         </div>
 
@@ -3428,7 +3429,7 @@
               <div>Thời gian: ${formatDateTimeDisplay(s.date)}</div>
               <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>
               <div style="margin-top: 8px; text-align: right;">
-                <button class="btn-outline" style="font-size: 11.5px; padding: 4px 8px;" onclick="openPrintPreviewModal('${c.id}', '${s.id}')"><i class="fa-solid fa-print"></i> In bill đợt này</button>
+                <button class="btn-outline" style="font-size: 13px; padding: 6px 12px;" onclick="openPrintPreviewModal('${c.id}', '${s.id}')" title="In hóa đơn đợt này"><i class="fa-solid fa-print"></i></button>
               </div>
               ${(s.imgBefore || s.imgAfter) ? `
                 <div class="detail-images">
@@ -3564,7 +3565,7 @@
               <div style="font-weight: 700; font-size: 14px; color: var(--text-main);">${escapeHtml(c.name)} <span style="font-size: 12px; color: var(--primary-gold);">(${escapeHtml(c.phone)})</span></div>
               <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">Dịch vụ gần nhất: ${escapeHtml(sName)}</div>
             </div>
-            <button class="btn-outline" style="font-size: 12px;"><i class="fa-solid fa-chevron-right"></i> Chọn</button>
+            <button class="btn-outline" style="font-size: 12px; padding: 6px 10px;" title="Chọn khách hàng"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
         `;
       }).join('');
@@ -3741,7 +3742,7 @@
       }
     }
 
-    /* DOANH THU & FIX CHUẨN LỌC TUẦN NÀY / TUẦN TRƯỚC */
+    /* DOANH THU & CHUẨN HÓA LỌC TUẦN NÀY / TUẦN TRƯỚC */
     function unlockRevenue() {
       if (document.getElementById('passcodeInput').value === db.brand.passcode) {
         document.getElementById('revenueLockScreen').style.display = 'none';
@@ -3768,8 +3769,7 @@
       const now = new Date();
       let start = new Date(now), end = new Date(now);
 
-      // Tính khoảng ngày Thứ 2 đến Chủ Nhật chuẩn lịch Việt Nam
-      const currentDay = now.getDay(); // 0 là Chủ Nhật, 1 là Thứ Hai...
+      const currentDay = now.getDay();
       const diffToMonday = (currentDay === 0 ? -6 : 1 - currentDay);
 
       if (type === 'this_week') {
@@ -3954,6 +3954,7 @@
       if (!db.brand) db.brand = {};
       db.brand.lastExportDate = getTodayDateTimeString();
       await saveDB();
+      renderBackupReminder();
     }
 
     async function processImportedJsonText(jsonText) {
