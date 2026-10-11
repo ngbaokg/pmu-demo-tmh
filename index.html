@@ -1296,6 +1296,17 @@
     const defaultReminderTemplate = "Dạ em chào chị {TEN_KH}, cửa hàng {TEN_TIEM} xin phép nhắc lịch kiểm tra và dặm bảo hành dịch vụ {DICH_VU} của chị ạ. Hạn bảo hành của chị đến ngày {HAN_BH}. Chị sắp xếp ghé cửa hàng để bên em hỗ trợ dặm đẹp nhất cho chị nhé!";
     const defaultPrintFooterNote = "• Quý khách kiêng nước trong vòng 24 giờ đầu sau khi làm.\n• Không tự ý dùng tay bóc vảy, để vảy bong tự nhiên.\n• Hỗ trợ dặm bảo hành miễn phí theo đúng thời hạn ghi trên phiếu!";
 
+    // === BỔ SUNG: danh mục dịch vụ (thiếu trong bản gốc gây lỗi nút không phản hồi) ===
+    // Tên trong items phải khớp với trường "service" của dữ liệu khách đã lưu. Hãy sửa theo danh sách của bạn.
+    const serviceCategories = {
+      moi:    { title: 'Dịch vụ Môi',     items: ['Phun môi collagen', 'Phun môi pha lê', 'Phun môi ombre', 'Khử thâm môi', 'Dặm môi'] },
+      may:    { title: 'Dịch vụ Mày',     items: ['Điêu khắc mày', 'Phun mày sợi', 'Phun mày tán bột', 'Phun mày ombre', 'Dặm mày'] },
+      mi:     { title: 'Dịch vụ Mí',      items: ['Phun mí mở tròng', 'Phun mí trên', 'Phun mí dưới', 'Dặm mí'] },
+      combo:  { title: 'Combo',           items: ['Combo mày + môi', 'Combo mày + mí', 'Combo mày + mí + môi'] },
+      nhuhoa: { title: 'Dịch vụ Nhũ hoa', items: ['Phun nhũ hoa', 'Dặm nhũ hoa'] },
+      xoa:    { title: 'Xóa xăm',         items: ['Xóa môi', 'Xóa mày', 'Xóa mí'] }
+    };
+
     localforage.config({
       name: 'PMU_PRO_APP_DB',
       storeName: 'pmu_data_store'
@@ -3517,9 +3528,31 @@
       document.getElementById('remindModal').style.display = 'block';
     }
 
+    function copyTextSafe(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).catch(function() { return fallbackCopy(text); });
+      }
+      return Promise.resolve(fallbackCopy(text));
+    }
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    function copyReminderText() {
+      const text = document.getElementById('remindMessageBody').value;
+      copyTextSafe(text).then(function() { showAppAlert('Đã sao chép nội dung nhắc lịch!'); });
+    }
+
     function sendViaZalo() {
       const text = document.getElementById('remindMessageBody').value;
-      navigator.clipboard.writeText(text).then(function() {
+      copyTextSafe(text).then(function() {
         window.open(`https://zalo.me/${currentRemindPhone}`, '_blank');
       });
     }
