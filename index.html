@@ -1981,6 +1981,7 @@
       showAppAlert('Đã ghi nhận khách thanh toán đủ tiền mặt!');
     }
 
+    // 1. Mở popup chuyển khoản VietQR: Tính toán sẵn tiền cọc / tiền đã trả trước
     function openTransferPaymentModal() {
       const priceVal = parseInt((document.getElementById('custPrice').value || '').replace(/\D/g, '')) || 0;
       if (priceVal <= 0) {
@@ -2000,21 +2001,29 @@
       selectTransferOption('full');
     }
 
+    // 2. Xử lý các lựa chọn: TỰ ĐỘNG TRỪ TIỀN ĐÃ CỌC KHI CHỌN "CHUYỂN ĐỦ"
     function selectTransferOption(opt) {
       const priceVal = parseInt((document.getElementById('custPrice').value || '').replace(/\D/g, '')) || 0;
-      const amtInput = document.getElementById('transferCustomAmount');
+      const paidBefore = parseInt((document.getElementById('custPaid').value || '').replace(/\D/g, '')) || 0;
       
+      // Số tiền thực tế khách còn thiếu sau khi đã trừ cọc
+      const remainingDebt = Math.max(0, priceVal - paidBefore);
+
+      const amtInput = document.getElementById('transferCustomAmount');
       const btnFull = document.getElementById('btnQrFull');
       const btnDebt = document.getElementById('btnQrDebt');
       const btnPart = document.getElementById('btnQrPart');
+
       if (btnFull) btnFull.classList.toggle('active', opt === 'full');
       if (btnDebt) btnDebt.classList.toggle('active', opt === 'debt');
       if (btnPart) btnPart.classList.toggle('active', opt === 'part');
 
       if (opt === 'full') {
-        amtInput.value = new Intl.NumberFormat('vi-VN').format(priceVal);
+        // Nếu có cọc: Chuyển đủ phần còn lại (remainingDebt). Nếu chưa cọc: Chuyển full tổng bill (priceVal)
+        const targetAmount = (paidBefore > 0) ? remainingDebt : priceVal;
+        amtInput.value = new Intl.NumberFormat('vi-VN').format(targetAmount);
         amtInput.readOnly = true;
-        renderTransferQrCode(priceVal);
+        renderTransferQrCode(targetAmount);
       } else if (opt === 'debt') {
         amtInput.value = '0';
         amtInput.readOnly = true;
@@ -2022,56 +2031,34 @@
       } else if (opt === 'part') {
         amtInput.readOnly = false;
         amtInput.focus();
-        const currentPart = parseInt(amtInput.value.replace(/\D/g, '')) || Math.round(priceVal / 2);
+        const baseVal = (paidBefore > 0) ? remainingDebt : priceVal;
+        const currentPart = parseInt(amtInput.value.replace(/\D/g, '')) || Math.round(baseVal / 2);
         amtInput.value = new Intl.NumberFormat('vi-VN').format(currentPart);
         renderTransferQrCode(currentPart);
       }
     }
 
-    function onTransferAmountChanged(input) {
-      formatCurrencyInput(input);
-      const val = parseInt(input.value.replace(/\D/g, '')) || 0;
-      renderTransferQrCode(val);
-    }
-
-    function renderTransferQrCode(amount) {
-      const displayArea = document.getElementById('transferQrDisplayArea');
-      if (!displayArea) return;
-      if (amount <= 0) {
-        displayArea.innerHTML = `
-          <div style="background: #fdf2f2; border: 1px dashed var(--danger); border-radius: 8px; padding: 14px; color: var(--danger); font-size: 13px;">
-            <i class="fa-solid fa-hand-holding-dollar"></i> Khách nợ 100% (Số tiền chuyển là 0 đ, không tạo mã QR).
-          </div>
-        `;
-        return;
-      }
-
-      const bankId = db.brand && db.brand.bankId;
-      const accountNo = db.brand && db.brand.bankAccountNo;
-      const accountName = db.brand && db.brand.bankAccountName;
-      const custName = document.getElementById('custName').value.trim() || 'Khach';
-      const cleanNote = removeVietnameseTones('TT ' + custName).replace(/[^a-zA-Z0-9 ]/g, '').trim();
-
-      const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=${Math.round(amount)}&addInfo=${encodeURIComponent(cleanNote)}${accountName ? '&accountName=' + encodeURIComponent(removeVietnameseTones(accountName)) : ''}`;
-
-      displayArea.innerHTML = `
-        <img src="${qrUrl}" style="width: 100%; max-width: 270px; border-radius: 8px; background: #fff; padding: 6px; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.06);" alt="Mã QR Chuyển khoản">
-        <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">
-          Quét mã để chuyển: <strong style="color: var(--primary-gold); font-size: 15px;">${formatMoney(amount)}</strong>
-        </div>
-      `;
-    }
-
+    // 3. Khi bấm "Xác nhận số tiền này": Tự động CỘNG DỒN với tiền cọc cũ
     function confirmTransferToForm() {
-      const raw = document.getElementById('transferCustomAmount').value.replace(/\D/g, '');
-      const transferAmount = parseInt(raw) || 0;
+      const priceVal = parseInt((document.getElementById('custPrice').value || '').replace(/\D/g, '')) || 0;
+      const paidBefore = parseInt((document.getElementById('custPaid').value || '').replace(/\D/g, '')) || 0;
+      
+      const rawTransfer = document.getElementById('transferCustomAmount').value.replace(/\D/g, '');
+      const transferAmount = parseInt(rawTransfer) || 0;
 
-      document.getElementById('custPaid').value = new Intl.NumberFormat('vi-VN').format(transferAmount);
+      // Tổng đã trả = Tiền cọc trước đó + Tiền vừa quét chuyển khoản
+      const newTotalPaid = Math.min(priceVal, paidBefore + transferAmount);
+
+      document.getElementById('custPaid').value = new Intl.NumberFormat('vi-VN').format(newTotalPaid);
       handlePriceOrPaidChange();
       closeModal('transferQrModal');
-      showAppAlert(`Đã cập nhật số tiền khách thanh toán: ${formatMoney(transferAmount)}`);
-    }
 
+      if (paidBefore > 0) {
+        showAppAlert(`Đã cộng dồn: Cọc ${formatMoney(paidBefore)} + Chuyển ${formatMoney(transferAmount)}\nTổng đã trả: ${formatMoney(newTotalPaid)}`);
+      } else {
+        showAppAlert(`Đã cập nhật số tiền thanh toán: ${formatMoney(newTotalPaid)}`);
+      }
+    }
     function calculateWarranty(dateStr, months) {
       const m = parseInt(months);
       if (isNaN(m) || m <= 0) {
