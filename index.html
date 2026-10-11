@@ -85,6 +85,7 @@
     .brand-box > div { min-width: 0; }
     .brand-title { font-size: 21px; font-weight: 700; color: var(--primary-gold); letter-spacing: 0.5px; line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
     .brand-slogan { font-size: 13px; color: var(--text-muted); margin-top: 2px; white-space: normal; }
+    .brand-slogan:empty { display: none; }
     .brand-contact { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 12px; color: var(--text-muted); line-height: 1.35; }
     .brand-contact:empty { display: none; }
     .brand-contact a, .brand-contact span { color: inherit; text-decoration: none; }
@@ -649,7 +650,7 @@
 
       <div>
         <div class="brand-title" id="brandTitle">Quản Lý Phun Xăm PMU</div>
-        <div class="brand-slogan" id="brandSlogan">Hệ thống quản lý và chăm sóc khách hàng</div>
+        <div class="brand-slogan" id="brandSlogan"></div>
         <div class="brand-contact" id="brandContact"></div>
       </div>
     </div>
@@ -2227,7 +2228,7 @@
       let warranties = [];
       (db.customers || []).forEach(function(c) {
         (c.sessions || []).forEach(function(s) {
-          if (!s.warrantyDone) {
+          if (!s.warrantyDone && !s.warrantyNoRemind) {
             const w = calculateWarranty(s.date, s.warrantyMonths);
             if (!w.isNoWarranty && (w.isOverdue || w.daysLeft <= 3)) {
               warranties.push({ cust: c, session: s, w: w });
@@ -2268,6 +2269,9 @@
               <div style="font-size: 12px; margin-top: 4px; color: ${item.w.isOverdue ? 'var(--danger)' : 'var(--warning)'};">
                 ${item.w.isOverdue ? `<i class="fa-solid fa-triangle-exclamation"></i> Đã quá hạn bảo hành ${item.w.overdueDays} ngày` : `<i class="fa-regular fa-clock"></i> Còn ${item.w.daysLeft} ngày là hết hạn (${item.w.expiryDateStr})`}
               </div>
+              <label style="display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--text-muted); cursor: pointer;">
+                <input type="checkbox" onchange="setWarrantyNoRemind('${item.cust.id}', '${item.session.id}', this.checked)"> Không nhắc lại khách này
+              </label>
             </div>
           `;
         }).join('');
@@ -2277,6 +2281,17 @@
       }
 
       document.getElementById('autoWarrantyReminderModal').style.display = 'block';
+    }
+
+    async function setWarrantyNoRemind(custId, sessionId, flag) {
+      const c = (db.customers || []).find(function(x) { return x.id === custId; });
+      if (!c) return;
+      const s = (c.sessions || []).find(function(x) { return x.id === sessionId; });
+      if (!s) return;
+      if (flag) s.warrantyNoRemind = true; else delete s.warrantyNoRemind;
+      markDataChanged();
+      await saveDB();
+      syncCustomerToCloud(custId);
     }
 
     function closeAutoWarrantyReminderPopup() {
@@ -2462,7 +2477,7 @@
 
     function renderHome() {
       document.getElementById('brandTitle').innerText = db.brand.title;
-      document.getElementById('brandSlogan').innerText = db.brand.slogan;
+      document.getElementById('brandSlogan').innerText = db.brand.slogan || '';
       renderBrandContact();
       document.getElementById('heroBrandName').innerText = db.brand.title;
       document.getElementById('brandLogo').src = db.brand.logo || defaultBrandLogo;
@@ -3598,7 +3613,8 @@
               <div>Màu đã pha: <strong>${escapeHtml(s.colorMix) || 'Mặc định'}</strong></div>
               <div>Thời gian: ${formatDateTimeDisplay(s.date)}</div>
               <div>Hạn bảo hành: <strong style="color: var(--primary-gold);">${w.expiryDateStr}</strong></div>
-              <div style="margin-top: 8px; text-align: right;">
+              <div style="margin-top: 8px; display: flex; justify-content: ${s.warrantyNoRemind ? 'space-between' : 'flex-end'}; align-items: center; gap: 8px;">
+                ${s.warrantyNoRemind ? `<button class="btn-outline" style="font-size: 12px; padding: 6px 10px;" onclick="reenableWarrantyRemind('${c.id}', '${s.id}')" title="Bật lại nhắc việc"><i class="fa-solid fa-bell-slash"></i> Đã tắt nhắc · Bật lại</button>` : ''}
                 <button class="btn-outline" style="font-size: 13px; padding: 6px 12px;" onclick="openPrintPreviewModal('${c.id}', '${s.id}')" title="In hóa đơn đợt này"><i class="fa-solid fa-print"></i></button>
               </div>
               ${(s.imgBefore || s.imgAfter) ? `
@@ -3613,6 +3629,11 @@
       `;
       document.getElementById('customerDetailContent').innerHTML = html;
       document.getElementById('customerDetailModal').style.display = 'block';
+    }
+
+    async function reenableWarrantyRemind(custId, sessionId) {
+      await setWarrantyNoRemind(custId, sessionId, false);
+      openCustomerDetail(custId);
     }
 
     async function deleteCustomer(custId) {
@@ -4230,7 +4251,7 @@
     function openSettingsModal() {
       renderBankOptions();
       document.getElementById('settingTitle').value = db.brand.title;
-      document.getElementById('settingSlogan').value = db.brand.slogan;
+      document.getElementById('settingSlogan').value = db.brand.slogan || '';
       document.getElementById('settingHotline').value = db.brand.hotline || '';
       document.getElementById('settingAddress').value = db.brand.address || '';
       document.getElementById('settingMsgTemplate').value = db.brand.msgTemplate;
@@ -4269,7 +4290,7 @@
       }
 
       db.brand.title = document.getElementById('settingTitle').value.trim() || db.brand.title;
-      db.brand.slogan = document.getElementById('settingSlogan').value.trim() || db.brand.slogan;
+      db.brand.slogan = document.getElementById('settingSlogan').value.trim();
       db.brand.hotline = document.getElementById('settingHotline').value.trim() || '';
       db.brand.address = document.getElementById('settingAddress').value.trim() || '';
       db.brand.msgTemplate = document.getElementById('settingMsgTemplate').value.trim() || db.brand.msgTemplate;
