@@ -1320,9 +1320,6 @@
 
       <!-- TAB: Máy in -->
       <div class="settings-tab-content" id="settingsTab-printer">
-        <div class="print-info-box">
-          Ứng dụng chạy trên trình duyệt nên <b>không tự dò được danh sách máy in</b> (do trình duyệt chặn vì bảo mật). Khi bấm <b>In</b>, hộp thoại in của thiết bị sẽ hiện ra: bạn chọn đúng máy in (laser, kim, bill nhiệt...) ở đó. Phần cài đặt này giúp app gửi hóa đơn đúng <b>khổ giấy, lề, cỡ chữ</b> cho từng loại máy. Cài đặt được lưu riêng trên <b>từng thiết bị</b>.
-        </div>
         <div class="form-group">
           <label>Loại máy in / Khổ giấy</label>
           <select id="printPaper" class="form-control" onchange="onPrintPaperChange()"></select>
@@ -1352,9 +1349,6 @@
           <input type="checkbox" id="printLogo" onchange="savePrintCfgFromUI()"> In logo cửa hàng trên hóa đơn
         </label>
         <button type="button" class="btn-outline" style="width: 100%; justify-content: center; padding: 10px;" onclick="printTestPage()"><i class="fa-solid fa-vial"></i> Xem & in thử trang test</button>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">
-          Mẹo: trong hộp thoại in của trình duyệt, chọn đúng máy in, đặt <b>Tỷ lệ = 100%</b>, <b>Lề = Mặc định/Không</b> và khổ giấy trùng với khổ đã chọn ở đây. Bill nhiệt cuộn: chiều dài chỉ là ước lượng, driver máy in sẽ tự cắt theo nội dung.
-        </div>
       </div>
 
       <!-- TAB: Đồng bộ & Bản quyền -->
