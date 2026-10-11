@@ -456,7 +456,7 @@
 
     .settings-tabs { 
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px; 
       margin-bottom: 18px; 
       border-bottom: none;
@@ -601,6 +601,19 @@
       #customerList, #homeRecentList, #warrantyList { grid-template-columns: 1fr 1fr 1fr; }
       .bottom-nav { max-width: 900px; }
     }
+
+    /* BỐ CỤC HÓA ĐƠN THEO LOẠI MÁY IN */
+    #printReceiptContainer.rcpt-thermal > div { max-width: 100% !important; }
+    #printReceiptContainer.rcpt-thermal th:last-child { width: auto !important; }
+    #printReceiptContainer.rcpt-thermal th, #printReceiptContainer.rcpt-thermal td { padding-left: 2px !important; padding-right: 2px !important; }
+    #printReceiptContainer.rcpt-thermal [style*="justify-content: space-between"] { flex-wrap: wrap; gap: 0 6px; }
+    #printReceiptContainer.rcpt-thermal [style*="text-align: center; margin-top: 16px"] { flex-direction: column; gap: 14px; }
+    #printReceiptContainer.rcpt-thermal [style*="text-align: center; margin-top: 16px"] > div { width: 100% !important; }
+    #printReceiptContainer.rcpt-nologo img { display: none !important; }
+    #printReceiptContainer.rcpt-bw, #printReceiptContainer.rcpt-bw * { color: #000 !important; background: transparent !important; box-shadow: none !important; }
+    #printReceiptContainer.rcpt-bw img { filter: grayscale(1) contrast(1.5); }
+    .print-info-box { background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--text-muted); line-height: 1.55; margin-bottom: 12px; }
+    .print-info-box b { color: var(--text-main); }
 
     /* IN A4 */
     @page {
@@ -791,8 +804,12 @@
 
       <div id="printReceiptContainer" style="background: #ffffff; color: #111111; padding: 25px 30px; border-radius: 8px; font-family: Arial, sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.15);"></div>
 
-      <div class="no-print" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px;">
-        <button class="btn-gold" style="padding: 12px;" onclick="executePrintReceipt()"><i class="fa-solid fa-print"></i> In hóa đơn (Khổ A4)</button>
+      <div class="no-print" style="display: flex; align-items: center; gap: 8px; margin-top: 14px;">
+        <label style="font-size: 12px; white-space: nowrap; margin: 0;">Khổ giấy:</label>
+        <select id="printPaperQuick" class="form-control" onchange="onPrintPaperQuickChange(this.value)"></select>
+      </div>
+      <div class="no-print" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+        <button class="btn-gold" style="padding: 12px;" onclick="executePrintReceipt()"><i class="fa-solid fa-print"></i> <span id="printBtnLabel">In hóa đơn</span></button>
         <button class="btn-outline" style="justify-content: center; padding: 12px; border-color: var(--zalo-blue); color: #0068ff; font-weight: 600;" onclick="exportReceiptImageAndSendZalo()"><i class="fa-solid fa-image"></i> Tải ảnh / Gửi Zalo</button>
       </div>
     </div>
@@ -1120,6 +1137,19 @@
     </div>
   </div>
 
+  <!-- HỎI IN HÓA ĐƠN SAU KHI LƯU -->
+  <div id="savedPrintPromptModal" class="modal" style="z-index: 2900;">
+    <div class="modal-content" style="max-width: 360px; text-align: center;">
+      <div style="font-size: 32px; color: #16a34a; margin-bottom: 10px;"><i class="fa-solid fa-circle-check"></i></div>
+      <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">Lưu hồ sơ thành công!</div>
+      <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">Bạn có muốn in hóa đơn kiêm phiếu bảo hành cho buổi làm này không?</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <button class="btn-outline" style="justify-content: center; padding: 11px;" onclick="closeModal('savedPrintPromptModal')">Để sau</button>
+        <button class="btn-gold" style="padding: 11px;" onclick="confirmSavedPrint()"><i class="fa-solid fa-print"></i> In hóa đơn</button>
+      </div>
+    </div>
+  </div>
+
   <!-- LIGHTBOX XEM ẢNH -->
   <div id="imageViewerModal" onclick="closeImageViewer()">
     <div style="width: 100%; max-width: 700px; text-align: right; margin-bottom: 8px;">
@@ -1224,6 +1254,9 @@
         <div class="settings-tab" data-tab="sync" onclick="switchSettingsTab('sync', this)" title="Bản quyền & Đồng bộ dữ liệu">
           <i class="fa-solid fa-cloud"></i>
         </div>
+        <div class="settings-tab" data-tab="printer" onclick="switchSettingsTab('printer', this)" title="Cài đặt máy in & khổ giấy">
+          <i class="fa-solid fa-print"></i>
+        </div>
       </div>
 
       <!-- TAB: Cửa hàng -->
@@ -1282,6 +1315,45 @@
             <label style="font-size: 12px;">Tên chủ tài khoản (viết hoa không dấu)</label>
             <input type="text" id="settingBankAccountName" class="form-control" placeholder="VD: NGUYEN VAN A">
           </div>
+        </div>
+      </div>
+
+      <!-- TAB: Máy in -->
+      <div class="settings-tab-content" id="settingsTab-printer">
+        <div class="print-info-box">
+          Ứng dụng chạy trên trình duyệt nên <b>không tự dò được danh sách máy in</b> (do trình duyệt chặn vì bảo mật). Khi bấm <b>In</b>, hộp thoại in của thiết bị sẽ hiện ra: bạn chọn đúng máy in (laser, kim, bill nhiệt...) ở đó. Phần cài đặt này giúp app gửi hóa đơn đúng <b>khổ giấy, lề, cỡ chữ</b> cho từng loại máy. Cài đặt được lưu riêng trên <b>từng thiết bị</b>.
+        </div>
+        <div class="form-group">
+          <label>Loại máy in / Khổ giấy</label>
+          <select id="printPaper" class="form-control" onchange="onPrintPaperChange()"></select>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label>Chiều rộng giấy (mm)</label>
+            <input type="number" id="printPaperW" class="form-control" min="30" max="500" oninput="onPrintDimChange()">
+          </div>
+          <div class="form-group">
+            <label>Chiều dài giấy (mm)</label>
+            <input type="number" id="printPaperH" class="form-control" min="50" max="1000" oninput="onPrintDimChange()">
+          </div>
+          <div class="form-group">
+            <label>Lề giấy (mm)</label>
+            <input type="number" id="printMargin" class="form-control" min="0" max="40" oninput="savePrintCfgFromUI()">
+          </div>
+          <div class="form-group">
+            <label>Cỡ chữ khi in (%)</label>
+            <input type="number" id="printScale" class="form-control" min="50" max="200" oninput="savePrintCfgFromUI()">
+          </div>
+        </div>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 8px; cursor: pointer;">
+          <input type="checkbox" id="printBW" onchange="savePrintCfgFromUI()"> In đen trắng (nên bật với máy in kim, bill nhiệt)
+        </label>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 12px; cursor: pointer;">
+          <input type="checkbox" id="printLogo" onchange="savePrintCfgFromUI()"> In logo cửa hàng trên hóa đơn
+        </label>
+        <button type="button" class="btn-outline" style="width: 100%; justify-content: center; padding: 10px;" onclick="printTestPage()"><i class="fa-solid fa-vial"></i> Xem & in thử trang test</button>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.5;">
+          Mẹo: trong hộp thoại in của trình duyệt, chọn đúng máy in, đặt <b>Tỷ lệ = 100%</b>, <b>Lề = Mặc định/Không</b> và khổ giấy trùng với khổ đã chọn ở đây. Bill nhiệt cuộn: chiều dài chỉ là ước lượng, driver máy in sẽ tự cắt theo nội dung.
         </div>
       </div>
 
@@ -2374,6 +2446,14 @@
       box.textContent = '';
       const phone = (db.brand.hotline || '').trim();
       const addr = (db.brand.address || '').trim();
+      if (addr) {
+        const s = document.createElement('span');
+        const i = document.createElement('i');
+        i.className = 'fa-solid fa-location-dot';
+        s.appendChild(i);
+        s.appendChild(document.createTextNode(addr));
+        box.appendChild(s);
+      }
       if (phone) {
         const a = document.createElement('a');
         a.className = 'bc-phone';
@@ -2383,14 +2463,6 @@
         a.appendChild(i);
         a.appendChild(document.createTextNode(phone));
         box.appendChild(a);
-      }
-      if (addr) {
-        const s = document.createElement('span');
-        const i = document.createElement('i');
-        i.className = 'fa-solid fa-location-dot';
-        s.appendChild(i);
-        s.appendChild(document.createTextNode(addr));
-        box.appendChild(s);
       }
     }
 
@@ -3465,7 +3537,20 @@
       renderHome();
       renderCustomerList();
       renderWarrantyList();
-      showAppAlert('Lưu hồ sơ thành công!');
+      if (savedCustomerId) showSavedPrintPrompt(savedCustomerId, sessionData.id);
+      else showAppAlert('Lưu hồ sơ thành công!');
+    }
+
+    /* HỎI IN HÓA ĐƠN NGAY SAU KHI LƯU BUỔI LÀM */
+    let pendingPrintCustId = null, pendingPrintSessionId = null;
+    function showSavedPrintPrompt(custId, sessionId) {
+      pendingPrintCustId = custId;
+      pendingPrintSessionId = sessionId;
+      document.getElementById('savedPrintPromptModal').style.display = 'block';
+    }
+    function confirmSavedPrint() {
+      closeModal('savedPrintPromptModal');
+      if (pendingPrintCustId) openPrintPreviewModal(pendingPrintCustId, pendingPrintSessionId);
     }
 
     /* CHI TIẾT KHÁCH HÀNG: CÁC NÚT THUẦN ICON */
@@ -3820,9 +3905,152 @@
 
       document.getElementById('printReceiptContainer').innerHTML = receiptHtml;
       document.getElementById('printPreviewModal').style.display = 'block';
+      applyPrintLayout();
+    }
+
+    // ===== CÀI ĐẶT MÁY IN (lưu riêng từng thiết bị) =====
+    const PRINT_PAPERS = {
+      a4:     { name: 'A4 – máy in laser/phun (210×297)',          short: 'A4',        w: 210, h: 297, m: 12, thermal: false },
+      a5:     { name: 'A5 dọc (148×210)',                          short: 'A5 dọc',    w: 148, h: 210, m: 8,  thermal: false },
+      a5l:    { name: 'A5 ngang (210×148)',                        short: 'A5 ngang',  w: 210, h: 148, m: 8,  thermal: false },
+      kim:    { name: 'Giấy liên tục – máy in kim (241×140)',      short: 'máy in kim',w: 241, h: 140, m: 6,  thermal: false },
+      k80:    { name: 'Bill nhiệt K80 (rộng 80mm)',                short: 'K80',       w: 80,  h: 200, m: 2,  thermal: true },
+      k58:    { name: 'Bill nhiệt K58 (rộng 58mm)',                short: 'K58',       w: 58,  h: 180, m: 2,  thermal: true },
+      custom: { name: 'Tùy chỉnh kích thước',                      short: 'tùy chỉnh', w: 210, h: 297, m: 10, thermal: false }
+    };
+    const PRINT_CFG_KEY = 'pmuPrintCfg';
+
+    function getPrintCfg() {
+      const d = { paper: 'a4', w: 210, h: 297, margin: 12, scale: 100, bw: false, logo: true };
+      try {
+        const raw = localStorage.getItem(PRINT_CFG_KEY);
+        if (raw) {
+          const o = JSON.parse(raw);
+          if (o && PRINT_PAPERS[o.paper]) {
+            return {
+              paper: o.paper,
+              w: Number(o.w) || d.w,
+              h: Number(o.h) || d.h,
+              margin: (o.margin === 0 || Number(o.margin)) ? Number(o.margin) : d.margin,
+              scale: Number(o.scale) || 100,
+              bw: !!o.bw,
+              logo: o.logo !== false
+            };
+          }
+        }
+      } catch (e) {}
+      return d;
+    }
+
+    function setPrintCfg(cfg) {
+      try { localStorage.setItem(PRINT_CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
+    }
+
+    function fillPaperSelect(sel, value) {
+      if (!sel) return;
+      if (!sel.options.length) {
+        Object.keys(PRINT_PAPERS).forEach(function(k) {
+          const o = document.createElement('option');
+          o.value = k;
+          o.textContent = PRINT_PAPERS[k].name;
+          sel.appendChild(o);
+        });
+      }
+      sel.value = value;
+    }
+
+    function applyPrintLayout() {
+      const cfg = getPrintCfg();
+      const w = cfg.w, h = cfg.h, m = cfg.margin;
+      let st = document.getElementById('dynamicPageStyle');
+      if (!st) {
+        st = document.createElement('style');
+        st.id = 'dynamicPageStyle';
+        document.head.appendChild(st);
+      }
+      st.textContent = '@page { size: ' + w + 'mm ' + h + 'mm; margin: ' + m + 'mm; }' +
+        '@media print { #printReceiptContainer > div { zoom: ' + (cfg.scale / 100) + '; } }';
+
+      const c = document.getElementById('printReceiptContainer');
+      if (c) {
+        const isThermal = PRINT_PAPERS[cfg.paper].thermal || w <= 100;
+        c.classList.toggle('rcpt-thermal', isThermal);
+        c.classList.toggle('rcpt-bw', cfg.bw);
+        c.classList.toggle('rcpt-nologo', !cfg.logo);
+        c.style.width = Math.max(30, w - 2 * m) + 'mm';
+        c.style.maxWidth = '100%';
+        c.style.marginLeft = 'auto';
+        c.style.marginRight = 'auto';
+      }
+      const lbl = document.getElementById('printBtnLabel');
+      if (lbl) lbl.textContent = 'In hóa đơn (' + PRINT_PAPERS[cfg.paper].short + ')';
+      fillPaperSelect(document.getElementById('printPaperQuick'), cfg.paper);
+    }
+
+    function loadPrintCfgToUI() {
+      const cfg = getPrintCfg();
+      fillPaperSelect(document.getElementById('printPaper'), cfg.paper);
+      document.getElementById('printPaperW').value = cfg.w;
+      document.getElementById('printPaperH').value = cfg.h;
+      document.getElementById('printMargin').value = cfg.margin;
+      document.getElementById('printScale').value = cfg.scale;
+      document.getElementById('printBW').checked = cfg.bw;
+      document.getElementById('printLogo').checked = cfg.logo;
+    }
+
+    function savePrintCfgFromUI() {
+      const cfg = {
+        paper: document.getElementById('printPaper').value,
+        w: Number(document.getElementById('printPaperW').value) || 210,
+        h: Number(document.getElementById('printPaperH').value) || 297,
+        margin: Math.max(0, Number(document.getElementById('printMargin').value) || 0),
+        scale: Math.min(200, Math.max(50, Number(document.getElementById('printScale').value) || 100)),
+        bw: document.getElementById('printBW').checked,
+        logo: document.getElementById('printLogo').checked
+      };
+      setPrintCfg(cfg);
+      applyPrintLayout();
+    }
+
+    function selectPrintPreset(key) {
+      const p = PRINT_PAPERS[key];
+      if (!p) return;
+      const cfg = getPrintCfg();
+      if (key !== 'custom') { cfg.w = p.w; cfg.h = p.h; cfg.margin = p.m; }
+      cfg.paper = key;
+      if (p.thermal) cfg.bw = true;
+      setPrintCfg(cfg);
+      loadPrintCfgToUI();
+      applyPrintLayout();
+    }
+
+    function onPrintPaperChange() { selectPrintPreset(document.getElementById('printPaper').value); }
+    function onPrintPaperQuickChange(key) { selectPrintPreset(key); }
+
+    function onPrintDimChange() {
+      document.getElementById('printPaper').value = 'custom';
+      savePrintCfgFromUI();
+    }
+
+    function printTestPage() {
+      const cfg = getPrintCfg();
+      const innerW = Math.max(30, cfg.w - 2 * cfg.margin);
+      document.getElementById('printReceiptContainer').innerHTML =
+        '<div style="width:100%; max-width:100%; color:#000; font-family: Arial, sans-serif; text-align:center; line-height:1.5;">' +
+        '<div style="font-size:16px; font-weight:bold; border-bottom:2px solid #000; padding-bottom:6px;">TRANG IN THỬ</div>' +
+        '<div style="font-size:13px; margin-top:8px;">Khổ giấy: <b>' + escapeHtml(PRINT_PAPERS[cfg.paper].short) + '</b><br>' +
+        cfg.w + ' × ' + cfg.h + ' mm &nbsp;|&nbsp; Lề ' + cfg.margin + ' mm<br>Vùng in rộng ' + innerW + ' mm</div>' +
+        '<div style="border:1px solid #000; margin:10px 0; padding:6px; font-size:12px;">Khung này phải nằm gọn trong giấy, không bị cắt mép.</div>' +
+        '<div style="font-size:12px; display:flex; justify-content:space-between;"><span>◄ Mép trái</span><span>Mép phải ►</span></div>' +
+        '<div style="font-size:12px; margin-top:8px;">Chữ mẫu: Ngọc Ánh PMU – 0123456789 – Tiếng Việt có dấu</div>' +
+        '</div>';
+      closeModal('settingsModal');
+      document.getElementById('printPreviewModal').style.display = 'block';
+      applyPrintLayout();
     }
 
     function executePrintReceipt() {
+      applyPrintLayout();
       window.print();
     }
 
@@ -4018,6 +4246,7 @@
       document.getElementById('settingPrintFooterNote').value = db.brand.footerNote || defaultPrintFooterNote;
       document.getElementById('settingPasscode').value = '';
       document.getElementById('settingOldPasscode').value = '';
+      loadPrintCfgToUI();
       document.getElementById('settingsModal').style.display = 'block';
       renderCloudSettingsBox();
     }
