@@ -635,6 +635,20 @@
       }
       .no-print { display: none !important; }
     }
+
+    /* ===== BẢNG GIÁ + THANH TOÁN QR ===== */
+    .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .price-card { position: relative; border: 1.5px solid var(--border-color); border-radius: 10px; padding: 12px 8px; background: #fff; cursor: pointer; text-align: center; font-family: inherit; transition: all .15s; }
+    .price-card:hover, .price-card:active { border-color: var(--primary-gold); box-shadow: 0 2px 8px rgba(179,135,56,.18); }
+    .price-card .p-name { font-size: 13px; font-weight: 700; color: var(--text-main); }
+    .price-card .p-amount { font-size: 18px; font-weight: 800; color: var(--primary-gold); margin: 4px 0 2px; }
+    .price-card .p-sub { font-size: 11px; color: var(--text-muted); }
+    .price-card .p-badge { position: absolute; top: -8px; right: 8px; background: var(--success); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+    .pay-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px dashed var(--border-color); font-size: 13px; text-align: left; }
+    .pay-row:last-child { border-bottom: none; }
+    .pay-row .pay-label { color: var(--text-muted); font-size: 12px; flex-shrink: 0; }
+    .pay-row .pay-val { font-weight: 700; color: var(--text-main); word-break: break-all; text-align: right; }
+    .pay-copy { border: 1px solid var(--border-color); background: #fff; border-radius: 6px; padding: 3px 8px; font-size: 11px; cursor: pointer; color: var(--primary-gold); font-family: inherit; flex-shrink: 0; }
   </style>
 </head>
 
@@ -854,8 +868,13 @@
       <button class="btn-gold" style="width: 100%; margin-bottom: 15px;" onclick="activateLicenseKey()"><i class="fa-solid fa-key"></i> Kích hoạt ngay</button>
 
       <div style="border-top: 1px dashed var(--border-color); padding-top: 16px; margin-top: 15px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 10px;">Mua / gia hạn bản quyền</div>
+        <div id="pricingLock" style="margin-bottom: 16px;"></div>
+      </div>
+
+      <div style="border-top: 1px dashed var(--border-color); padding-top: 16px; margin-top: 5px;">
         <div style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.5;">
-          Chưa có mã kích hoạt? Liên hệ quản trị viên để mua bản quyền:
+          Cần hỗ trợ hoặc đã có mã kích hoạt? Liên hệ quản trị viên:
         </div>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
@@ -869,6 +888,29 @@
 
         <button class="btn-danger-outline" style="width: 100%; justify-content: center; margin-top: 6px; padding: 8px;" onclick="cloudSignOut()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất tài khoản</button>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL THANH TOÁN QR -->
+  <div id="payModal" class="modal" style="z-index: 10001;">
+    <div class="modal-content" style="max-width: 400px; text-align: center;">
+      <div class="modal-header-top">
+        <h3 id="payTitle" style="color: var(--primary-gold); font-size: 17px;">Thanh toán</h3>
+        <div class="modal-close-btn" onclick="closePayModal()"><i class="fa-solid fa-xmark"></i></div>
+      </div>
+      <div style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px;">Quét mã bằng app ngân hàng bất kỳ. Số tiền và nội dung đã điền sẵn, <strong>giữ nguyên không sửa</strong>.</div>
+      <img id="payQrImg" alt="QR thanh toán" style="width: 100%; max-width: 280px; border: 1px solid var(--border-color); border-radius: 10px; background: #fff;" onerror="this.style.display='none'; document.getElementById('payQrFail').style.display='block';">
+      <div id="payQrFail" style="display: none; color: var(--danger); font-size: 12px; margin: 8px 0;">Không tải được mã QR (kiểm tra mạng). Bạn vẫn có thể chuyển khoản thủ công theo thông tin bên dưới.</div>
+      <div style="margin-top: 12px;">
+        <div class="pay-row"><span class="pay-label">Ngân hàng</span><span class="pay-val" id="payBank"></span></div>
+        <div class="pay-row"><span class="pay-label">Số tài khoản</span><span class="pay-val" id="payAcc"></span><button type="button" class="pay-copy" onclick="copyPay('payAcc')">Chép</button></div>
+        <div class="pay-row"><span class="pay-label">Chủ tài khoản</span><span class="pay-val" id="payName"></span></div>
+        <div class="pay-row"><span class="pay-label">Số tiền</span><span class="pay-val" id="payAmount" style="color: var(--primary-gold);"></span><button type="button" class="pay-copy" onclick="copyPay('payAmountRaw')">Chép</button></div>
+        <div class="pay-row"><span class="pay-label">Nội dung</span><span class="pay-val" id="payContent"></span><button type="button" class="pay-copy" onclick="copyPay('payContent')">Chép</button></div>
+      </div>
+      <span id="payAmountRaw" style="display:none;"></span>
+      <div id="payStatus" style="margin-top: 12px; font-size: 12.5px; color: var(--text-muted); line-height: 1.5;"><i class="fa-solid fa-spinner fa-spin"></i> Đang chờ thanh toán... Sau khi chuyển khoản, hạn dùng sẽ tự cập nhật khi được xác nhận.</div>
+      <a href="https://zalo.me/0913535344" target="_blank" class="btn-outline" style="justify-content: center; padding: 9px; margin-top: 10px; border-color: var(--zalo-blue); color: var(--zalo-blue); text-decoration: none; font-weight: 600;"><i class="fa-solid fa-comment-dots"></i> Gửi bill qua Zalo để được kích hoạt nhanh</a>
     </div>
   </div>
 
@@ -1647,6 +1689,7 @@
         const dateStr = new Date(expireAt).toLocaleDateString('vi-VN');
         document.getElementById('lockReasonText').innerHTML = `Tài khoản đã hết hạn vào ngày: <strong style="color: var(--text-main);">${dateStr}</strong>.<br>Vui lòng kích hoạt bản quyền để tiếp tục sử dụng dữ liệu!`;
         lockModal.style.display = 'block';
+        renderPricing('pricingLock');
       } else {
         lockModal.style.display = 'none';
       }
@@ -1659,9 +1702,13 @@
         }
         const expEl = document.getElementById('licenseExpiryDisplay');
         if (expEl && document.getElementById('settingsModal').style.display === 'block') {
-          const dateStr = new Date(currentAccountExpireAt).toLocaleDateString('vi-VN');
-          const remainStr = formatTimeRemaining(currentAccountExpireAt);
-          expEl.innerHTML = `<strong style="color: var(--text-main);">${dateStr}</strong> <span style="color: var(--primary-gold); font-size: 11.5px;">(${remainStr})</span>`;
+          if (currentAccountExpireAt >= LIFETIME_EXPIRE_AT) {
+            expEl.innerHTML = `<strong style="color: var(--success);">Trọn đời</strong>`;
+          } else {
+            const dateStr = new Date(currentAccountExpireAt).toLocaleDateString('vi-VN');
+            const remainStr = formatTimeRemaining(currentAccountExpireAt);
+            expEl.innerHTML = `<strong style="color: var(--text-main);">${dateStr}</strong> <span style="color: var(--primary-gold); font-size: 11.5px;">(${remainStr})</span>`;
+          }
         }
       }
     }, 30000);
@@ -1709,6 +1756,131 @@
       } catch (err) {
         showAppAlert('Lỗi kích hoạt: ' + err.message);
       }
+    }
+
+
+    // ===== BẢNG GIÁ + THANH TOÁN QR (VietQR) =====
+    const BANK_INFO = { bin: 'MB', name: 'MB Bank', account: '0913535344', holder: 'NGUYỄN QUỐC BẢO', holderNoAccent: 'NGUYEN QUOC BAO' };
+    const PAY_PREFIX = 'PMU';
+    // Gói trọn đời: admin đặt expireAt = mốc này (01/01/2100) trên Firebase
+    const LIFETIME_EXPIRE_AT = 4102444800000;
+    const PLANS = [
+      { id: '3T',  label: '3 tháng',  months: 3,  price: 399000 },
+      { id: '6T',  label: '6 tháng',  months: 6,  price: 599000 },
+      { id: '12T', label: '12 tháng', months: 12, price: 799000, badge: 'Hot' },
+      { id: 'VV',  label: 'Trọn đời', months: 0,  price: 1299000, badge: 'Rẻ nhất' }
+    ];
+    let payPollTimer = null;
+    let payBaseExpire = 0;
+
+    function formatVnd(n) { return Number(n).toLocaleString('vi-VN') + 'đ'; }
+
+    // Mã ngắn cố định theo tài khoản (5 ký tự), dùng làm nội dung chuyển khoản thay cho email
+    function getPayCode(uid) {
+      let h = 5381;
+      for (let i = 0; i < uid.length; i++) h = ((h * 33) ^ uid.charCodeAt(i)) >>> 0;
+      let h2 = 52711;
+      for (let i = uid.length - 1; i >= 0; i--) h2 = ((h2 * 31) ^ uid.charCodeAt(i)) >>> 0;
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let out = '';
+      let x = (h ^ (h2 << 1)) >>> 0;
+      for (let i = 0; i < 5; i++) { out += chars[x % chars.length]; x = Math.floor(x / chars.length) + (h2 >>> (i * 3)); x >>>= 0; }
+      return out;
+    }
+
+    function renderPricing(containerId) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = '<div class="price-grid">' + PLANS.map(function(p) {
+        const sub = p.months ? '≈ ' + formatVnd(Math.round(p.price / p.months / 1000) * 1000) + '/tháng' : 'Dùng mãi mãi';
+        return '<button type="button" class="price-card" onclick="openPayment(\'' + p.id + '\')">' +
+          (p.badge ? '<span class="p-badge">' + p.badge + '</span>' : '') +
+          '<div class="p-name">' + p.label + '</div>' +
+          '<div class="p-amount">' + formatVnd(p.price) + '</div>' +
+          '<div class="p-sub">' + sub + '</div></button>';
+      }).join('') + '</div>';
+    }
+
+    async function openPayment(planId) {
+      if (!cloudUser) { showAppAlert('Vui lòng đăng nhập tài khoản trước khi mua gói.'); return; }
+      const plan = PLANS.find(function(p) { return p.id === planId; });
+      if (!plan) return;
+
+      const code = getPayCode(cloudUser.uid);
+      const content = PAY_PREFIX + ' ' + code + ' ' + plan.id;
+      const qrUrl = 'https://img.vietqr.io/image/' + BANK_INFO.bin + '-' + BANK_INFO.account + '-compact2.png' +
+        '?amount=' + plan.price + '&addInfo=' + encodeURIComponent(content) + '&accountName=' + encodeURIComponent(BANK_INFO.holderNoAccent);
+
+      document.getElementById('payTitle').innerText = 'Gói ' + plan.label;
+      document.getElementById('payBank').innerText = BANK_INFO.name;
+      document.getElementById('payAcc').innerText = BANK_INFO.account;
+      document.getElementById('payName').innerText = BANK_INFO.holder;
+      document.getElementById('payAmount').innerText = formatVnd(plan.price);
+      document.getElementById('payAmountRaw').innerText = String(plan.price);
+      document.getElementById('payContent').innerText = content;
+      document.getElementById('payQrFail').style.display = 'none';
+      const img = document.getElementById('payQrImg');
+      img.style.display = 'inline-block';
+      img.src = qrUrl;
+      document.getElementById('payStatus').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang chờ thanh toán... Sau khi chuyển khoản, hạn dùng sẽ tự cập nhật khi được xác nhận.';
+      document.getElementById('payModal').style.display = 'block';
+
+      // Ghi đơn "chờ thanh toán" để đối chiếu / tra cứu khi khách khiếu nại
+      try {
+        const orderId = code + '-' + plan.id + '-' + Date.now();
+        await cloudFirestore.collection('orders').doc(orderId).set({
+          uid: cloudUser.uid,
+          email: cloudUser.email,
+          payCode: code,
+          plan: plan.id,
+          planLabel: plan.label,
+          amount: plan.price,
+          content: content,
+          status: 'pending',
+          createdAt: Date.now()
+        });
+      } catch (e) {
+        console.warn('Không ghi được đơn hàng (kiểm tra Firestore rules):', e && e.code);
+      }
+
+      startPayPolling();
+    }
+
+    // Khi admin kích hoạt trên Firebase, app tự phát hiện hạn mới
+    function startPayPolling() {
+      stopPayPolling();
+      payBaseExpire = currentAccountExpireAt || 0;
+      payPollTimer = setInterval(async function() {
+        try {
+          if (!cloudUser || !cloudFirestore) return;
+          const doc = await cloudFirestore.collection('users').doc(cloudUser.uid).get({ source: 'server' });
+          const exp = (doc.data() || {}).expireAt || 0;
+          if (exp > payBaseExpire) {
+            currentAccountExpireAt = exp;
+            stopPayPolling();
+            checkLicenseExpiry({ expireAt: exp });
+            closeModal('payModal');
+            if (typeof updateLicenseDisplay === 'function') updateLicenseDisplay();
+            showAppAlert('Thanh toán thành công! Bản quyền của bạn đã được kích hoạt.');
+          }
+        } catch (e) {}
+      }, 8000);
+    }
+    function stopPayPolling() { if (payPollTimer) { clearInterval(payPollTimer); payPollTimer = null; } }
+    function closePayModal() { stopPayPolling(); closeModal('payModal'); }
+
+    function copyPay(elId) {
+      const text = document.getElementById(elId).innerText;
+      const done = function() { showAppAlert('Đã chép: ' + text); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function() { fallbackCopy(text, done); });
+      } else { fallbackCopy(text, done); }
+    }
+    function fallbackCopy(text, cb) {
+      const t = document.createElement('textarea');
+      t.value = text; document.body.appendChild(t); t.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(t); cb();
     }
 
     function setCloudStatus(text, iconClass) {
@@ -1778,8 +1950,11 @@
           </div>
           <button type="button" class="btn-gold" style="padding: 10px; margin-bottom: 12px;" onclick="activateLicenseKeyFromSettings()"><i class="fa-solid fa-key"></i> Kích hoạt gói</button>
 
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-main); margin: 4px 0 8px;">Mua / gia hạn bản quyền</div>
+          <div id="pricingSettings" style="margin-bottom: 14px;"></div>
+
           <div style="background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: 8px; padding: 10px; margin-bottom: 12px; text-align: center;">
-            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Chưa có mã key? Liên hệ để mua bản quyền:</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Cần hỗ trợ? Liên hệ:</div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               <a href="https://zalo.me/0913535344" target="_blank" class="btn-outline" style="justify-content: center; padding: 8px; border-color: var(--zalo-blue); color: var(--zalo-blue); text-decoration: none; font-weight: 600;">
                 <i class="fa-solid fa-comment-dots"></i> Nhắn Zalo
@@ -1793,6 +1968,7 @@
           <button type="button" class="btn-danger-outline" style="width: 100%; justify-content: center; padding: 8px;" onclick="cloudSignOut()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
         `;
         updateLicenseDisplay();
+        renderPricing('pricingSettings');
       } else {
         el.innerHTML = `
           <div style="margin-bottom: 10px;">Chưa đăng nhập tài khoản.</div>
@@ -1826,7 +2002,9 @@
       checkLicenseExpiry({ expireAt: exp });
 
       if (expEl) {
-        if (exp) {
+        if (exp >= LIFETIME_EXPIRE_AT) {
+          expEl.innerHTML = `<strong style="color: var(--success);">Trọn đời</strong>`;
+        } else if (exp) {
           const dateStr = new Date(exp).toLocaleDateString('vi-VN');
           const remainStr = formatTimeRemaining(exp);
           expEl.innerHTML = `<strong style="color: var(--text-main);">${dateStr}</strong> <span style="color: var(--primary-gold); font-size: 11.5px;">(${remainStr})</span>`;
