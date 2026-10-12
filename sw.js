@@ -1,6 +1,6 @@
 // Service Worker - Hỗ trợ PWA mở ứng dụng mượt mà, lưu bộ đệm tĩnh (HTML/CSS/Icon)
 // Mỗi lần muốn ép máy bỏ bộ đệm cũ, chỉ cần đổi số phiên bản bên dưới (v2 -> v3 -> ...)
-const CACHE_NAME = 'pmu-pro-saas-v2';
+const CACHE_NAME = 'pmu-pro-saas-v3';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -9,11 +9,31 @@ const CORE_ASSETS = [
   './icon-512.png'
 ];
 
+// Thư viện bên ngoài mà index.html cần: lưu sẵn để mở app được khi không có mạng
+const CDN_ASSETS = [
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-regular-400.woff2',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-brands-400.woff2',
+  'https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  'https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js'
+];
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
       // Thiếu 1 file (vd: icon) cũng không làm hỏng việc cài đặt
-      Promise.all(CORE_ASSETS.map((u) => cache.add(u).catch(() => null)))
+      Promise.all([
+        ...CORE_ASSETS.map((u) => cache.add(u).catch(() => null)),
+        ...CDN_ASSETS.map((u) =>
+          fetch(u, { mode: 'no-cors' })
+            .then((res) => cache.put(u, res))
+            .catch(() => null)
+        )
+      ])
     )
   );
   self.skipWaiting();
