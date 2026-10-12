@@ -1447,6 +1447,55 @@
       appointments: []
     };
 
+    // ===== TÁCH DỮ LIỆU THEO TÀI KHOẢN =====
+    // Dữ liệu cục bộ lưu theo trình duyệt, nên phải ghi nhớ nó thuộc tài khoản nào
+    // để khi đăng nhập tài khoản khác thì không bị lẫn dữ liệu.
+    let signupInProgress = false;
+
+    function createFreshDb() {
+      return {
+        brand: {
+          title: "Quản Lý Phun Xăm PMU",
+          slogan: "Hệ thống quản lý và chăm sóc khách hàng",
+          hotline: "",
+          address: "",
+          logo: defaultBrandLogo,
+          passcode: "123456",
+          msgTemplate: defaultReminderTemplate,
+          paperSize: "a4",
+          footerNote: defaultPrintFooterNote
+        },
+        customers: [],
+        appointments: []
+      };
+    }
+
+    async function prepareLocalDataForUser(user) {
+      try {
+        const ownerUid = await localforage.getItem('na_pmu_owner_uid');
+        const isNewSignup = signupInProgress;
+        signupInProgress = false;
+
+        if (isNewSignup || (ownerUid && ownerUid !== user.uid)) {
+          // Cất dữ liệu cũ vào bản sao lưu (không xóa), rồi bắt đầu sạch cho tài khoản này
+          const hasData = db && ((db.customers && db.customers.length) || (db.appointments && db.appointments.length));
+          if (hasData) {
+            await localforage.setItem('na_pmu_db_backup_' + (ownerUid || 'legacy'), db);
+          }
+          const restored = isNewSignup ? null : await localforage.getItem('na_pmu_db_backup_' + user.uid);
+          db = restored || createFreshDb();
+          await saveDBLocalOnly();
+          renderHome();
+          if (typeof renderCustomerList === 'function') renderCustomerList();
+          if (typeof renderWarrantyList === 'function') renderWarrantyList();
+          if (typeof renderAppointmentList === 'function') renderAppointmentList();
+        }
+        await localforage.setItem('na_pmu_owner_uid', user.uid);
+      } catch (e) {
+        console.error('Lỗi tách dữ liệu theo tài khoản:', e);
+      }
+    }
+
     function markDataChanged() {
       if (!db.brand) db.brand = {};
       db.brand.lastDataModifiedTime = Date.now();
@@ -1599,11 +1648,26 @@
       if (boxEl) boxEl.querySelector('i').className = iconClass;
     }
 
+    // Hiển thị trạng thái ngoại tuyến: dữ liệu vẫn lưu trên máy và tự đồng bộ khi có mạng lại
+    function updateNetworkStatus() {
+      if (!cloudUser) return;
+      if (navigator.onLine === false) setCloudStatus('Ngoại tuyến', 'fa-solid fa-triangle-exclamation');
+      else setCloudStatus('Đã kết nối', 'fa-solid fa-cloud-arrow-up');
+    }
+
     function initFirebase() {
       try {
         firebase.initializeApp(firebaseConfig);
         cloudAuth = firebase.auth();
         cloudFirestore = firebase.firestore();
+
+        // Lưu hàng đợi ghi dữ liệu vào bộ nhớ máy: thay đổi lúc mất mạng sẽ tự đẩy lên đám mây khi có mạng lại,
+        // kể cả khi đã đóng app giữa chừng.
+        try {
+          cloudFirestore.enablePersistence({ synchronizeTabs: true }).catch(function(e) {
+            console.warn('Không bật được bộ nhớ ngoại tuyến của Firestore:', e && e.code);
+          });
+        } catch (e) { console.warn(e); }
 
         cloudAuth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(console.error);
 
@@ -1612,14 +1676,20 @@
           if (user) {
             setCloudStatus('Đã kết nối', 'fa-solid fa-cloud-arrow-up');
             document.getElementById('cloudLoginModal').style.display = 'none';
-            startCloudSync();
+            prepareLocalDataForUser(user).then(function() {
+              if (cloudUser && cloudUser.uid === user.uid) startCloudSync();
+            });
           } else {
             setCloudStatus('Chưa đăng nhập', 'fa-solid fa-cloud-arrow-down');
             stopCloudSync();
             document.getElementById('cloudLoginModal').style.display = 'block';
           }
           renderCloudSettingsBox();
+          updateNetworkStatus();
         });
+
+        window.addEventListener('online', updateNetworkStatus);
+        window.addEventListener('offline', updateNetworkStatus);
       } catch (err) {
         console.error('Lỗi Firebase:', err);
       }
@@ -1711,6 +1781,7 @@
         return;
       }
 
+      signupInProgress = true;
       cloudAuth.createUserWithEmailAndPassword(email, pass)
         .then(function(userCredential) {
           const uid = userCredential.user.uid;
@@ -1727,6 +1798,7 @@
           showAppAlert("Tạo tài khoản thành công! Bạn nhận được " + TRIAL_DAYS + " ngày trải nghiệm miễn phí.");
         })
         .catch(function(err) {
+          signupInProgress = false;
           document.getElementById('cloudLoginError').innerText = 'Lỗi: ' + err.message;
           document.getElementById('cloudLoginError').style.display = 'block';
         });
