@@ -1215,7 +1215,7 @@
         <h3 style="color: var(--primary-gold); font-size: 18px;"><i class="fa-solid fa-cloud"></i> Đăng nhập tài khoản</h3>
       </div>
       <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
-        Vui lòng đăng nhập để bắt đầu sử dụng phần mềm. Nếu là cửa hàng mới, bạn nhập email và mật khẩu rồi bấm <strong style="color: var(--primary-gold);">"Tạo tài khoản mới"</strong> để nhận ngay 30 ngày trải nghiệm miễn phí!
+        Vui lòng đăng nhập để bắt đầu sử dụng phần mềm. Nếu là cửa hàng mới, bạn nhập email và mật khẩu rồi bấm <strong style="color: var(--primary-gold);">"Tạo tài khoản mới"</strong> để nhận ngay <span class="trial-days-text">30</span> ngày trải nghiệm miễn phí!
       </p>
       <div class="form-group">
         <label>Email cửa hàng (*)</label>
@@ -1391,6 +1391,10 @@
   <script>
     const defaultBrandLogo = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 500'><circle cx='250' cy='250' r='240' fill='%23ffffff' stroke='%23b38738' stroke-width='8'/><text x='250' y='275' font-family='sans-serif' font-size='76' font-weight='bold' fill='%23b38738' text-anchor='middle'>PMU</text></svg>";
     const defaultReminderTemplate = "Dạ em chào chị {TEN_KH}, cửa hàng {TEN_TIEM} xin phép nhắc lịch kiểm tra và dặm bảo hành dịch vụ {DICH_VU} của chị ạ. Hạn bảo hành của chị đến ngày {HAN_BH}. Chị sắp xếp ghé cửa hàng để bên em hỗ trợ dặm đẹp nhất cho chị nhé!";
+    // Số ngày dùng thử miễn phí cho tài khoản mới (chỉ cần sửa ở đây)
+    const TRIAL_DAYS = 30;
+    const TRIAL_MS = TRIAL_DAYS * 24 * 60 * 60 * 1000;
+
     const defaultPrintFooterNote = "• Quý khách kiêng nước trong vòng 24 giờ đầu sau khi làm.\n• Không tự ý dùng tay bóc vảy, để vảy bong tự nhiên.\n• Hỗ trợ dặm bảo hành miễn phí theo đúng thời hạn ghi trên phiếu!";
 
     // === BỔ SUNG: danh mục dịch vụ (thiếu trong bản gốc gây lỗi nút không phản hồi) ===
@@ -1668,10 +1672,8 @@
         const data = doc.data() || {};
         exp = data.expireAt || 0;
       } else {
-        } else {
-        const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
         const now = Date.now();
-        exp = now + THIRTY_DAYS_MS;
+        exp = now + TRIAL_MS;
         await userRef.set({
           email: cloudUser.email,
           trialStartedAt: now,
@@ -1712,18 +1714,17 @@
       cloudAuth.createUserWithEmailAndPassword(email, pass)
         .then(function(userCredential) {
           const uid = userCredential.user.uid;
-          const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
           const now = Date.now();
 
           return cloudFirestore.collection('users').doc(uid).set({
             email: email,
             trialStartedAt: now,
-            expireAt: now + THIRTY_DAYS_MS,
+            expireAt: now + TRIAL_MS,
             createdAt: now
           }, { merge: true });
         })
         .then(function() {
-          showAppAlert("Tạo tài khoản thành công! Bạn nhận được 30 ngày trải nghiệm miễn phí.");
+          showAppAlert("Tạo tài khoản thành công! Bạn nhận được " + TRIAL_DAYS + " ngày trải nghiệm miễn phí.");
         })
         .catch(function(err) {
           document.getElementById('cloudLoginError').innerText = 'Lỗi: ' + err.message;
@@ -4381,6 +4382,7 @@
         let saved = await localforage.getItem('na_pmu_db');
         if (saved) db = saved;
       } catch (e) {}
+      document.querySelectorAll('.trial-days-text').forEach(function(e) { e.textContent = TRIAL_DAYS; });
       renderHome();
       initFirebase();
       checkDailyTasksPopup();
