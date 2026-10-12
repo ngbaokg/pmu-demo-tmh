@@ -685,6 +685,7 @@
         <h3 style="font-size: 16px; color: var(--primary-gold);"><i class="fa-solid fa-users"></i> Hồ sơ khách hàng</h3>
         <button class="btn-gold" style="padding: 8px 14px; font-size: 13px; width: auto;" onclick="openAddCustomerModal()"><i class="fa-solid fa-user-plus"></i> Thêm khách</button>
       </div>
+      <button type="button" class="btn-outline" style="width: 100%; justify-content: center; padding: 10px; margin-bottom: 12px;" onclick="openPromoModal()"><i class="fa-solid fa-bullhorn"></i> Gửi khuyến mãi theo nhóm khách</button>
       <div class="form-group">
         <input type="text" id="customerSearchInput" class="form-control" placeholder="Tìm theo Tên, SĐT, Địa chỉ..." oninput="renderCustomerList()">
       </div>
@@ -1098,6 +1099,71 @@
   </div>
 
   <!-- MODAL: GỬI TIN NHẮN NHẮC LỊCH -->
+  <!-- KHUYẾN MÃI HÀNG LOẠT -->
+  <div id="promoModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header-top">
+        <h3 style="color: var(--primary-gold); font-size: 16px;"><i class="fa-solid fa-bullhorn"></i> Gửi khuyến mãi theo nhóm khách</h3>
+        <div class="modal-close-btn" onclick="closeModal('promoModal')"><i class="fa-solid fa-xmark"></i></div>
+      </div>
+
+      <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px;">Thống kê khách hàng</div>
+      <div id="promoStats" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px;"></div>
+
+      <div class="form-group">
+        <label>Nhóm khách muốn gửi</label>
+        <select id="promoFilter" class="form-control" onchange="onPromoFilterChange()">
+          <option value="inactive">Lâu chưa quay lại</option>
+          <option value="missing">Chưa làm một dịch vụ nào đó (đã làm dịch vụ khác)</option>
+          <option value="single">Mới làm đúng 1 nhóm dịch vụ</option>
+          <option value="vip">Khách chi tiêu cao</option>
+          <option value="warranty">Vừa hết hạn bảo hành</option>
+          <option value="all">Tất cả khách</option>
+        </select>
+      </div>
+      <div class="form-group" id="promoNumRow">
+        <label id="promoNumLabel">Chưa quay lại từ (tháng)</label>
+        <input type="number" id="promoParamNum" class="form-control" value="12" min="1" oninput="renderPromoModal()">
+      </div>
+      <div class="form-group" id="promoTargetRow" style="display: none;">
+        <label>Dịch vụ muốn quảng cáo cho nhóm này</label>
+        <select id="promoTarget" class="form-control" onchange="promoFillPreset(); renderPromoModal()">
+          <option value="moi">Môi</option>
+          <option value="may">Mày</option>
+          <option value="mi">Mí</option>
+          <option value="nhuhoa">Nhũ hoa</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label style="display: flex; justify-content: space-between; align-items: center;">
+          <span>Nội dung tin nhắn</span>
+          <a href="javascript:void(0)" style="font-size: 12px; color: var(--primary-gold);" onclick="promoFillPreset()">Điền mẫu gợi ý</a>
+        </label>
+        <textarea id="promoTemplate" class="form-control" style="height: 120px; line-height: 1.5; font-size: 13px;" oninput="onPromoTemplateInput()"></textarea>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.5;">
+          Chỗ điền tự động: {TEN_KH} {DICH_VU_DA_LAM} {DICH_VU_GOI_Y} {TEN_TIEM} {SDT_TIEM} {DIA_CHI}
+        </div>
+      </div>
+
+      <label style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-bottom: 10px; cursor: pointer;">
+        <input type="checkbox" id="promoHideSent" checked onchange="renderPromoModal()"> Ẩn khách đã được gửi trong 30 ngày qua
+      </label>
+
+      <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Khách phù hợp: <span id="promoCount" style="color: var(--primary-gold);">0</span></div>
+      <div id="promoList"></div>
+
+      <details style="margin-top: 12px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+        <summary style="font-size: 13px; cursor: pointer; font-weight: 600;">Phân loại dịch vụ chưa nhận diện</summary>
+        <div id="promoUnclassifiedBox" style="margin-top: 10px;"></div>
+      </details>
+      <details style="margin-top: 8px; background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px;">
+        <summary style="font-size: 13px; cursor: pointer; font-weight: 600;">Khách không nhận khuyến mãi</summary>
+        <div id="promoOptOutBox" style="margin-top: 10px;"></div>
+      </details>
+    </div>
+  </div>
+
   <div id="remindModal" class="modal">
     <div class="modal-content">
       <div class="modal-header-top">
@@ -1968,6 +2034,7 @@
         bankAccountName: db.brand.bankAccountName || '',
         paperSize: "a4",
         footerNote: db.brand.footerNote || defaultPrintFooterNote,
+        serviceGroupMapJson: db.brand.serviceGroupMapJson || '{}',
         updatedAt: Date.now()
       };
       cloudFirestore.collection('users').doc(cloudUser.uid).set(brandPayload, { merge: true });
@@ -2381,6 +2448,682 @@
     function closeAutoWarrantyReminderPopup() {
       closeModal('autoWarrantyReminderModal');
     }
+
+    /* ===== KHUYẾN MÃI HÀNG LOẠT THEO NHÓM KHÁCH ===== */
+
+    const PROMO_GROUP_LABELS = { moi: 'Môi', may: 'Mày', mi: 'Mí', nhuhoa: 'Nhũ hoa' };
+
+    const PROMO_MAIN_GROUPS = ['moi', 'may', 'mi', 'nhuhoa'];
+
+    const PROMO_PLACEHOLDER_NOTE = '[ghi nội dung ưu đãi]';
+
+    let currentPromoCustId = null;
+
+    let promoSentFlag = false;
+
+    let promoUnclassified = [];
+
+
+
+    function promoNorm(s) {
+
+      return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, ' ').trim();
+
+    }
+
+
+
+    function getServiceGroupMap() {
+
+      try { return JSON.parse((db.brand && db.brand.serviceGroupMapJson) || '{}') || {}; } catch (e) { return {}; }
+
+    }
+
+
+
+    // Trả về { groups: [...], known: true/false } cho một tên dịch vụ
+
+    function getServiceGroups(name) {
+
+      const map = getServiceGroupMap();
+
+      if (map[name]) return { groups: map[name] === 'khac' ? [] : [map[name]], known: true };
+
+
+
+      for (let g in serviceCategories) {
+
+        if (g !== 'combo' && serviceCategories[g].items.indexOf(name) !== -1) {
+
+          return { groups: [g], known: true };
+
+        }
+
+      }
+
+
+
+      const n = promoNorm(name);
+
+      if (/\bxoa\b/.test(n)) return { groups: ['xoa'], known: true };
+
+      const groups = [];
+
+      if (/\bmoi\b/.test(n)) groups.push('moi');
+
+      if (/\bmay\b/.test(n)) groups.push('may');
+
+      if (/\bmi\b/.test(n)) groups.push('mi');
+
+      if (/\bnhu hoa\b/.test(n)) groups.push('nhuhoa');
+
+      return { groups: groups, known: groups.length > 0 };
+
+    }
+
+
+
+    function promoCustomerStats(c) {
+
+      const done = [];
+
+      let last = 0, spend = 0, hasUnknown = false;
+
+      const sessions = c.sessions || [];
+
+      sessions.forEach(function(s) {
+
+        const t = new Date(s.date).getTime();
+
+        if (!isNaN(t) && t > last) last = t;
+
+        spend += (s.price || 0);
+
+        const r = getServiceGroups(s.service);
+
+        if (!r.known) hasUnknown = true;
+
+        r.groups.forEach(function(g) {
+
+          if (PROMO_MAIN_GROUPS.indexOf(g) !== -1 && done.indexOf(g) === -1) done.push(g);
+
+        });
+
+      });
+
+      return { done: done, last: last, spend: spend, sessions: sessions.length, hasUnknown: hasUnknown };
+
+    }
+
+
+
+    function promoMonthsAgo(ts) {
+
+      return Math.floor((Date.now() - ts) / (30.44 * 86400000));
+
+    }
+
+
+
+    function promoGroupNames(arr) {
+
+      return arr.map(function(g) { return PROMO_GROUP_LABELS[g]; }).join(' và ');
+
+    }
+
+
+
+    function promoCurrentFilter() {
+
+      return {
+
+        f: document.getElementById('promoFilter').value,
+
+        num: parseFloat(document.getElementById('promoParamNum').value),
+
+        target: document.getElementById('promoTarget').value,
+
+        hideSent: document.getElementById('promoHideSent').checked
+
+      };
+
+    }
+
+
+
+    function promoGetCandidates() {
+
+      const p = promoCurrentFilter();
+
+      const now = Date.now();
+
+      const out = [];
+
+      (db.customers || []).forEach(function(c) {
+
+        const phone = String(c.phone || '').replace(/\D/g, '');
+
+        if (!phone || c.noPromo) return;
+
+        const st = promoCustomerStats(c);
+
+        if (!st.sessions) return;
+
+
+
+        let ok = false;
+
+        if (p.f === 'all') ok = true;
+
+        else if (p.f === 'inactive') {
+
+          const months = p.num > 0 ? p.num : 12;
+
+          ok = st.last > 0 && (now - st.last) >= months * 30.44 * 86400000;
+
+        } else if (p.f === 'missing') {
+
+          ok = st.done.length > 0 && st.done.indexOf(p.target) === -1;
+
+        } else if (p.f === 'single') {
+
+          ok = st.done.length === 1 && st.done.indexOf(p.target) === -1;
+
+        } else if (p.f === 'vip') {
+
+          const min = (p.num > 0 ? p.num : 5) * 1000000;
+
+          ok = st.spend >= min;
+
+        } else if (p.f === 'warranty') {
+
+          const days = p.num > 0 ? p.num : 30;
+
+          let latest = null;
+
+          c.sessions.forEach(function(s) {
+
+            const t = new Date(s.date).getTime();
+
+            if (!isNaN(t) && (!latest || t > new Date(latest.date).getTime())) latest = s;
+
+          });
+
+          if (latest) {
+
+            const w = calculateWarranty(latest.date, latest.warrantyMonths);
+
+            ok = !w.isNoWarranty && w.isOverdue && w.overdueDays <= days;
+
+          }
+
+        }
+
+        if (!ok) return;
+
+
+
+        const log = c.promoLog || [];
+
+        const lastSent = log.length ? log[log.length - 1].t : 0;
+
+        if (p.hideSent && lastSent && (now - lastSent) < 30 * 86400000) return;
+
+        out.push({ c: c, st: st, lastSent: lastSent });
+
+      });
+
+      out.sort(function(a, b) { return b.st.spend - a.st.spend; });
+
+      return out;
+
+    }
+
+
+
+    function promoPresetTemplate() {
+
+      const p = promoCurrentFilter();
+
+      const n = PROMO_PLACEHOLDER_NOTE;
+
+      if (p.f === 'inactive') return 'Dạ em chào chị {TEN_KH}, lâu rồi {TEN_TIEM} chưa được gặp chị ạ. Tiệm đang có ưu đãi dành riêng cho khách cũ: ' + n + '. Chị ghé tiệm hoặc nhắn em để đặt lịch nhé! SĐT/Zalo: {SDT_TIEM}';
+
+      if (p.f === 'missing' || p.f === 'single') return 'Dạ em chào chị {TEN_KH}, chị đã làm {DICH_VU_DA_LAM} tại {TEN_TIEM}. Hiện tiệm đang có ưu đãi dịch vụ {DICH_VU_GOI_Y}: ' + n + '. Chị quan tâm nhắn em tư vấn nhé! SĐT/Zalo: {SDT_TIEM}';
+
+      if (p.f === 'vip') return 'Dạ em chào chị {TEN_KH}, cảm ơn chị đã đồng hành cùng {TEN_TIEM}. Tiệm có ưu đãi tri ân khách thân thiết: ' + n + '. Chị nhắn em để đặt lịch nhé! SĐT/Zalo: {SDT_TIEM}';
+
+      if (p.f === 'warranty') return 'Dạ em chào chị {TEN_KH}, bảo hành dịch vụ {DICH_VU_DA_LAM} của chị tại {TEN_TIEM} đã hết hạn. Tiệm đang có ưu đãi dặm lại: ' + n + '. Chị nhắn em để đặt lịch nhé! SĐT/Zalo: {SDT_TIEM}';
+
+      return 'Dạ em chào chị {TEN_KH}, {TEN_TIEM} đang có chương trình ưu đãi: ' + n + '. Địa chỉ: {DIA_CHI}. SĐT/Zalo: {SDT_TIEM}';
+
+    }
+
+
+
+    function promoFillPreset() {
+
+      document.getElementById('promoTemplate').value = promoPresetTemplate();
+
+      onPromoTemplateInput();
+
+    }
+
+
+
+    function onPromoTemplateInput() {
+
+      if (!db.brand) db.brand = {};
+
+      db.brand.promoTemplate = document.getElementById('promoTemplate').value;
+
+      saveDBLocalOnly();
+
+    }
+
+
+
+    function onPromoFilterChange() {
+
+      const p = promoCurrentFilter();
+
+      const numRow = document.getElementById('promoNumRow');
+
+      const numLabel = document.getElementById('promoNumLabel');
+
+      const numInput = document.getElementById('promoParamNum');
+
+      const targetRow = document.getElementById('promoTargetRow');
+
+      const cfg = {
+
+        inactive: { label: 'Chưa quay lại từ (tháng)', val: 12 },
+
+        vip: { label: 'Tổng chi tiêu từ (triệu đồng)', val: 5 },
+
+        warranty: { label: 'Hết bảo hành trong vòng (ngày)', val: 30 }
+
+      }[p.f];
+
+      numRow.style.display = cfg ? 'block' : 'none';
+
+      if (cfg) { numLabel.textContent = cfg.label; numInput.value = cfg.val; }
+
+      targetRow.style.display = (p.f === 'missing' || p.f === 'single') ? 'block' : 'none';
+
+      promoFillPreset();
+
+      renderPromoModal();
+
+    }
+
+
+
+    function openPromoModal() {
+
+      if (!db.brand) db.brand = {};
+
+      const t = document.getElementById('promoTemplate');
+
+      if (!t.value) t.value = db.brand.promoTemplate || promoPresetTemplate();
+
+      onPromoFilterChangeKeepTemplate();
+
+      document.getElementById('promoModal').style.display = 'block';
+
+    }
+
+
+
+    function onPromoFilterChangeKeepTemplate() {
+
+      const keep = document.getElementById('promoTemplate').value;
+
+      const p = promoCurrentFilter();
+
+      const numRow = document.getElementById('promoNumRow');
+
+      const cfg = { inactive: 1, vip: 1, warranty: 1 }[p.f];
+
+      numRow.style.display = cfg ? 'block' : 'none';
+
+      document.getElementById('promoTargetRow').style.display = (p.f === 'missing' || p.f === 'single') ? 'block' : 'none';
+
+      document.getElementById('promoTemplate').value = keep;
+
+      renderPromoModal();
+
+    }
+
+
+
+    function renderPromoModal() {
+
+      renderPromoStats();
+
+      renderPromoList();
+
+      renderPromoUnclassified();
+
+      renderPromoOptOut();
+
+    }
+
+
+
+    function renderPromoStats() {
+
+      const box = document.getElementById('promoStats');
+
+      const all = (db.customers || []);
+
+      const cnt = { moi: 0, may: 0, mi: 0, nhuhoa: 0 };
+
+      let single = 0, inactive12 = 0, unclassified = 0, withPhone = 0;
+
+      all.forEach(function(c) {
+
+        if (String(c.phone || '').replace(/\D/g, '')) withPhone++;
+
+        const st = promoCustomerStats(c);
+
+        if (!st.sessions) return;
+
+        st.done.forEach(function(g) { cnt[g]++; });
+
+        if (st.done.length === 1) single++;
+
+        if (st.last && (Date.now() - st.last) >= 12 * 30.44 * 86400000) inactive12++;
+
+        if (st.done.length === 0 && st.hasUnknown) unclassified++;
+
+      });
+
+      function chip(label, value) {
+
+        return '<div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 6px 10px; text-align: center; min-width: 78px;"><div style="font-size: 16px; font-weight: 700; color: var(--primary-gold);">' + value + '</div><div style="font-size: 11px; color: var(--text-muted);">' + label + '</div></div>';
+
+      }
+
+      box.innerHTML =
+
+        chip('Tổng khách', all.length) + chip('Có SĐT', withPhone) +
+
+        chip('Đã làm Môi', cnt.moi) + chip('Đã làm Mày', cnt.may) + chip('Đã làm Mí', cnt.mi) + chip('Nhũ hoa', cnt.nhuhoa) +
+
+        chip('Chỉ 1 nhóm DV', single) + chip('Quá 12 tháng', inactive12) + chip('Chưa phân loại', unclassified);
+
+    }
+
+
+
+    function renderPromoList() {
+
+      const listEl = document.getElementById('promoList');
+
+      const countEl = document.getElementById('promoCount');
+
+      const rows = promoGetCandidates();
+
+      countEl.textContent = rows.length;
+
+      if (!rows.length) {
+
+        listEl.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 13px; padding: 16px;">Không có khách nào phù hợp bộ lọc này.</div>';
+
+        return;
+
+      }
+
+      const MAX = 150;
+
+      listEl.innerHTML = rows.slice(0, MAX).map(function(r) {
+
+        const c = r.c, st = r.st;
+
+        const doneTxt = st.done.length ? promoGroupNames(st.done) : 'Chưa phân loại';
+
+        const lastTxt = st.last ? (promoMonthsAgo(st.last) >= 1 ? promoMonthsAgo(st.last) + ' tháng trước' : 'trong tháng này') : '---';
+
+        const sentTxt = r.lastSent ? '<span style="color: #16a34a;">Đã gửi ' + formatDateYMD(new Date(r.lastSent)).split('-').reverse().slice(0, 2).join('/') + '</span> · ' : '';
+
+        return '<div style="border: 1px solid var(--border-color); border-radius: 10px; padding: 10px; margin-bottom: 8px; background: var(--bg-card); display: flex; align-items: center; justify-content: space-between; gap: 8px;">' +
+
+          '<div style="min-width: 0; flex: 1;">' +
+
+            '<div style="font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(c.name) + ' <span style="font-weight: 400; font-size: 12px; color: var(--text-muted);">- ' + escapeHtml(c.phone) + '</span></div>' +
+
+            '<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">' + sentTxt + 'Lần cuối: ' + lastTxt + ' · Đã làm: ' + escapeHtml(doneTxt) + '</div>' +
+
+          '</div>' +
+
+          '<div style="display: flex; gap: 6px; flex-shrink: 0;">' +
+
+            '<button type="button" class="btn-remind" style="width: 34px; height: 34px; padding: 0; font-size: 14px; justify-content: center;" onclick="openPromoMessage(\'' + c.id + '\')" title="Soạn tin khuyến mãi"><i class="fa-solid fa-paper-plane"></i></button>' +
+
+            '<button type="button" class="btn-outline" style="width: 34px; height: 34px; padding: 0; font-size: 13px; justify-content: center; color: var(--text-muted);" onclick="setCustomerNoPromo(\'' + c.id + '\', true)" title="Khách này không nhận khuyến mãi"><i class="fa-solid fa-ban"></i></button>' +
+
+          '</div>' +
+
+        '</div>';
+
+      }).join('') + (rows.length > MAX ? '<div style="text-align: center; font-size: 12px; color: var(--text-muted); padding: 6px;">Đang hiển thị ' + MAX + ' khách đầu tiên (xếp theo tổng chi tiêu). Gửi xong sẽ có thêm khách hiện ra.</div>' : '');
+
+    }
+
+
+
+    function renderPromoUnclassified() {
+
+      const box = document.getElementById('promoUnclassifiedBox');
+
+      const names = {};
+
+      (db.customers || []).forEach(function(c) {
+
+        (c.sessions || []).forEach(function(s) {
+
+          if (s.service && !getServiceGroups(s.service).known) names[s.service] = true;
+
+        });
+
+      });
+
+      promoUnclassified = Object.keys(names);
+
+      if (!promoUnclassified.length) {
+
+        box.innerHTML = '<div style="font-size: 12px; color: var(--text-muted);">Tất cả dịch vụ đã được phân loại.</div>';
+
+        return;
+
+      }
+
+      const opts = '<option value="">-- Chọn nhóm --</option><option value="moi">Môi</option><option value="may">Mày</option><option value="mi">Mí</option><option value="nhuhoa">Nhũ hoa</option><option value="xoa">Xóa xăm</option><option value="khac">Khác (không tính)</option>';
+
+      box.innerHTML = '<div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Các dịch vụ dưới đây app chưa biết thuộc nhóm nào. Hãy chọn nhóm để thống kê và lọc chính xác:</div>' +
+
+        promoUnclassified.map(function(n, i) {
+
+          return '<div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;"><div style="flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(n) + '</div><select class="form-control" style="width: 130px; padding: 6px;" onchange="setPromoServiceGroup(' + i + ', this.value)">' + opts + '</select></div>';
+
+        }).join('');
+
+    }
+
+
+
+    async function setPromoServiceGroup(idx, group) {
+
+      const name = promoUnclassified[idx];
+
+      if (!name || !group) return;
+
+      const map = getServiceGroupMap();
+
+      map[name] = group;
+
+      if (!db.brand) db.brand = {};
+
+      db.brand.serviceGroupMapJson = JSON.stringify(map);
+
+      await saveDB();
+
+      syncBrandToCloud();
+
+      renderPromoModal();
+
+    }
+
+
+
+    function renderPromoOptOut() {
+
+      const box = document.getElementById('promoOptOutBox');
+
+      const list = (db.customers || []).filter(function(c) { return c.noPromo; });
+
+      if (!list.length) {
+
+        box.innerHTML = '<div style="font-size: 12px; color: var(--text-muted);">Chưa có khách nào tắt nhận khuyến mãi.</div>';
+
+        return;
+
+      }
+
+      box.innerHTML = list.map(function(c) {
+
+        return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; font-size: 13px;"><span style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + escapeHtml(c.name) + ' - ' + escapeHtml(c.phone || '') + '</span><button type="button" class="btn-outline" style="font-size: 12px; padding: 5px 10px; white-space: nowrap;" onclick="setCustomerNoPromo(\'' + c.id + '\', false)">Bật lại</button></div>';
+
+      }).join('');
+
+    }
+
+
+
+    async function setCustomerNoPromo(custId, flag) {
+
+      const c = (db.customers || []).find(function(x) { return x.id === custId; });
+
+      if (!c) return;
+
+      if (flag) c.noPromo = true; else delete c.noPromo;
+
+      await saveDB();
+
+      syncCustomerToCloud(custId);
+
+      renderPromoModal();
+
+    }
+
+
+
+    function promoBuildMessage(c) {
+
+      const st = promoCustomerStats(c);
+
+      const p = promoCurrentFilter();
+
+      let lastService = '';
+
+      let latestT = 0;
+
+      (c.sessions || []).forEach(function(s) {
+
+        const t = new Date(s.date).getTime();
+
+        if (!isNaN(t) && t >= latestT) { latestT = t; lastService = s.service || ''; }
+
+      });
+
+      const doneTxt = st.done.length ? promoGroupNames(st.done) : lastService;
+
+      const suggest = (p.f === 'missing' || p.f === 'single') ? (PROMO_GROUP_LABELS[p.target] || '') : '';
+
+      return document.getElementById('promoTemplate').value
+
+        .replace(/{TEN_KH}/g, c.name)
+
+        .replace(/{DICH_VU_DA_LAM}/g, doneTxt)
+
+        .replace(/{DICH_VU_GOI_Y}/g, suggest)
+
+        .replace(/{TEN_TIEM}/g, db.brand.title || '')
+
+        .replace(/{SDT_TIEM}/g, db.brand.hotline || '')
+
+        .replace(/{DIA_CHI}/g, db.brand.address || '');
+
+    }
+
+
+
+    function openPromoMessage(custId) {
+
+      const c = (db.customers || []).find(function(x) { return x.id === custId; });
+
+      if (!c) return;
+
+      const tpl = document.getElementById('promoTemplate').value;
+
+      if (!tpl.trim()) { showAppAlert('Bạn chưa soạn nội dung tin nhắn khuyến mãi.'); return; }
+
+      if (tpl.indexOf(PROMO_PLACEHOLDER_NOTE) !== -1) {
+
+        showAppAlert('Hãy thay phần "' + PROMO_PLACEHOLDER_NOTE + '" trong mẫu tin bằng nội dung ưu đãi thật của tiệm trước khi gửi.');
+
+        return;
+
+      }
+
+      currentPromoCustId = custId;
+
+      promoSentFlag = false;
+
+      currentRemindPhone = String(c.phone || '').replace(/\D/g, '');
+
+      document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-bullhorn"></i> Gửi khuyến mãi';
+
+      document.getElementById('remindCustName').innerText = c.name;
+
+      document.getElementById('remindCustPhone').innerText = c.phone;
+
+      document.getElementById('remindMessageBody').value = promoBuildMessage(c);
+
+      document.getElementById('remindModal').style.display = 'block';
+
+    }
+
+
+
+    // Ghi nhận đã gửi khi bấm Zalo / SMS / Sao chép trong hộp thoại tin nhắn
+
+    async function promoTrackSend() {
+
+      if (!currentPromoCustId || promoSentFlag) return;
+
+      const c = (db.customers || []).find(function(x) { return x.id === currentPromoCustId; });
+
+      if (!c) return;
+
+      promoSentFlag = true;
+
+      if (!c.promoLog) c.promoLog = [];
+
+      c.promoLog.push({ t: Date.now(), f: document.getElementById('promoFilter').value });
+
+      if (c.promoLog.length > 20) c.promoLog = c.promoLog.slice(-20);
+
+      await saveDB();
+
+      syncCustomerToCloud(c.id);
+
+      renderPromoList();
+
+    }
+
+
 
     /* NHẮC SAO LƯU 7 NGÀY MỘT LẦN */
     function dismissBackupBanner() {
@@ -3749,6 +4492,7 @@
         .replace(/{HAN_BH}/g, w.expiryDateStr)
         .replace(/{TEN_TIEM}/g, db.brand.title);
 
+      currentPromoCustId = null;
       currentRemindPhone = c.phone.replace(/\D/g, '');
       document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Nhắc bảo hành dặm';
       document.getElementById('remindCustName').innerText = c.name;
@@ -3761,6 +4505,7 @@
       const c = db.customers.find(function(item) { return item.id === custId; });
       if (!c) return;
       const msg = `Xin chào ${c.name}, ${db.brand.title} xin cảm ơn bạn đã sử dụng dịch vụ. Nếu cần hỗ trợ thêm, bạn vui lòng nhắn lại cửa hàng nhé!`;
+      currentPromoCustId = null;
       currentRemindPhone = c.phone.replace(/\D/g, '');
       document.getElementById('remindModalHeaderTitle').innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi tin nhắn chăm sóc';
       document.getElementById('remindCustName').innerText = c.name;
@@ -3787,11 +4532,13 @@
     }
 
     function copyReminderText() {
+      promoTrackSend();
       const text = document.getElementById('remindMessageBody').value;
       copyTextSafe(text).then(function() { showAppAlert('Đã sao chép nội dung nhắc lịch!'); });
     }
 
     function sendViaZalo() {
+      promoTrackSend();
       const text = document.getElementById('remindMessageBody').value;
       copyTextSafe(text).then(function() {
         window.open(`https://zalo.me/${currentRemindPhone}`, '_blank');
@@ -3799,6 +4546,7 @@
     }
 
     function sendViaSMS() {
+      promoTrackSend();
       const phoneInput = currentRemindPhone ? currentRemindPhone.replace(/\D/g, '') : '';
       if (!phoneInput) {
         showAppAlert('Khách hàng chưa có số điện thoại!');
