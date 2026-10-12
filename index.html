@@ -2343,13 +2343,13 @@
               <div style="font-size: 12px; margin-top: 4px; color: ${item.w.isOverdue ? 'var(--danger)' : 'var(--warning)'};">
                 ${item.w.isOverdue ? `<i class="fa-solid fa-triangle-exclamation"></i> Đã quá hạn bảo hành ${item.w.overdueDays} ngày` : `<i class="fa-regular fa-clock"></i> Còn ${item.w.daysLeft} ngày là hết hạn (${item.w.expiryDateStr})`}
               </div>
-              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
-                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); cursor: pointer;">
+              <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: nowrap; gap: 8px; margin-top: 8px;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); cursor: pointer; min-width: 0;">
                   <input type="checkbox" onchange="setWarrantyNoRemind('${item.cust.id}', '${item.session.id}', this.checked)"> Không nhắc lại khách này
                 </label>
-                <div style="display: flex; gap: 6px;">
-                  <a class="btn-call" style="padding: 7px 11px; font-size: 13px; text-decoration: none;" href="tel:${escapeHtml(String(item.cust.phone || '').replace(/[^0-9+]/g, ''))}" title="Gọi điện"><i class="fa-solid fa-phone"></i> Gọi</a>
-                  <button type="button" class="btn-remind" style="padding: 7px 11px; font-size: 13px;" onclick="openRemindModal('${item.cust.id}', '${item.session.id}')" title="Nhắn Zalo / SMS nội dung nhắc dặm"><i class="fa-solid fa-comment-dots"></i> Nhắn tin</button>
+                <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                  <a class="btn-call" style="width: 34px; height: 34px; padding: 0; font-size: 14px; justify-content: center; text-decoration: none;" href="tel:${escapeHtml(String(item.cust.phone || '').replace(/[^0-9+]/g, ''))}" title="Gọi điện"><i class="fa-solid fa-phone"></i></a>
+                  <button type="button" class="btn-remind" style="width: 34px; height: 34px; padding: 0; font-size: 14px; justify-content: center;" onclick="openRemindModal('${item.cust.id}', '${item.session.id}')" title="Nhắn Zalo / SMS nội dung nhắc dặm"><i class="fa-solid fa-comment-dots"></i></button>
                 </div>
               </div>
             </div>
