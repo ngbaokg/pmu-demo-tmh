@@ -1366,6 +1366,10 @@
             <button type="button" class="btn-outline" style="justify-content: center; padding: 8px;" onclick="document.getElementById('importFileInput').click()"><i class="fa-solid fa-upload"></i> Nhập file dữ liệu</button>
           </div>
           <input type="file" id="importFileInput" accept=".json" style="display: none;" onchange="importDataFile(event)">
+          <div id="backupLastInfo" style="font-size: 11px; color: var(--text-muted); margin-top: 8px;"></div>
+          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; margin-top: 8px; cursor: pointer;">
+            <input type="checkbox" id="autoBackupToggle" style="margin-top: 3px;" onchange="toggleAutoBackup(this.checked)"> Tự động tải file sao lưu khi mở app (mỗi 7 ngày, nếu có dữ liệu mới)
+          </label>
 
           <div style="margin-top: 12px; border-top: 1px dashed var(--border-color); padding-top: 10px;">
             <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;">Nếu nút "Nhập file dữ liệu" không phản hồi trên điện thoại: mở file sao lưu (.json), copy toàn bộ nội dung rồi dán vào ô bên dưới:</div>
@@ -2423,7 +2427,7 @@
               <div style="font-size: 12.5px; color: var(--text-main); line-height: 1.5;">Đã hơn 7 ngày chưa sao lưu dữ liệu mới ra file (.json). Hãy tải file để phòng mất dữ liệu.</div>
             </div>
             <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
-              <button class="btn-outline" style="font-size: 12px; padding: 6px 10px;" onclick="openSettingsModal()" title="Mở cài đặt sao lưu"><i class="fa-solid fa-download"></i></button>
+              <button class="btn-outline" style="font-size: 12px; padding: 6px 10px;" onclick="exportDataFile()" title="Tải file sao lưu ngay"><i class="fa-solid fa-download"></i></button>
               <button class="btn-outline" style="font-size: 12px; padding: 6px 10px; color: var(--text-muted);" onclick="dismissBackupBanner()" title="Nhắc lại sau 7 ngày"><i class="fa-solid fa-xmark"></i></button>
             </div>
           </div>
@@ -4342,6 +4346,7 @@
       document.getElementById('settingPasscode').value = '';
       document.getElementById('settingOldPasscode').value = '';
       loadPrintCfgToUI();
+      loadBackupSettingsToUI();
       document.getElementById('settingsModal').style.display = 'block';
       renderCloudSettingsBox();
     }
@@ -4388,16 +4393,54 @@
       showAppAlert('Đã cập nhật cài đặt thành công!');
     }
 
-    async function exportDataFile() {
+    async function exportDataFile(silent) {
+      if (!db.brand) db.brand = {};
+      // Ghi mốc sao lưu trước khi tạo file, để file sao lưu cũng mang mốc này (phục hồi xong không bị nhắc lại ngay)
+      db.brand.lastExportDate = getTodayDateTimeString();
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
       const a = document.createElement('a');
       a.href = dataStr;
       a.download = `SaoLuu_PMU_${Date.now()}.json`;
+      document.body.appendChild(a);
       a.click();
-      if (!db.brand) db.brand = {};
-      db.brand.lastExportDate = getTodayDateTimeString();
+      document.body.removeChild(a);
       await saveDB();
       renderBackupReminder();
+      updateBackupInfo();
+      if (silent !== true) showAppAlert('Đã tải file sao lưu. Hãy cất file này ở nơi an toàn (Zalo, Google Drive, email...).');
+    }
+
+    /* TỰ ĐỘNG TẢI FILE SAO LƯU */
+    function isBackupDue() {
+      if (!db.customers || db.customers.length === 0) return false;
+      const lastExportTime = db.brand && db.brand.lastExportDate ? new Date(db.brand.lastExportDate).getTime() : 0;
+      const lastModifiedTime = (db.brand && db.brand.lastDataModifiedTime) || 0;
+      const days = lastExportTime && !isNaN(lastExportTime) ? (Date.now() - lastExportTime) / 86400000 : 999;
+      return days >= 7 && (!lastExportTime || lastModifiedTime > lastExportTime);
+    }
+
+    function runAutoBackupIfDue() {
+      if (!db.brand || !db.brand.autoBackupEnabled) return;
+      if (isBackupDue()) exportDataFile(true);
+    }
+
+    function updateBackupInfo() {
+      const el = document.getElementById('backupLastInfo');
+      if (!el) return;
+      const t = db.brand && db.brand.lastExportDate;
+      el.textContent = t ? 'Lần tải file sao lưu gần nhất: ' + formatDateTimeDisplay(t) : 'Chưa tải file sao lưu lần nào trên thiết bị này.';
+    }
+
+    function loadBackupSettingsToUI() {
+      const cb = document.getElementById('autoBackupToggle');
+      if (cb) cb.checked = !!(db.brand && db.brand.autoBackupEnabled);
+      updateBackupInfo();
+    }
+
+    function toggleAutoBackup(flag) {
+      if (!db.brand) db.brand = {};
+      db.brand.autoBackupEnabled = !!flag;
+      saveDBLocalOnly();
     }
 
     async function processImportedJsonText(jsonText) {
@@ -4465,6 +4508,7 @@
       initFirebase();
       checkDailyTasksPopup();
       ivInitZoom();
+      setTimeout(runAutoBackupIfDue, 6000);
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(function(err) {
