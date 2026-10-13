@@ -1,9 +1,10 @@
 // Service Worker - Hỗ trợ PWA mở ứng dụng mượt mà, lưu bộ đệm tĩnh (HTML/CSS/Icon)
 // Mỗi lần muốn ép máy bỏ bộ đệm cũ, chỉ cần đổi số phiên bản bên dưới (v2 -> v3 -> ...)
-const CACHE_NAME = 'pmu-pro-saas-v3';
+const CACHE_NAME = 'pmu-pro-saas-v4';
 const CORE_ASSETS = [
   './',
   './index.html',
+  './app.min.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
