@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Quản trị đơn hàng</title>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<style>
+  * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
+  body { margin: 0; background: #f6f7fa; color: #1e2329; padding: 16px; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h2 { color: #b38738; margin: 0 0 12px; font-size: 20px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  input, select { padding: 9px 10px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; }
+  button { padding: 9px 14px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; }
+  button.gold { background: #b38738; color: #fff; border-color: #b38738; }
+  button.red { color: #dc2626; border-color: rgba(220,38,38,.4); }
+  button:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .bar { margin-bottom: 12px; }
+  .muted { color: #6b7280; font-size: 12.5px; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+  .pending { background: rgba(217,119,6,.12); color: #d97706; }
+  .paid { background: rgba(22,163,74,.12); color: #16a34a; }
+  .cancelled { background: #f3f4f6; color: #6b7280; }
+  .big { font-size: 16px; font-weight: 700; }
+  .err { color: #dc2626; font-size: 13px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Quản trị đơn hàng</h2>
+
+  <div id="loginBox" class="card">
+    <div class="row">
+      <input id="email" type="email" placeholder="Email quản trị" style="flex:1; min-width:180px;">
+      <input id="pass" type="password" placeholder="Mật khẩu" style="flex:1; min-width:140px;">
+      <button class="gold" id="btnLogin">Đăng nhập</button>
+    </div>
+    <div id="loginErr" class="err"></div>
+  </div>
+
+  <div id="appBox" style="display:none;">
+    <div class="row bar">
+      <select id="filter">
+        <option value="pending">Chờ xác nhận</option>
+        <option value="paid">Đã kích hoạt</option>
+        <option value="cancelled">Đã hủy</option>
+        <option value="all">Tất cả</option>
+      </select>
+      <input id="search" placeholder="Tìm mã, email, nội dung..." style="flex:1; min-width:160px;">
+      <button id="btnReload">Tải lại</button>
+      <button id="btnLogout">Đăng xuất</button>
+    </div>
+    <div id="msg" class="muted" style="margin-bottom:8px;"></div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAnZn28fs7fOrvdsIMaQYf3DNGV8iLdxKE",
+    authDomain: "pmu-demo-phtm.firebaseapp.com",
+    projectId: "pmu-demo-phtm",
+    storageBucket: "pmu-demo-phtm.firebasestorage.app",
+    messagingSenderId: "78213388821",
+    appId: "1:78213388821:web:86b339f31b1f9d1dfe4c1c"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const LIFETIME = 4102444800000;
+  const DAYS = { '3T': 90, '6T': 180, '12T': 365 };
+  let orders = [];
+
+  const $ = id => document.getElementById(id);
+  const fmtVnd = n => Number(n || 0).toLocaleString('vi-VN') + 'đ';
+  const fmtTime = t => t ? new Date(t).toLocaleString('vi-VN') : '---';
+  const fmtExp = t => t >= LIFETIME ? 'Trọn đời' : new Date(t).toLocaleDateString('vi-VN');
+
+  $('btnLogin').onclick = () => {
+    $('loginErr').textContent = '';
+    auth.signInWithEmailAndPassword($('email').value.trim(), $('pass').value)
+      .catch(e => { $('loginErr').textContent = 'Đăng nhập thất bại: ' + e.message; });
+  };
+  $('btnLogout').onclick = () => auth.signOut();
+  $('btnReload').onclick = loadOrders;
+  $('filter').onchange = render;
+  $('search').oninput = render;
+
+  auth.onAuthStateChanged(user => {
+    $('loginBox').style.display = user ? 'none' : 'block';
+    $('appBox').style.display = user ? 'block' : 'none';
+    if (user) loadOrders();
+  });
+
+  async function loadOrders() {
+    $('msg').textContent = 'Đang tải...';
+    try {
+      const snap = await db.collection('orders').orderBy('createdAt', 'desc').limit(300).get();
+      orders = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      $('msg').textContent = '';
+      render();
+    } catch (e) {
+      $('msg').textContent = '';
+      const span = document.createElement('span');
+      span.className = 'err';
+      span.textContent = 'Không tải được đơn: ' + e.message + ' (tài khoản này chưa được cấp quyền quản trị trong Firestore Rules?)';
+      $('msg').appendChild(span);
+    }
+  }
+
+  function render() {
+    const f = $('filter').value;
+    const q = $('search').value.trim().toLowerCase();
+    const rows = orders.filter(o => {
+      if (f !== 'all' && (o.status || 'pending') !== f) return false;
+      if (!q) return true;
+      return [o.payCode, o.email, o.content, o.plan].join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+    const list = $('list');
+    list.textContent = '';
+    if (!rows.length) {
+      const d = document.createElement('div');
+      d.className = 'card muted';
+      d.textContent = 'Không có đơn nào.';
+      list.appendChild(d);
+      return;
+    }
+    rows.forEach(o => {
+      const st = o.status || 'pending';
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      const top = document.createElement('div');
+      top.className = 'row';
+      top.style.justifyContent = 'space-between';
+      const title = document.createElement('div');
+      title.className = 'big';
+      title.textContent = (o.planLabel || o.plan) + ' - ' + fmtVnd(o.amount);
+      const tag = document.createElement('span');
+      tag.className = 'tag ' + st;
+      tag.textContent = st === 'pending' ? 'Chờ xác nhận' : st === 'paid' ? 'Đã kích hoạt' : 'Đã hủy';
+      top.appendChild(title); top.appendChild(tag);
+      card.appendChild(top);
+
+      const info = document.createElement('div');
+      info.className = 'muted';
+      info.style.margin = '6px 0 10px';
+      info.textContent = 'Nội dung CK: ' + (o.content || '') + '  |  ' + (o.email || '') + '  |  Tạo lúc ' + fmtTime(o.createdAt) +
+        (st === 'paid' ? '  |  Hạn mới: ' + fmtExp(o.newExpireAt) : '');
+      card.appendChild(info);
+
+      if (st === 'pending') {
+        const act = document.createElement('div');
+        act.className = 'row';
+        const b1 = document.createElement('button');
+        b1.className = 'gold';
+        b1.textContent = 'Kích hoạt';
+        b1.onclick = () => activate(o, b1);
+        const b2 = document.createElement('button');
+        b2.className = 'red';
+        b2.textContent = 'Hủy đơn';
+        b2.onclick = () => cancelOrder(o);
+        act.appendChild(b1); act.appendChild(b2);
+        card.appendChild(act);
+      }
+      list.appendChild(card);
+    });
+  }
+
+  async function activate(o, btn) {
+    if (!confirm('Bạn đã NHẬN ĐỦ ' + fmtVnd(o.amount) + ' với nội dung "' + o.content + '" chưa?\nKích hoạt gói ' + (o.planLabel || o.plan) + ' cho ' + o.email + '?')) return;
+    btn.disabled = true;
+    const userRef = db.collection('users').doc(o.uid);
+    const orderRef = db.collection('orders').doc(o.id);
+    let newExp = 0;
+    try {
+      await db.runTransaction(async tx => {
+        const od = await tx.get(orderRef);
+        if (!od.exists) throw new Error('Đơn không tồn tại.');
+        if ((od.data().status || 'pending') !== 'pending') throw new Error('Đơn này đã được xử lý rồi.');
+        const u = await tx.get(userRef);
+        if (!u.exists) throw new Error('Không tìm thấy tài khoản của khách.');
+        const cur = (u.data() || {}).expireAt || 0;
+        if (o.plan === 'VV') newExp = LIFETIME;
+        else if (!DAYS[o.plan]) throw new Error('Gói không hợp lệ: ' + o.plan);
+        else newExp = (cur >= LIFETIME) ? cur : Math.max(Date.now(), cur) + DAYS[o.plan] * 86400000;
+        tx.update(userRef, { expireAt: newExp, updatedAt: Date.now() });
+        tx.update(orderRef, { status: 'paid', paidAt: Date.now(), newExpireAt: newExp });
+      });
+      alert('Đã kích hoạt. Hạn mới: ' + fmtExp(newExp));
+      loadOrders();
+    } catch (e) {
+      alert('Lỗi: ' + e.message);
+      btn.disabled = false;
+    }
+  }
+
+  async function cancelOrder(o) {
+    if (!confirm('Hủy đơn ' + o.content + '?')) return;
+    try {
+      await db.collection('orders').doc(o.id).update({ status: 'cancelled', cancelledAt: Date.now() });
+      loadOrders();
+    } catch (e) { alert('Lỗi: ' + e.message); }
+  }
+</script>
+</body>
+</html>
