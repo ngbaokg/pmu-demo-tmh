@@ -861,12 +861,6 @@
         Thời gian dùng thử miễn phí đã kết thúc. Vui lòng kích hoạt bản quyền để tiếp tục sử dụng đầy đủ các tính năng!
       </p>
 
-      <div class="form-group" style="text-align: left; margin-bottom: 12px;">
-        <label style="font-size: 12px; color: var(--text-muted);">Nhập mã kích hoạt bản quyền (License Key):</label>
-        <input type="text" id="licenseKeyInput" class="form-control" placeholder="Nhập mã bản quyền của bạn..." style="text-transform: uppercase; font-weight: bold; letter-spacing: 1px; text-align: center;">
-      </div>
-      <button class="btn-gold" style="width: 100%; margin-bottom: 15px;" onclick="activateLicenseKey()"><i class="fa-solid fa-key"></i> Kích hoạt ngay</button>
-
       <div style="border-top: 1px dashed var(--border-color); padding-top: 16px; margin-top: 15px;">
         <div style="font-size: 13px; font-weight: 700; color: var(--text-main); margin-bottom: 10px;">Mua / gia hạn bản quyền</div>
         <div id="pricingLock" style="margin-bottom: 16px;"></div>
@@ -1713,51 +1707,6 @@
       }
     }, 30000);
 
-    async function activateLicenseKey() {
-      const inputEl = document.getElementById('licenseKeyInput');
-      const key = inputEl.value.trim().toUpperCase();
-
-      if (!key) {
-        showAppAlert('Vui lòng nhập mã kích hoạt!');
-        return;
-      }
-      if (!cloudUser) {
-        showAppAlert('Vui lòng đăng nhập tài khoản trước khi kích hoạt mã.');
-        return;
-      }
-
-      try {
-        const keyRef = cloudFirestore.collection('activation_keys').doc(key);
-        const userRef = cloudFirestore.collection('users').doc(cloudUser.uid);
-
-        await cloudFirestore.runTransaction(async (transaction) => {
-          const keyDoc = await transaction.get(keyRef);
-          if (!keyDoc.exists) throw new Error('Mã kích hoạt không tồn tại trên hệ thống!');
-
-          const keyData = keyDoc.data();
-          if (keyData.used === true || keyData.used === "true") {
-            throw new Error('Mã này đã được sử dụng rồi!');
-          }
-
-          const userDoc = await transaction.get(userRef);
-          const userData = userDoc.data() || {};
-          const currentExpire = Math.max(Date.now(), userData.expireAt || 0);
-
-          const daysAdded = parseInt(keyData.days) || 30;
-          const addedMs = daysAdded * 24 * 60 * 60 * 1000;
-          const newExpire = currentExpire + addedMs;
-
-          transaction.update(keyRef, { used: true, usedBy: cloudUser.email, usedAt: Date.now() });
-          transaction.set(userRef, { expireAt: newExpire, updatedAt: Date.now() }, { merge: true });
-        });
-
-        inputEl.value = '';
-        showAppAlert('Kích hoạt bản quyền thành công!');
-      } catch (err) {
-        showAppAlert('Lỗi kích hoạt: ' + err.message);
-      }
-    }
-
 
     // ===== BẢNG GIÁ + THANH TOÁN QR (VietQR) =====
     const BANK_INFO = { bin: 'MB', name: 'MB Bank', account: '0913535344', holder: 'NGUYỄN QUỐC BẢO', holderNoAccent: 'NGUYEN QUOC BAO' };
@@ -1945,10 +1894,6 @@
         el.innerHTML = `
           <div style="margin-bottom: 8px;">Tài khoản: <strong style="color: var(--text-main);">${escapeHtml(cloudUser.email)}</strong></div>
           <div style="margin-bottom: 12px; color: var(--text-muted);">Hạn dùng: <span id="licenseExpiryDisplay">Đang tải...</span></div>
-          <div class="form-group" style="margin-bottom: 10px;">
-            <input type="text" id="settingLicenseKeyInput" class="form-control" placeholder="NHẬP MÃ KÍCH HOẠT (KEY)..." style="text-transform: uppercase;">
-          </div>
-          <button type="button" class="btn-gold" style="padding: 10px; margin-bottom: 12px;" onclick="activateLicenseKeyFromSettings()"><i class="fa-solid fa-key"></i> Kích hoạt gói</button>
 
           <div style="font-size: 13px; font-weight: 700; color: var(--text-main); margin: 4px 0 8px;">Mua / gia hạn bản quyền</div>
           <div id="pricingSettings" style="margin-bottom: 14px;"></div>
@@ -2012,12 +1957,6 @@
           expEl.innerHTML = `<span style="color: var(--danger);">Hết hạn</span>`;
         }
       }
-    }
-
-    function activateLicenseKeyFromSettings() {
-      const input = document.getElementById('settingLicenseKeyInput');
-      document.getElementById('licenseKeyInput').value = input.value;
-      activateLicenseKey();
     }
 
     function cloudSignUp() {
