@@ -957,23 +957,29 @@
       </div>
 
       <div class="form-group">
-        <label>Dịch vụ thực hiện (* Nhấn nhóm để chọn chi tiết)</label>
-        <div class="service-btn-grid">
-          <div class="service-parent-btn active" id="btn-grp-moi" onclick="toggleServiceGroup('moi')"><span>Môi</span></div>
-          <div class="service-parent-btn" id="btn-grp-may" onclick="toggleServiceGroup('may')"><span>Mày</span></div>
-          <div class="service-parent-btn" id="btn-grp-mi" onclick="toggleServiceGroup('mi')"><span>Mí</span></div>
-          <div class="service-parent-btn" id="btn-grp-combo" onclick="toggleServiceGroup('combo')"><span>Combo</span></div>
-          <div class="service-parent-btn" id="btn-grp-nhuhoa" onclick="toggleServiceGroup('nhuhoa')"><span>Nhũ hoa</span></div>
-          <div class="service-parent-btn" id="btn-grp-xoa" onclick="toggleServiceGroup('xoa')"><span>Xóa</span></div>
+        <label>Dịch vụ thực hiện</label>
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px;">
+          <select id="svcGroupSelect" class="form-control" onchange="onServiceGroupChange('cust')">
+            <option value="moi">Môi</option>
+            <option value="may">Mày</option>
+            <option value="mi">Mí</option>
+            <option value="combo">Combo</option>
+            <option value="nhuhoa">Nhũ hoa</option>
+            <option value="xoa">Xóa</option>
+          </select>
+          <select id="svcItemSelect" class="form-control" onchange="onServiceItemChange('cust')"></select>
         </div>
-
-        <div class="sub-service-container" id="subServiceContainer">
-          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;" id="subServiceTitle">Chọn loại dịch vụ Môi:</div>
-          <div class="sub-service-grid" id="subServiceGrid"></div>
+        <div id="svcAddBox" style="display: none; margin-top: 8px;">
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="svcAddInput" class="form-control" placeholder="Tên dịch vụ mới..." maxlength="60" autocomplete="off">
+            <button type="button" class="btn-gold" style="padding: 8px 14px;" onclick="saveNewService('cust')">Lưu</button>
+            <button type="button" class="btn-outline" style="padding: 8px 12px;" onclick="cancelNewService('cust')">Hủy</button>
+          </div>
         </div>
         <input type="hidden" id="custService" value="Phun môi">
-        <div style="font-size: 12px; color: var(--primary-gold); margin-top: -6px; margin-bottom: 10px;">
-          Dịch vụ đã chọn: <strong id="displaySelectedService">Phun môi</strong>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--primary-gold); margin: 8px 0 10px;">
+          <span>Dịch vụ đã chọn: <strong id="displaySelectedService">Phun môi</strong></span>
+          <button type="button" id="svcDelBtn" class="btn-danger-outline" style="display: none; padding: 4px 10px; font-size: 11.5px;" onclick="deleteCustomService('cust')">Xóa dịch vụ này</button>
         </div>
       </div>
 
@@ -1119,23 +1125,29 @@
         <input type="tel" id="apptPhone" class="form-control" placeholder="Nhập số điện thoại..." maxlength="11">
       </div>
       <div class="form-group">
-        <label>Dịch vụ dự kiến (* Nhấn nhóm để chọn chi tiết)</label>
-        <div class="service-btn-grid">
-          <div class="service-parent-btn active" id="appt-btn-grp-moi" onclick="toggleApptServiceGroup('moi')"><span>Môi</span></div>
-          <div class="service-parent-btn" id="appt-btn-grp-may" onclick="toggleApptServiceGroup('may')"><span>Mày</span></div>
-          <div class="service-parent-btn" id="appt-btn-grp-mi" onclick="toggleApptServiceGroup('mi')"><span>Mí</span></div>
-          <div class="service-parent-btn" id="appt-btn-grp-combo" onclick="toggleApptServiceGroup('combo')"><span>Combo</span></div>
-          <div class="service-parent-btn" id="appt-btn-grp-nhuhoa" onclick="toggleApptServiceGroup('nhuhoa')"><span>Nhũ hoa</span></div>
-          <div class="service-parent-btn" id="appt-btn-grp-xoa" onclick="toggleApptServiceGroup('xoa')"><span>Xóa</span></div>
+        <label>Dịch vụ dự kiến</label>
+        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px;">
+          <select id="apptSvcGroupSelect" class="form-control" onchange="onServiceGroupChange('appt')">
+            <option value="moi">Môi</option>
+            <option value="may">Mày</option>
+            <option value="mi">Mí</option>
+            <option value="combo">Combo</option>
+            <option value="nhuhoa">Nhũ hoa</option>
+            <option value="xoa">Xóa</option>
+          </select>
+          <select id="apptSvcItemSelect" class="form-control" onchange="onServiceItemChange('appt')"></select>
         </div>
-
-        <div class="sub-service-container" id="apptSubServiceContainer">
-          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px;" id="apptSubServiceTitle">Chọn loại dịch vụ Môi:</div>
-          <div class="sub-service-grid" id="apptSubServiceGrid"></div>
+        <div id="apptSvcAddBox" style="display: none; margin-top: 8px;">
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="apptSvcAddInput" class="form-control" placeholder="Tên dịch vụ mới..." maxlength="60" autocomplete="off">
+            <button type="button" class="btn-gold" style="padding: 8px 14px;" onclick="saveNewService('appt')">Lưu</button>
+            <button type="button" class="btn-outline" style="padding: 8px 12px;" onclick="cancelNewService('appt')">Hủy</button>
+          </div>
         </div>
         <input type="hidden" id="apptService" value="Phun môi">
-        <div style="font-size: 12px; color: var(--primary-gold); margin-top: -6px; margin-bottom: 10px;">
-          Dịch vụ đã chọn: <strong id="apptDisplaySelectedService">Phun môi</strong>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--primary-gold); margin: 8px 0 10px;">
+          <span>Dịch vụ đã chọn: <strong id="apptDisplaySelectedService">Phun môi</strong></span>
+          <button type="button" id="apptSvcDelBtn" class="btn-danger-outline" style="display: none; padding: 4px 10px; font-size: 11.5px;" onclick="deleteCustomService('appt')">Xóa dịch vụ này</button>
         </div>
       </div>
       <div class="form-group">
