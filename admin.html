@@ -69,9 +69,9 @@
     messagingSenderId: "78213388821",
     appId: "1:78213388821:web:86b339f31b1f9d1dfe4c1c"
   };
-  const adminApp = firebase.initializeApp(firebaseConfig, 'admin');
-const auth = adminApp.auth();
-const db = adminApp.firestore();
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
   const LIFETIME = 4102444800000;
   const DAYS = { '3T': 90, '6T': 180, '12T': 365 };
@@ -151,8 +151,8 @@ const db = adminApp.firestore();
       const info = document.createElement('div');
       info.className = 'muted';
       info.style.margin = '6px 0 10px';
-      info.textContent = 'Nội dung CK: ' + (o.content || '') + '  |  ' + (o.email || '') + '  |  uid: ' + (o.uid || '?') +
-  '  |  Tạo lúc ' + fmtTime(o.createdAt) + (st === 'paid' ? '  |  Hạn mới: ' + fmtExp(o.newExpireAt) : '');
+      info.textContent = 'Nội dung CK: ' + (o.content || '') + '  |  ' + (o.email || '') + '  |  Tạo lúc ' + fmtTime(o.createdAt) +
+        (st === 'paid' ? (o.plan === 'PH' ? '  |  Đã cộng 1 điện thoại' : '  |  Hạn mới: ' + fmtExp(o.newExpireAt)) : '');
       card.appendChild(info);
 
       if (st === 'pending') {
@@ -186,9 +186,11 @@ const db = adminApp.firestore();
         if ((od.data().status || 'pending') !== 'pending') throw new Error('Đơn này đã được xử lý rồi.');
         const u = await tx.get(userRef);
         if (!u.exists) throw new Error('Không tìm thấy tài khoản của khách.');
-       const ud = u.data() || {};
-if (ud.email && o.email && ud.email.toLowerCase() !== o.email.toLowerCase())
-  throw new Error('Lệch tài khoản: đơn của ' + o.email + ' nhưng uid ' + o.uid + ' thuộc ' + ud.email);
+        if (o.plan === 'PH') {
+          tx.update(userRef, { extraPhones: firebase.firestore.FieldValue.increment(1), updatedAt: Date.now() });
+          tx.update(orderRef, { status: 'paid', paidAt: Date.now(), addedPhone: 1 });
+          return;
+        }
         const cur = (u.data() || {}).expireAt || 0;
         if (o.plan === 'VV') newExp = LIFETIME;
         else if (!DAYS[o.plan]) throw new Error('Gói không hợp lệ: ' + o.plan);
@@ -196,7 +198,7 @@ if (ud.email && o.email && ud.email.toLowerCase() !== o.email.toLowerCase())
         tx.update(userRef, { expireAt: newExp, updatedAt: Date.now() });
         tx.update(orderRef, { status: 'paid', paidAt: Date.now(), newExpireAt: newExp });
       });
-      alert('Đã kích hoạt. Hạn mới: ' + fmtExp(newExp));
+      alert(o.plan === 'PH' ? 'Đã cộng thêm 1 điện thoại cho khách.' : 'Đã kích hoạt. Hạn mới: ' + fmtExp(newExp));
       loadOrders();
     } catch (e) {
       alert('Lỗi: ' + e.message);
