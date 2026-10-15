@@ -679,6 +679,8 @@
 
   <div class="container">
 
+    <div id="expiryBanner" style="display: none;"></div>
+
     <!-- 1. TAB TRANG CHỦ -->
     <div id="tab-home" class="tab-content active">
       <div id="backupReminderBanner" style="display: none;"></div>
@@ -886,6 +888,37 @@
         </div>
 
         <button class="btn-danger-outline" style="width: 100%; justify-content: center; margin-top: 6px; padding: 8px;" onclick="cloudSignOut()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất tài khoản</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL BẢNG GIÁ (mở từ thanh nhắc sắp hết hạn) -->
+  <div id="pricingModal" class="modal" style="z-index: 2500;">
+    <div class="modal-content" style="max-width: 400px;">
+      <div class="modal-header-top">
+        <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-crown"></i> Gia hạn bản quyền</h3>
+        <div class="modal-close-btn" onclick="closeModal('pricingModal')"><i class="fa-solid fa-xmark"></i></div>
+      </div>
+      <div id="pricingModalBox"></div>
+    </div>
+  </div>
+
+  <!-- MODAL CẬP NHẬT SỐ ĐIỆN THOẠI -->
+  <div id="phoneModal" class="modal" style="z-index: 10000; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px);">
+    <div class="modal-content" style="max-width: 380px;">
+      <div class="modal-header-top" style="border-bottom: none; margin-bottom: 6px;">
+        <h3 style="color: var(--primary-gold); font-size: 17px;"><i class="fa-solid fa-phone"></i> Cập nhật số Zalo / điện thoại</h3>
+      </div>
+      <p style="font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">
+        Để nhận thông báo gia hạn và được hỗ trợ nhanh khi cần, vui lòng cho biết số Zalo hoặc điện thoại của bạn.
+      </p>
+      <div class="form-group">
+        <input type="tel" id="phoneModalInput" class="form-control" placeholder="09xx xxx xxx" maxlength="15">
+      </div>
+      <div id="phoneModalError" style="color: var(--danger); font-size: 12px; margin-bottom: 10px; display: none;"></div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button class="btn-outline" style="justify-content: center; padding: 10px;" onclick="closeModal('phoneModal')">Để sau</button>
+        <button class="btn-gold" style="padding: 10px;" onclick="saveUserPhone('modal')">Lưu số</button>
       </div>
     </div>
   </div>
@@ -1370,6 +1403,10 @@
       <div class="form-group" style="margin-bottom: 14px;">
         <label>Mật khẩu (tối thiểu 6 ký tự) (*)</label>
         <input type="password" id="cloudPassword" class="form-control" placeholder="••••••">
+      </div>
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label>Số Zalo / điện thoại (* bắt buộc khi tạo tài khoản mới)</label>
+        <input type="tel" id="cloudPhone" class="form-control" placeholder="09xx xxx xxx" maxlength="15">
       </div>
 
       <div id="cloudLoginError" style="color: var(--danger); font-size: 12px; margin-bottom: 12px; display: none;"></div>

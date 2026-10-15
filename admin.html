@@ -45,6 +45,12 @@
 
   <div id="appBox" style="display:none;">
     <div class="row bar">
+      <button class="gold" id="tabOrders">Đơn hàng</button>
+      <button id="tabExp">Sắp hết hạn</button>
+    </div>
+
+    <div id="ordersPane">
+    <div class="row bar">
       <select id="filter">
         <option value="pending">Chờ xác nhận</option>
         <option value="paid">Đã kích hoạt</option>
@@ -57,6 +63,20 @@
     </div>
     <div id="msg" class="muted" style="margin-bottom:8px;"></div>
     <div id="list"></div>
+    </div>
+
+    <div id="expPane" style="display:none;">
+      <div class="row bar">
+        <select id="expFilter">
+          <option value="soon">Sắp hết hạn (14 ngày tới)</option>
+          <option value="expired">Đã hết hạn (30 ngày qua)</option>
+          <option value="both">Cả hai</option>
+        </select>
+        <button id="btnExpReload">Tải lại</button>
+      </div>
+      <div id="expMsg" class="muted" style="margin-bottom:8px;"></div>
+      <div id="expList"></div>
+    </div>
   </div>
 </div>
 
@@ -204,6 +224,117 @@
       alert('Lỗi: ' + e.message);
       btn.disabled = false;
     }
+  }
+
+  // ===== DANH SÁCH SẮP HẾT HẠN =====
+  let expUsers = [];
+  const DAY_MS = 86400000;
+
+  function showPane(name) {
+    $('ordersPane').style.display = name === 'orders' ? 'block' : 'none';
+    $('expPane').style.display = name === 'exp' ? 'block' : 'none';
+    $('tabOrders').className = name === 'orders' ? 'gold' : '';
+    $('tabExp').className = name === 'exp' ? 'gold' : '';
+    if (name === 'exp') loadExpiring();
+  }
+  $('tabOrders').onclick = () => showPane('orders');
+  $('tabExp').onclick = () => showPane('exp');
+  $('btnExpReload').onclick = loadExpiring;
+  $('expFilter').onchange = loadExpiring;
+
+  async function loadExpiring() {
+    $('expMsg').textContent = 'Đang tải...';
+    const mode = $('expFilter').value;
+    const now = Date.now();
+    let lo, hi;
+    if (mode === 'soon') { lo = now; hi = now + 14 * DAY_MS; }
+    else if (mode === 'expired') { lo = now - 30 * DAY_MS; hi = now; }
+    else { lo = now - 30 * DAY_MS; hi = now + 14 * DAY_MS; }
+    try {
+      const snap = await db.collection('users')
+        .where('expireAt', '>=', lo).where('expireAt', '<=', hi)
+        .orderBy('expireAt', 'asc').limit(300).get();
+      expUsers = snap.docs.map(d => Object.assign({ uid: d.id }, d.data()));
+      $('expMsg').textContent = expUsers.length + ' tài khoản';
+      renderExpiring();
+    } catch (e) {
+      $('expMsg').textContent = 'Không tải được: ' + e.message;
+    }
+  }
+
+  function reminderText(u) {
+    const d = new Date(u.expireAt).toLocaleDateString('vi-VN');
+    const expired = u.expireAt <= Date.now();
+    return 'Chào bạn, gói sử dụng phần mềm quản lý phun xăm của bạn ' +
+      (expired ? 'đã hết hạn vào ngày ' : 'sẽ hết hạn vào ngày ') + d + '. ' +
+      'Bạn vào app > Cài đặt > Mua / gia hạn bản quyền để gia hạn nhé ' +
+      '(3 tháng 399k, 6 tháng 599k, 12 tháng 799k, trọn đời 1.299k). Cần hỗ trợ bạn cứ nhắn mình.';
+  }
+
+  function copyText(t) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(() => alert('Đã chép lời nhắn.')).catch(() => prompt('Chép lời nhắn:', t));
+    } else { prompt('Chép lời nhắn:', t); }
+  }
+
+  function renderExpiring() {
+    const list = $('expList');
+    list.textContent = '';
+    if (!expUsers.length) {
+      const d = document.createElement('div');
+      d.className = 'card muted';
+      d.textContent = 'Không có tài khoản nào trong khoảng này.';
+      list.appendChild(d);
+      return;
+    }
+    const now = Date.now();
+    expUsers.forEach(u => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const expired = u.expireAt <= now;
+      const days = expired ? Math.floor((now - u.expireAt) / DAY_MS) : Math.ceil((u.expireAt - now) / DAY_MS);
+
+      const top = document.createElement('div');
+      top.className = 'row';
+      top.style.justifyContent = 'space-between';
+      const title = document.createElement('div');
+      title.className = 'big';
+      title.textContent = u.email || u.uid;
+      const tag = document.createElement('span');
+      tag.className = 'tag ' + (expired ? 'cancelled' : 'pending');
+      tag.textContent = expired ? (days < 1 ? 'Vừa hết hạn' : 'Quá hạn ' + days + ' ngày') : 'Còn ' + days + ' ngày';
+      top.appendChild(title); top.appendChild(tag);
+      card.appendChild(top);
+
+      const info = document.createElement('div');
+      info.className = 'muted';
+      info.style.margin = '6px 0 10px';
+      info.textContent = 'Hết hạn: ' + new Date(u.expireAt).toLocaleDateString('vi-VN') +
+        '  |  SĐT/Zalo: ' + (u.phone || 'chưa có');
+      card.appendChild(info);
+
+      const act = document.createElement('div');
+      act.className = 'row';
+      if (u.phone) {
+        const z = document.createElement('a');
+        z.href = 'https://zalo.me/' + u.phone;
+        z.target = '_blank';
+        z.rel = 'noopener';
+        z.textContent = 'Nhắn Zalo';
+        z.style.cssText = 'padding:9px 14px;border-radius:8px;border:1px solid #0068ff;color:#0068ff;font-size:13px;font-weight:600;text-decoration:none;';
+        const c = document.createElement('a');
+        c.href = 'tel:' + u.phone;
+        c.textContent = 'Gọi';
+        c.style.cssText = 'padding:9px 14px;border-radius:8px;border:1px solid #e5e7eb;color:#1e2329;font-size:13px;font-weight:600;text-decoration:none;';
+        act.appendChild(z); act.appendChild(c);
+      }
+      const cp = document.createElement('button');
+      cp.textContent = 'Chép lời nhắn';
+      cp.onclick = () => copyText(reminderText(u));
+      act.appendChild(cp);
+      card.appendChild(act);
+      list.appendChild(card);
+    });
   }
 
   async function cancelOrder(o) {
